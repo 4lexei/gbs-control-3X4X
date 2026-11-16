@@ -1,3 +1,5 @@
+**Español** | [English](README.en.md)
+
 # gbs-control-3X4X
 <b>Firmware para GBS-Control con detección automática de consola, píxel entero y escalado vertical perfecto sin tocar nada.</b><br>
   <i>Enciende, configura una sola vez y juega.</i>
