@@ -1,0 +1,1455 @@
+/** variables */
+:root {
+  --color-black: black;
+  --color-cod-gray-light: #181818;
+  --color-cod-gray: #101010;
+  --color-mine-shaft-light: #303030;
+  --color-mine-shaft: #202020;
+  --color-primary-rgba: 60, 210, 120;
+  --color-primary: #3cd278;
+  --color-scorpion: #808080;
+  --color-secondary-rgba: 234, 182, 56;
+  --color-secondary: #eab638;
+  --color-silver-chalice: #aaa;
+  --color-warning: red;
+  --color-white: white;
+  --viewport-height: 100%;
+
+  /*GBC
+  --color-black: black;
+    --color-cod-gray-light: #181818;
+    --color-cod-gray: #101010;
+    --color-mine-shaft-light: #0f380f;
+    --color-mine-shaft: #306230;
+    --color-primary-rgba: 155,188,15;
+    --color-primary: #9bbc0f;
+    --color-scorpion: #808080;
+    --color-secondary-rgba: 155,188,15;
+    --color-secondary: #9bbc0f;
+    --color-silver-chalice: black;
+    --color-warning: black;
+    --color-white: white;
+  */
+}
+
+/* latin */
+@font-face {
+  font-family: "Oswald";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(data:font/woff2;base64,${oswald}) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+/* fallback */
+@font-face {
+  font-family: "Material Icons";
+  font-style: normal;
+  font-weight: 400;
+  src: url(data:font/woff2;base64,${material}) format("woff2");
+}
+
+html,
+body {
+  height: 100%;
+  touch-action: manipulation;
+  width: 100%;
+}
+
+body {
+  background-color: var(--color-cod-gray);
+  font-family: "Oswald", sans-serif;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+* {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/** main container */
+.gbs-container {
+  background-color: var(--color-mine-shaft);
+  display: inline-block;
+  height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 414px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+/** main screen scrollable area */
+.gbs-scroll {
+  height: calc(100% - 54px);
+  margin-bottom: 148px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.gbs-scroll::-webkit-scrollbar {
+  width: 2px;
+}
+
+.gbs-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gbs-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary);
+  border-radius: 20px;
+}
+
+/* buttons */
+.gbs-button {
+  appearance: none;
+  background-color: var(--color-mine-shaft-light);
+  border-radius: 4px;
+  border: 1px dashed rgba(var(--color-primary-rgba), 0.2);
+  color: rgba(var(--color-primary-rgba), 0.6);
+  cursor: pointer;
+  flex-grow: 1;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 300;
+  margin: 2px;
+  outline: 0;
+  overflow: hidden;
+  padding: 4px 8px;
+  position: relative;
+  text-align: right;
+  text-overflow: ellipsis;
+  transition: all 0.2s linear;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.gbs-button[disabled] {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.gbs-button[active] {
+  border: 1px solid var(--color-primary);
+  box-shadow: inset 0 0 6px 4px rgba(var(--color-primary-rgba), 0.2),
+    0 0 6px 4px rgba(var(--color-primary-rgba), 0.2);
+  color: var(--color-primary);
+}
+
+.gbs-button__secondary {
+  border: 1px dashed rgba(var(--color-secondary-rgba), 0.3);
+  color: rgba(var(--color-secondary-rgba), 0.7);
+}
+
+.gbs-button__secondary[active] {
+  background-color: rgba(var(--color-secondary-rgba), 0.7);
+  border: 1px solid rgba(var(--color-secondary-rgba), 0.3);
+  box-shadow: inset 0 0 6px 4px rgba(var(--color-secondary-rgba), 0.2),
+    0 0 6px 8px rgba(var(--color-secondary-rgba), 0.2);
+  color: var(--color-black);
+  transform: scale(0.98);
+}
+
+.gbs-button__menu {
+  margin: 2px;
+  width: 100%;
+  text-align: center;
+}
+
+.gbs-button__preset {
+  flex-grow: 1;
+  font-size: 12px;
+  height: 44px;
+  line-height: 12px;
+  margin: 1px;
+  padding: 4px;
+  text-align: right;
+  vertical-align: top;
+  white-space: initial;
+}
+
+.gbs-button__slot {
+  flex-grow: 1;
+  line-height: 16px;
+  margin: 4px;
+  min-height: 56px;
+  padding: 8px;
+  text-align: right;
+  width: 132px;
+}
+
+.gbs-button__slot::before {
+  color: var(--color-secondary);
+  content: attr(gbs-name);
+  font-size: 16px;
+  white-space: normal;
+}
+
+.gbs-button__slot::after {
+  color: var(--color-primary);
+  content: attr(gbs-meta);
+  display: block;
+  font-size: 10px;
+  line-height: 14px;
+  white-space: pre;
+}
+
+.gbs-button__resolution {
+  flex-grow: 1;
+  font-size: 14px;
+  height: 52px;
+  line-height: 14px;
+  margin: 1px;
+  min-width: 40px;
+  padding: 4px;
+  text-align: right;
+  vertical-align: top;
+  white-space: initial;
+}
+
+.gbs-button__resolution--center {
+  text-align: center;
+}
+
+.gbs-button__resolution--pass-through {
+  font-size: 10px;
+  line-height: 10px;
+  position: relative;
+  top: -4px;
+}
+
+.gbs-button__control {
+  flex-grow: 1;
+  height: 68px;
+  margin: 2px;
+  padding: 6px;
+  text-align: right;
+  vertical-align: top;
+  white-space: initial;
+  width: 84px;
+}
+
+.gbs-button__control-action {
+  flex-grow: 1;
+  height: 56px;
+  line-height: 1;
+  margin: 4px;
+  text-align: right;
+}
+
+/* menu */
+.gbs-menu {
+  background-color: var(--color-cod-gray-light);
+  border-top: 1px solid #282828;
+  bottom: 0;
+  box-sizing: border-box;
+  color: var(--color-primary);
+  display: flex;
+  height: 54px;
+  padding: 8px;
+  position: absolute;
+  text-align: center;
+  width: 100%;
+}
+
+.gbs-menu__logo {
+  display: none;
+  margin: auto;
+  margin-right: 8px;
+  width: 200%;
+}
+
+/* fieldset */
+.gbs-fieldset {
+  border-radius: 4px;
+  border: 1px solid rgba(var(--color-primary-rgba), 0.1);
+  box-sizing: border-box;
+  color: var(--color-primary);
+  font-size: 15px;
+  margin: 8px;
+  padding: 8px;
+  position: relative;
+}
+
+.gbs-fieldset__legend {
+  display: inline-block !important;
+  font-size: 16px;
+  position: relative;
+  text-align: left;
+  vertical-align: top;
+}
+
+.gbs-fieldset__legend--help::after {
+  color: var(--color-secondary);
+  content: "help_center";
+  cursor: pointer;
+  font-family: "Material Icons";
+  font-size: 24px;
+  position: relative;
+  top: 8px;
+}
+
+.gbs-show-help .gbs-fieldset__legend::after {
+  color: var(--color-scorpion);
+}
+
+.gbs-fieldset__legend div {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/** table */
+
+.gbs-preferences {
+  width: 100%;
+}
+
+.gbs-preferences td {
+  color: var(--color-silver-chalice);
+  text-align: left;
+}
+
+.gbs-preferences td[toggle-switch],
+.gbs-preferences td.gbs-icon {
+  cursor: pointer;
+}
+
+.gbs-preferences tr[active] td {
+  color: var(--color-primary);
+}
+
+.gbs-preferences tr td.gbs-preferences__child {
+  color: var(--color-secondary);
+}
+
+.gbs-preferences tr[active] td.gbs-preferences__child {
+  color: var(--color-secondary);
+}
+
+.gbs-preferences td em {
+  color: var(--color-silver-chalice);
+  display: block;
+  display: none;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 16px;
+  margin-bottom: 16px;
+  margin-top: 4px;
+}
+
+.gbs-preferences .gbs-icon {
+  font-size: 32px;
+}
+
+/* sections */
+
+.gbs-scroll {
+  /* self */
+  display: flex;
+  flex-direction: column;
+}
+.gbs-scroll > section[name="presets"] {
+  flex-grow: 1;
+  /* self */
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+}
+.gbs-scroll > section[name="presets"] > fieldset {
+  margin: 0;
+}
+
+.gbs-resolution {
+  display: flex;
+}
+
+.gbs-scroll > section[name="presets"] > fieldset.presets {
+  flex-grow: 1;
+  /* self */
+  display: flex;
+  flex-direction: column;
+}
+.gbs-scroll > section[name="presets"] > fieldset.presets > .gbs-presets {
+  flex-grow: 1;
+  /* self */
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 16px;
+  overflow-y: scroll;
+  overflow: hidden;
+}
+
+.gbs-controls__desktop {
+  display: none;
+}
+
+.gbs-output-hide .gbs-output {
+  display: none;
+}
+
+.gbs-output {
+  position: relative;
+}
+
+.gbs-output__textarea {
+  appearance: none;
+  background-color: var(--color-black);
+  border-radius: 8px;
+  border: none;
+  box-sizing: border-box;
+  color: var(--color-white);
+  flex-grow: 1;
+  height: 400px;
+  outline: 0;
+  padding: 16px;
+  resize: none;
+  scrollbar-color: var(--color-primary) var(--color-black);
+  scrollbar-width: thin;
+  /* v82: air between lines, so the log can be read looking for one value among many.
+     v107: 1.9 put a gap between EVERY line, which turned out to be harder to read, not easier: nothing grouped, everything
+     equally far apart. The air now comes from the text instead, with a blank line before each block (see the \n in front of
+     the mode and preset messages), and the line height goes back to something compact. */
+  line-height: 1.35;
+}
+
+.gbs-output__textarea::-webkit-scrollbar {
+  border-radius: 20px;
+  width: 20px;
+}
+
+.gbs-output__textarea::-webkit-scrollbar-track {
+  background-color: var(--color-black);
+  border-radius: 20px;
+}
+
+.gbs-output__textarea::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary);
+  border-radius: 20px;
+  border: 7px solid var(--color-black);
+}
+
+.gbs-loader {
+  align-items: center;
+  background-color: var(--color-mine-shaft);
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+}
+
+.gbs-loader img {
+  border-radius: 16px;
+  box-shadow: 0 0 64px 4px var(--color-primary);
+  width: 160px;
+}
+
+.gbs-loader,
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 304 304' width='152' height='152'%3E%3Cpath fill='%233cd278' fill-opacity='0.4' d='M44.1 224a5 5 0 1 1 0 2H0v-2h44.1zm160 48a5 5 0 1 1 0 2H82v-2h122.1zm57.8-46a5 5 0 1 1 0-2H304v2h-42.1zm0 16a5 5 0 1 1 0-2H304v2h-42.1zm6.2-114a5 5 0 1 1 0 2h-86.2a5 5 0 1 1 0-2h86.2zm-256-48a5 5 0 1 1 0 2H0v-2h12.1zm185.8 34a5 5 0 1 1 0-2h86.2a5 5 0 1 1 0 2h-86.2zM258 12.1a5 5 0 1 1-2 0V0h2v12.1zm-64 208a5 5 0 1 1-2 0v-54.2a5 5 0 1 1 2 0v54.2zm48-198.2V80h62v2h-64V21.9a5 5 0 1 1 2 0zm16 16V64h46v2h-48V37.9a5 5 0 1 1 2 0zm-128 96V208h16v12.1a5 5 0 1 1-2 0V210h-16v-76.1a5 5 0 1 1 2 0zm-5.9-21.9a5 5 0 1 1 0 2H114v48H85.9a5 5 0 1 1 0-2H112v-48h12.1zm-6.2 130a5 5 0 1 1 0-2H176v-74.1a5 5 0 1 1 2 0V242h-60.1zm-16-64a5 5 0 1 1 0-2H114v48h10.1a5 5 0 1 1 0 2H112v-48h-10.1zM66 284.1a5 5 0 1 1-2 0V274H50v30h-2v-32h18v12.1zM236.1 176a5 5 0 1 1 0 2H226v94h48v32h-2v-30h-48v-98h12.1zm25.8-30a5 5 0 1 1 0-2H274v44.1a5 5 0 1 1-2 0V146h-10.1zm-64 96a5 5 0 1 1 0-2H208v-80h16v-14h-42.1a5 5 0 1 1 0-2H226v18h-16v80h-12.1zm86.2-210a5 5 0 1 1 0 2H272V0h2v32h10.1zM98 101.9V146H53.9a5 5 0 1 1 0-2H96v-42.1a5 5 0 1 1 2 0zM53.9 34a5 5 0 1 1 0-2H80V0h2v34H53.9zm60.1 3.9V66H82v64H69.9a5 5 0 1 1 0-2H80V64h32V37.9a5 5 0 1 1 2 0zM101.9 82a5 5 0 1 1 0-2H128V37.9a5 5 0 1 1 2 0V82h-28.1zm16-64a5 5 0 1 1 0-2H146v44.1a5 5 0 1 1-2 0V18h-26.1zm102.2 270a5 5 0 1 1 0 2H98v14h-2v-16h124.1zM242 149.9V160h16v34h-16v62h48v48h-2v-46h-48v-66h16v-30h-16v-12.1a5 5 0 1 1 2 0zM53.9 18a5 5 0 1 1 0-2H64V2H48V0h18v18H53.9zm112 32a5 5 0 1 1 0-2H192V0h50v2h-48v48h-28.1zm-48-48a5 5 0 0 1-9.8-2h2.07a3 3 0 1 0 5.66 0H178v34h-18V21.9a5 5 0 1 1 2 0V32h14V2h-58.1zm0 96a5 5 0 1 1 0-2H137l32-32h39V21.9a5 5 0 1 1 2 0V66h-40.17l-32 32H117.9zm28.1 90.1a5 5 0 1 1-2 0v-76.51L175.59 80H224V21.9a5 5 0 1 1 2 0V82h-49.59L146 112.41v75.69zm16 32a5 5 0 1 1-2 0v-99.51L184.59 96H300.1a5 5 0 0 1 3.9-3.9v2.07a3 3 0 0 0 0 5.66v2.07a5 5 0 0 1-3.9-3.9H185.41L162 121.41v98.69zm-144-64a5 5 0 1 1-2 0v-3.51l48-48V48h32V0h2v50H66v55.41l-48 48v2.69zM50 53.9v43.51l-48 48V208h26.1a5 5 0 1 1 0 2H0v-65.41l48-48V53.9a5 5 0 1 1 2 0zm-16 16V89.41l-34 34v-2.82l32-32V69.9a5 5 0 1 1 2 0zM12.1 32a5 5 0 1 1 0 2H9.41L0 43.41V40.6L8.59 32h3.51zm265.8 18a5 5 0 1 1 0-2h18.69l7.41-7.41v2.82L297.41 50H277.9zm-16 160a5 5 0 1 1 0-2H288v-71.41l16-16v2.82l-14 14V210h-28.1zm-208 32a5 5 0 1 1 0-2H64v-22.59L40.59 194H21.9a5 5 0 1 1 0-2H41.41L66 216.59V242H53.9zm150.2 14a5 5 0 1 1 0 2H96v-56.6L56.6 162H37.9a5 5 0 1 1 0-2h19.5L98 200.6V256h106.1zm-150.2 2a5 5 0 1 1 0-2H80v-46.59L48.59 178H21.9a5 5 0 1 1 0-2H49.41L82 208.59V258H53.9zM34 39.8v1.61L9.41 66H0v-2h8.59L32 40.59V0h2v39.8zM2 300.1a5 5 0 0 1 3.9 3.9H3.83A3 3 0 0 0 0 302.17V256h18v48h-2v-46H2v42.1zM34 241v63h-2v-62H0v-2h34v1zM17 18H0v-2h16V0h2v18h-1zm273-2h14v2h-16V0h2v16zm-32 273v15h-2v-14h-14v14h-2v-16h18v1zM0 92.1A5.02 5.02 0 0 1 6 97a5 5 0 0 1-6 4.9v-2.07a3 3 0 1 0 0-5.66V92.1zM80 272h2v32h-2v-32zm37.9 32h-2.07a3 3 0 0 0-5.66 0h-2.07a5 5 0 0 1 9.8 0zM5.9 0A5.02 5.02 0 0 1 0 5.9V3.83A3 3 0 0 0 3.83 0H5.9zm294.2 0h2.07A3 3 0 0 0 304 3.83V5.9a5 5 0 0 1-3.9-5.9zm3.9 300.1v2.07a3 3 0 0 0-1.83 1.83h-2.07a5 5 0 0 1 3.9-3.9zM97 100a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-48 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 96a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-144a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm96 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM49 36a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-32 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM33 68a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 240a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm80-176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 48a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm112 176a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-16 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 180a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0-32a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM17 84a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm32 64a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm16-16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.gbs-wifi__list {
+  text-align: left;
+}
+
+.gbs-wifi__list tr {
+  height: 38px;
+  line-height: 38px;
+}
+
+.gbs-wifi__list td {
+  line-height: 18px;
+  vertical-align: top;
+}
+
+.gbs-wifi__list .gbs-icon ~ td {
+  width: 100%;
+}
+
+.gbs-wifi__list td ~ td ~ td {
+  color: var(--color-secondary);
+}
+
+.gbs-wifi__input {
+  flex-grow: 1;
+  height: 38px;
+}
+
+.gbs-wifi__input--error {
+  animation: gbs-border-blinker 0.5s linear infinite;
+}
+
+input {
+  -webkit-user-select: initial !important;
+  user-select: initial !important;
+}
+
+.gbs-wifi-warning {
+  animation: gbs-blinker 0.5s linear infinite;
+  color: var(--color-warning);
+  position: absolute;
+  right: 18px;
+  top: 10px;
+  z-index: 1;
+}
+
+/* modals */
+
+section[name="prompt"],
+section[name="alert"] {
+  background-color: rgba(0, 0, 0, 0.96);
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.gbs-modal__message {
+  text-align: right;
+  margin-top: 16px;
+  margin-bottom: 32px;
+}
+
+/* HELPERS */
+[hidden] {
+  display: none !important;
+}
+
+[gbs-progress]::before {
+  content: attr(gbs-progress);
+}
+
+.gbs-backup-input,
+.gbs-profile-input {
+  cursor: pointer;
+  height: 100%;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.gbs-button[gbs-name="Empty"] ~ .gbs-button[gbs-name="Empty"] {
+  display: none;
+}
+
+.gbs-help {
+  color: var(--color-scorpion);
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  line-height: 18px;
+  margin: 8px 0 16px 0;
+  padding-left: 28px;
+  text-align: left;
+  white-space: pre-line;
+}
+
+.gbs-help-hide .gbs-help {
+  display: none;
+}
+
+.gbs-icon {
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  direction: ltr;
+  display: inline-block;
+  font-family: "Material Icons";
+  font-size: 24px;
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+}
+
+.gbs-flex {
+  display: flex;
+}
+
+.gbs-margin__bottom--16 {
+  margin-bottom: 16px;
+}
+
+.gbs-padding__left-16 {
+  padding-left: 16px;
+}
+
+.gbs-padding__hor-16 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 415px) {
+  .gbs-button:hover {
+    border: 1px solid var(--color-primary);
+    box-shadow: inset 0 0 6px 4px rgba(var(--color-primary-rgba), 0.2),
+      0 0 6px 4px rgba(var(--color-primary-rgba), 0.2);
+    color: var(--color-primary);
+  }
+
+  .gbs-button__secondary:hover {
+    background-color: rgba(var(--color-secondary-rgba), 0.7);
+    border: 1px solid rgba(var(--color-secondary-rgba), 0.3);
+    box-shadow: inset 0 0 6px 4px rgba(var(--color-secondary-rgba), 0.2),
+      0 0 6px 8px rgba(var(--color-secondary-rgba), 0.2);
+    color: var(--color-black);
+    transform: scale(0.98);
+  }
+
+  .gbs-button__control {
+    height: 60px;
+  }
+
+  .gbs-menu {
+    border-bottom: 1px solid rgba(var(--color-primary-rgba), 0.4);
+    bottom: initial;
+    padding-left: 8px;
+    padding-right: 8px;
+    position: relative;
+    top: 0;
+  }
+
+  .gbs-menu__logo {
+    display: inline-block;
+  }
+
+  .gbs-controls {
+    display: none;
+  }
+
+  .gbs-controls__desktop {
+    display: block;
+  }
+
+  /* [patch layout] easy to see/grab scrollbar: the picture-control block is tall on short laptop windows */
+  .gbs-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .gbs-output {
+    background-color: var(--color-mine-shaft-light);
+    height: 100vh;
+    left: 414px;
+    position: fixed;
+    top: 0px;
+    width: calc(100vw - 414px);
+    z-index: 1;
+  }
+
+  /* v58: the log fills what is left under its header (flex column), so its last line is never below the window */
+  .gbs-output {
+    box-sizing: border-box;
+  }
+
+  .gbs-fieldset-output {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .gbs-fieldset-output > .gbs-flex:last-child {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .gbs-output__textarea {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .gbs-output-hide .gbs-container {
+    border-radius: 16px;
+    box-shadow: 0 0 64px 4px rgba(var(--color-primary-rgba), 0.4);
+    display: block;
+    height: calc(100vh - 64px);
+    margin-top: 32px;
+  }
+
+  .gbs-fieldset-output {
+    height: calc(100vh - 16px);
+  }
+}
+
+@keyframes gbs-border-blinker {
+  50% {
+    border: 1px solid var(--color-warning);
+  }
+}
+
+@keyframes gbs-blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* v38: status bar at the top of the control panel (phone and desktop), normal flow: never covers the picture controls */
+.gbs-statusbar {
+  background-color: var(--color-black);
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--color-white);
+  font-size: 12px;
+  line-height: 1.5; /* v90: three lines need air between them to be readable at a glance */
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  white-space: pre-line; /* v90: the firmware sends the bar as three lines separated by \n */
+  word-break: break-word;
+}
+
+/* v56: the status bar sits at the top of the scrollable area, so it shows in every tab; sticky, in normal flow */
+.gbs-scroll > .gbs-statusbar {
+  flex-shrink: 0;
+  margin: 8px 8px 4px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* v61: the sticky status bar never hides the field the page scrolls to (profile name, export / import) */
+
+/* v62: on the desktop the status bar is sticky inside the scroller, so the modals (profile name prompt, alert)
+   must sit above it or the input is covered. Mobile had no overlap and is left alone. */
+@media (min-width: 415px) {
+  section[name="prompt"],
+  section[name="alert"] {
+    z-index: 20;
+  }
+}
+
+/* v107b: the slide that plays when a swipe changes section. Short on purpose: it is there so the eye catches which way
+   it moved while you are looking at the TV, not to be admired. Anyone who finds motion unpleasant gets none. */
+@keyframes gbs-slide-left {
+  from { transform: translateX(22px); opacity: .55; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes gbs-slide-right {
+  from { transform: translateX(-22px); opacity: .55; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes gbs-slide-left  { from { opacity: 1; } to { opacity: 1; } }
+  @keyframes gbs-slide-right { from { opacity: 1; } to { opacity: 1; } }
+}
+
+/* v107b: the sections are swiped now, so they must not be dragged sideways by the browser itself */
+.gbs-scroll { touch-action: pan-y; }
+
+/* ============================================================
+   v107c: the working screen and its fixed bar.
+   The device is operated with the eyes on the TV, so the controls that are used while adjusting must be in one place
+   and must never move. Everything here sends the same commands the old sections send; nothing new on the firmware side
+   except the undo, which simply places the mode again.
+   ============================================================ */
+.gbs-work { padding: 4px 4px 190px; }
+.gbs-work__mode {
+  color: var(--color-white);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  line-height: 1.15;
+}
+.gbs-work__sub {
+  color: var(--color-silver-chalice);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+.gbs-work__label {
+  color: var(--color-scorpion);
+  font-size: 11px;
+  letter-spacing: .14em;
+  margin: 18px 0 8px;
+  text-transform: uppercase;
+}
+.gbs-work__row { gap: 6px; }
+.gbs-work__row + .gbs-work__row { margin-top: 6px; }
+.gbs-work__chip {
+  flex: 1;
+  font-size: 13px;
+  padding: 13px 4px;
+  text-align: center;
+}
+
+.gbs-bar {
+  background: var(--color-black);
+  border-top: 1px solid var(--color-mine-shaft-light);
+  bottom: 54px;
+  box-sizing: border-box;
+  display: flex;
+  gap: 10px;
+  left: 0;
+  padding: 10px 10px 12px;
+  position: absolute;
+  width: 100%;
+  z-index: 5;
+}
+.gbs-bar[hidden] { display: none; }
+.gbs-bar__pad {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 38px);
+}
+.gbs-pad__k {
+  align-items: center;
+  background: var(--color-mine-shaft);
+  border: 0;
+  border-radius: 7px;
+  color: var(--color-white);
+  display: flex;
+  font-size: 20px;
+  justify-content: center;
+  padding: 0;
+}
+.gbs-pad__k:active { background: var(--color-mine-shaft-light); }
+.gbs-pad__blank { background: transparent; pointer-events: none; }
+.gbs-pad__mid {
+  background: transparent;
+  color: var(--color-scorpion);
+  font-family: "Oswald", sans-serif;
+  font-size: 9px;
+  letter-spacing: .1em;
+  pointer-events: none;
+}
+.gbs-bar__side { display: flex; flex-direction: column; flex-grow: 1; gap: 6px; }
+.gbs-seg {
+  background: var(--color-mine-shaft);
+  border-radius: 7px;
+  display: flex;
+  overflow: hidden;
+}
+.gbs-seg[hidden] { display: none; }
+.gbs-seg__b {
+  background: transparent;
+  border: 0;
+  color: var(--color-silver-chalice);
+  flex: 1;
+  font-family: "Oswald", sans-serif;
+  font-size: 11px;
+  letter-spacing: .06em;
+  padding: 9px 0;
+}
+.gbs-seg__b[active] { background: var(--color-primary); color: #000; font-weight: 500; }
+.gbs-seg--sub .gbs-seg__b[active] { background: var(--color-secondary); }
+.gbs-bar__acts { display: flex; gap: 6px; }
+.gbs-bar__ghost {
+  background: transparent;
+  border: 1px solid var(--color-mine-shaft-light);
+  color: var(--color-silver-chalice);
+  flex: 1;
+  font-size: 12px;
+  padding: 11px 0;
+  text-align: center;
+}
+
+/* ============================================================
+   v107e: the working screen as drawn in the proposal.
+   Plain sans-serif on this screen (the condensed face stays in the old sections), cards instead of fieldsets,
+   three text tabs instead of seven icons.
+   ============================================================ */
+:root {
+  --work-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --work-card: #1a1a1a;
+  --work-chip: #242424;
+  --work-chip-on: #16301f;
+  --work-text: #e8e8e8;
+  --work-dim: #9a9a9a;
+  --work-faint: #6c6c6c;
+  --work-warn-bg: #2e2716;
+}
+
+/* the old icon menu stays in the page (the tabs drive it) but is not shown */
+.gbs-menu { display: none !important; }
+
+.gbs-tabs {
+  background: var(--color-black);
+  border-top: 1px solid #262626;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  height: 54px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+  z-index: 6;
+}
+.gbs-tabs button {
+  background: transparent;
+  border: 0;
+  border-top: 3px solid transparent;
+  color: var(--work-dim);
+  flex: 1;
+  font-family: var(--work-font);
+  font-size: 13px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.gbs-tabs button[active] { border-top-color: var(--color-primary); color: var(--color-primary); }
+
+.gbs-subtabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  margin: 4px 8px 4px;
+}
+.gbs-subtabs[hidden] { display: none; }
+.gbs-subtabs button {
+  background: var(--work-chip);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--work-dim);
+  flex: 1;
+  font-family: var(--work-font);
+  font-size: 13px;
+  padding: 9px 0;
+}
+.gbs-subtabs button[active] { background: var(--work-chip-on); border-color: var(--color-primary); color: var(--color-primary); }
+
+.gbs-head {
+  background: var(--color-mine-shaft);
+  flex-shrink: 0;
+  padding-bottom: 2px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.gbs-head > .gbs-statusbar {
+  margin: 8px 8px 4px;
+  font-family: var(--work-font);
+  font-size: 12.5px;
+  line-height: 1.6;
+  padding: 10px 14px;
+  color: #cfcfcf;
+}
+
+.gbs-work { font-family: var(--work-font); padding: 4px 8px 200px; }
+.gbs-card {
+  background: var(--work-card);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  padding: 16px 12px 14px;
+}
+.gbs-card__head { align-items: baseline; display: flex; gap: 10px; }
+.gbs-card__title { color: #fff; font-size: 30px; font-weight: 500; letter-spacing: .01em; }
+.gbs-card__aspect {
+  background: transparent;
+  border: 0;
+  color: var(--color-primary);
+  font-family: var(--work-font);
+  font-size: 15px;
+  padding: 0;
+}
+.gbs-card__aspect[switch] {
+  border: 1px solid rgba(var(--color-primary-rgba), .45);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.gbs-card__aspect[hidden] { display: none; }
+.gbs-card__desc { color: var(--work-dim); font-size: 14px; line-height: 1.5; margin: 6px 0 12px; }
+.gbs-card__label {
+  color: var(--work-faint);
+  font-size: 11.5px;
+  letter-spacing: .16em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+.gbs-card__row { align-items: baseline; display: flex; justify-content: space-between; gap: 10px; }
+.gbs-card__value { color: var(--work-text); font-size: 15px; line-height: 1.4; }
+.gbs-card__tag { color: var(--color-secondary); flex-shrink: 0; font-size: 13px; }
+.gbs-card__tag[ok] { color: var(--color-primary); }
+.gbs-card__tag[hidden] { display: none; }
+.gbs-card__hint {
+  border-top: 1px solid #262626;
+  color: var(--work-faint);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.gbs-card__chips { display: flex; gap: 6px; }
+
+.gbs-chip {
+  align-items: center;
+  background: var(--work-chip);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--work-text);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-family: var(--work-font);
+  font-size: 14px;
+  gap: 2px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 4px;
+  text-align: center;
+}
+.gbs-chip small { color: var(--work-faint); font-size: 10.5px; }
+.gbs-chip:active { background: #2c2c2c; }
+.gbs-chip[active] { background: var(--work-chip-on); border-color: var(--color-primary); color: var(--color-primary); }
+.gbs-chip[active] small { color: rgba(var(--color-primary-rgba), .7); }
+
+.gbs-grid3 { display: grid; gap: 6px; grid-template-columns: repeat(3, 1fr); }
+.gbs-grid3--2 { grid-template-columns: repeat(2, 1fr); margin-top: 12px; }
+
+.gbs-note {
+  background: var(--work-warn-bg);
+  border-left: 3px solid var(--color-secondary);
+  border-radius: 4px 9px 9px 4px;
+  color: var(--color-secondary);
+  display: flex;
+  font-size: 13.5px;
+  gap: 10px;
+  line-height: 1.45;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+.gbs-note[hidden] { display: none; }
+.gbs-note__ico { flex-shrink: 0; font-size: 12px; padding-top: 2px; }
+
+/* the bar, redrawn */
+.gbs-bar { font-family: var(--work-font); gap: 12px; padding: 10px 10px 12px; }
+.gbs-bar__pad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 38px); }
+.gbs-pad__k { background: #242424; font-size: 15px; }
+.gbs-pad__blank { background: #141414; }
+.gbs-pad__mid { background: transparent; color: var(--work-faint); font-family: var(--work-font); font-size: 9.5px; letter-spacing: .12em; }
+.gbs-seg { background: #242424; border-radius: 9px; }
+.gbs-seg__b { font-family: var(--work-font); font-size: 12.5px; letter-spacing: .04em; padding: 10px 0; }
+.gbs-bar__acts { gap: 6px; }
+.gbs-bar__ghost {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  border-radius: 9px;
+  color: var(--work-dim);
+  flex: 1;
+  font-family: var(--work-font);
+  font-size: 13px;
+  padding: 10px 0;
+  text-align: center;
+}
+.gbs-bar__save {
+  background: var(--color-primary);
+  border: 0;
+  border-radius: 9px;
+  color: #000;
+  flex: 1;
+  font-family: var(--work-font);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 0;
+}
+.gbs-bar__save:active { filter: brightness(.85); }
+.gbs-bar__wide {
+  background: #242424;
+  border: 0;
+  border-radius: 9px;
+  color: var(--work-text);
+  font-family: var(--work-font);
+  font-size: 13px;
+  letter-spacing: .06em;
+  padding: 10px 0;
+}
+
+.gbs-dot { color: var(--work-faint); }
+.gbs-dot--on { color: var(--color-primary); }
+.gbs-scroll { overflow-anchor: none; } /* v107e: the sub-tabs appear after the scroll reset; without this the browser scrolls to keep the old content in place */
+
+/* v107f: the shape switch next to the mode name: both shapes in view, the one in use marked */
+.gbs-card__head { align-items: center; justify-content: space-between; }
+.gbs-asp { background: #242424; border-radius: 9px; display: flex; flex-shrink: 0; padding: 3px; }
+.gbs-asp[hidden] { display: none; }
+.gbs-asp button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--work-dim);
+  font-family: var(--work-font);
+  font-size: 14px;
+  min-width: 54px;
+  padding: 7px 10px;
+}
+.gbs-asp button[active] { background: var(--work-chip-on); border-color: var(--color-primary); color: var(--color-primary); }
+.gbs-asp button[disabled] { color: #464646; }
+
+.gbs-chip[hidden] { display: none; }
+
+.gbs-asp button[hidden] { display: none; }
+
+/* v107h: the pad in its own tab, "Ajuste". Nothing in this tab scrolls, so the keys never move under the thumb. */
+.gbs-work { padding-bottom: 70px; }
+.gbs-adj__seg { margin-top: 6px; }
+.gbs-adj__seg .gbs-seg__b { font-size: 14px; padding: 12px 0; }
+.gbs-adj__help { color: var(--work-dim); font-size: 13px; line-height: 1.5; margin: 12px 0 4px; text-align: center; }
+.gbs-adj__pad {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, 92px);
+  grid-template-rows: repeat(3, 80px);
+  justify-content: center;
+  margin: 12px 0 12px;
+}
+.gbs-adj__pad .gbs-pad__k { border-radius: 14px; font-size: 24px; background: #2a2a2a; }
+.gbs-adj__pad .gbs-pad__blank { background: transparent; }
+.gbs-adj__pad .gbs-pad__mid { background: transparent; font-size: 11px; letter-spacing: .14em; }
+.gbs-adj__acts { display: flex; gap: 8px; margin-bottom: 8px; }
+.gbs-adj__acts button { padding: 14px 0; font-size: 14px; border-radius: 11px; }
+.gbs-tabs button { letter-spacing: .1em; font-size: 12px; }
+
+/* v107h: the fine step and the save reminder in Ajuste; the save button in Imagen */
+.gbs-adj__fine {
+  align-items: center;
+  background: var(--work-chip);
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--work-text);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-family: var(--work-font);
+  font-size: 14px;
+  gap: 2px;
+  justify-content: center;
+}
+.gbs-adj__fine small { color: var(--work-faint); font-size: 10.5px; }
+.gbs-adj__fine[active] { background: var(--work-chip-on); border-color: var(--color-primary); color: var(--color-primary); }
+.gbs-adj__fine[active] small { color: rgba(var(--color-primary-rgba), .7); }
+.gbs-adj__remind {
+  background: transparent;
+  border: 1px dashed #3a3a3a;
+  border-radius: 11px;
+  color: var(--work-faint);
+  font-family: var(--work-font);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 11px 14px;
+  text-align: center;
+  width: 100%;
+}
+.gbs-adj__remind[dirty] { background: var(--work-warn-bg); border: 1px solid transparent; border-left: 3px solid var(--color-secondary); color: var(--color-secondary); }
+.gbs-chip--save { background: var(--color-primary) !important; color: #000 !important; font-weight: 500; }
+
+/* v107h: the status bar stays fixed on every tab, on black. The whole band it sits in is black too, edge to edge, with
+   a line under it, so what scrolls passes cleanly behind it instead of showing through the margins around the bar. */
+.gbs-head {
+  background: var(--color-black);
+  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 8px;
+  padding: 8px 8px 6px;
+}
+.gbs-head > .gbs-statusbar { margin: 0; }
+.gbs-head > .gbs-subtabs { margin: 6px 0 0; }
+
+/* v107h: the colour tab. One row per control: name on the left, minus and plus on the right, always in the same place. */
+.gbs-step {
+  align-items: center;
+  border-top: 1px solid #262626;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 56px 56px;
+  padding: 7px 0;
+}
+.gbs-card__label + .gbs-step { border-top: 0; padding-top: 0; }
+.gbs-step__lab { color: var(--work-text); display: flex; flex-direction: column; font-size: 15px; gap: 2px; }
+.gbs-step__lab small { color: var(--work-faint); font-size: 11.5px; }
+.gbs-step__b {
+  background: var(--work-chip);
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  font-family: var(--work-font);
+  font-size: 22px;
+  height: 44px;
+  line-height: 1;
+}
+.gbs-step__b:active { background: #333; }
+.gbs-col__wide { margin-top: 10px; width: 100%; }
+.gbs-col__desc { margin-top: 0; font-size: 13px; }
+/* five tabs now */
+.gbs-tabs button { font-size: 11px; letter-spacing: .06em; }
+
+/* v107h: the preset slots, at the end of the Modo tab */
+/* only the slots in use plus the first empty one are shown (the old rule: every "Empty" after the first is hidden),
+   so the grid stays short and needs no scroll of its own */
+.gbs-slots { display: grid; gap: 6px; grid-template-columns: repeat(3, 1fr); margin: 4px 0 10px; }
+.gbs-slots .gbs-button__slot {
+  background: var(--work-chip);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-family: var(--work-font);
+  margin: 0;
+  min-height: 52px;
+  padding: 7px 8px;
+  text-align: left;
+  width: auto;
+}
+.gbs-slots .gbs-button__slot::before { color: var(--work-text); font-size: 13px; }
+.gbs-slots .gbs-button__slot::after { color: var(--work-faint); font-size: 10px; }
+.gbs-slots .gbs-button__slot[active] { background: var(--work-chip-on); border-color: var(--color-primary); }
+.gbs-slots .gbs-button__slot[active]::before { color: var(--color-primary); }
+.gbs-import { cursor: pointer; position: relative; }
+.gbs-import input { display: none; }
+/* the one empty slot left visible: say so in Spanish, and drop the resolution it does not have yet (display only; the
+   code still checks the name "Empty") */
+.gbs-slots .gbs-button__slot[gbs-name="Empty"] { border: 1px dashed #3a3a3a; background: transparent; }
+.gbs-slots .gbs-button__slot[gbs-name="Empty"]::before { content: "+ ranura libre"; color: var(--work-dim); }
+.gbs-slots .gbs-button__slot[gbs-name="Empty"]::after { content: ""; }
+
+.gbs-adj__mem { margin-top: 8px; }
+.gbs-col__old .gbs-preferences { width: 100%; }
+
+/* v107h: Filtros in the new style. A switch row: name and a line of explanation on the left, the switch on the right;
+   the firmware's own toggle code marks it [active]. */
+.gbs-sw {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #262626;
+  color: var(--work-text);
+  display: flex;
+  font-family: var(--work-font);
+  gap: 12px;
+  padding: 10px 0;
+  text-align: left;
+  width: 100%;
+}
+.gbs-card__label + .gbs-sw { border-top: 0; padding-top: 0; }
+.gbs-sw__lab { display: flex; flex: 1; flex-direction: column; font-size: 15px; gap: 2px; }
+.gbs-sw__lab small { color: var(--work-faint); font-size: 11.5px; line-height: 1.35; }
+.gbs-sw__knob {
+  background: #3a3a3a;
+  border-radius: 14px;
+  flex-shrink: 0;
+  height: 28px;
+  position: relative;
+  transition: background .15s;
+  width: 48px;
+}
+.gbs-sw__knob::after {
+  background: #cfcfcf;
+  border-radius: 50%;
+  content: "";
+  height: 22px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transition: left .15s;
+  width: 22px;
+}
+.gbs-sw[active] .gbs-sw__knob { background: var(--color-primary); }
+.gbs-sw[active] .gbs-sw__knob::after { background: #000; left: 23px; }
+.gbs-sw__icon { display: none; }
+.gbs-filt .gbs-step + .gbs-grid3, .gbs-filt .gbs-sw + .gbs-grid3 { margin-top: 10px; }
+.gbs-filt .gbs-grid3 + .gbs-step { border-top: 0; margin-top: 8px; }
+.gbs-filt__seg .gbs-seg__b { font-size: 14px; padding: 12px 0; }
+
+.gbs-card__label-note { letter-spacing: .02em; text-transform: none; }
+
+/* v107j: the memory buttons show their value large, between the name and the hint */
+.gbs-mem { gap: 1px; padding: 10px 4px; }
+.gbs-mem span { color: var(--color-primary); font-size: 20px; font-weight: 500; }
+
+/* v107j: deshacer and ajuste fino side by side, each in its own column so the fine step can carry its note underneath */
+.gbs-adj__acts { align-items: flex-start; }
+.gbs-adj__col { display: flex; flex: 1; flex-direction: column; gap: 6px; }
+.gbs-adj__col > button { min-height: 52px; width: 100%; }
+.gbs-adj__note { color: var(--work-faint); font-size: 12px; line-height: 1.4; padding: 0 4px; text-align: center; }
+
+/* v107j: the fine-step note, same box and width as the save reminder */
+.gbs-adj__acts > button { min-height: 52px; }
+.gbs-adj__info { box-sizing: border-box; margin-bottom: 8px; }
+
+.gbs-step__val { color: var(--color-primary); font-size: 18px; font-weight: 500; margin-top: 2px; }
+
+.gbs-filt__note { margin: 4px 0 8px; }
+
+.gbs-filt__note--top { margin-top: 10px; margin-bottom: 0; }
+
+/* v107j: the console choice in Modo: four options, the one in use marked */
+.gbs-cons .gbs-seg__b { font-size: 13px; padding: 12px 2px; }
+.gbs-cons__desc { margin: 10px 0 0; }
+/* (after v107v) the profiles without measurements: folded under the four measured ones */
+.gbs-cons-more { display: block; width: 100%; margin: 8px 0 0; padding: 8px 2px; background: none; border: 0; color: var(--work-text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; opacity: .8; }
+.gbs-cons-others { margin-top: 4px; }
+.gbs-cons-others .gbs-chip { font-size: 12px; padding: 10px 2px; }
+
+/* v107h: Sistema in the new style */
+.gbs-sys__sub { border-top: 1px solid #262626; margin-top: 12px; padding-top: 12px; }
+.gbs-sys .gbs-wifi__list { color: var(--work-text); font-family: var(--work-font); font-size: 15px; width: 100%; }
+.gbs-sys .gbs-wifi__list tr { border-bottom: 1px solid #262626; cursor: pointer; }
+.gbs-sys__input {
+  background: var(--work-chip);
+  border: 1px solid #333;
+  border-radius: 9px;
+  box-sizing: border-box;
+  color: var(--work-text);
+  font-family: var(--work-font);
+  font-size: 15px;
+  margin-bottom: 8px;
+  padding: 12px;
+  width: 100%;
+}
+.gbs-sys__wide { margin-top: 4px; width: 100%; }
+.gbs-sys__ver { color: var(--work-dim); font-size: 13px; margin-bottom: 10px; }
+.gbs-sys__ver b { color: var(--work-text); font-weight: 500; }
+.gbs-sys__file { cursor: pointer; margin-bottom: 8px; }
+.gbs-sys__file input { display: none; }
+/* a file being dragged over a file button */
+.gbs-sys__file.gbs-drop, .gbs-import.gbs-drop { border-color: var(--color-primary); color: var(--color-primary); }
+.gbs-sys__status { color: var(--work-dim); font-size: 13px; line-height: 1.4; margin-bottom: 8px; }
+.gbs-sys__status:empty { display: none; }
+.gbs-sys__bar { background: #2a2a2a; border-radius: 4px; height: 8px; margin-bottom: 10px; overflow: hidden; }
+.gbs-sys__bar > div { background: var(--color-primary); height: 100%; width: 0; }
+.gbs-sys__restore { position: relative; }
+.gbs-sys [gbs-progress]:empty::before { content: attr(gbs-progress); }
+.gbs-sys__danger .gbs-chip { font-size: 13px; }
+.gbs-sys__reset { color: #e06c5a; }
+/* the Wi-Fi code still adds the old "secondary" class to the active mode: in this tab it must not bring its glow */
+.gbs-sys .gbs-chip.gbs-button__secondary { box-shadow: none; }
+.gbs-sys .gbs-chip.gbs-button__secondary:not([active]) { background: var(--work-chip); border-color: transparent; color: var(--work-text); }
+/* keep "4x5x" as typed: the font's contextual alternates turn the x between digits into a multiplication sign */
+.gbs-sys__ver b { font-feature-settings: "calt" 0; font-variant-ligatures: none; }
+.gbs-sys__sub > .gbs-sw:first-child { border-top: 0; padding-top: 0; }
+.gbs-scroll > section[name="presets"] > .gbs-work { padding: 0; } /* v107l: Avanzado is one page; the VGA card must not leave the bottom gap the other tabs keep for the tab bar */
+
+/* v107l: explanations without the dashed box and the centred text: plain, left-aligned, with a thin line at the left so
+   they read as a note attached to the control above. The save reminder keeps its amber when there are unsaved changes. */
+.gbs-adj__remind,
+.gbs-adj__info,
+.gbs-filt__note {
+  background: transparent !important;
+  border: 0 !important;
+  border-left: 2px solid #3a3a3a !important;
+  border-radius: 0 !important;
+  color: var(--work-dim);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 2px 0 2px 12px;
+  text-align: left;
+}
+.gbs-adj__remind[dirty] { border-left-color: var(--color-secondary) !important; color: var(--color-secondary); }
+.gbs-adj__remind, .gbs-adj__info { margin: 4px 0 12px; }
+/* v107l: and the card-end hints use the same format, so every explanation looks alike */
+.gbs-card__hint {
+  border-top: 0;
+  border-left: 2px solid #3a3a3a;
+  color: var(--work-dim);
+  line-height: 1.5;
+  margin-top: 12px;
+  padding: 2px 0 2px 12px;
+}
+
+/* v107l: buttons that delete or replace saved data are red, and all of them ask before acting */
+:root { --danger: #e06c5a; --danger-rgb: 224, 108, 90; }
+.gbs-danger, .gbs-danger span, .gbs-danger div { color: var(--danger) !important; }
+.gbs-chip.gbs-danger { border: 1px solid rgba(var(--danger-rgb), .35); }
+.gbs-button.gbs-danger { border-color: rgba(var(--danger-rgb), .5) !important; }
+.gbs-button.gbs-danger .gbs-icon { color: var(--danger) !important; }
+
+/* v107l: confirmations, notices and the name prompt open OVER the page. The confirm box had no overlay at all and
+   appeared at the end of the content: with the page scrolled, the question was waiting where nobody could see it. */
+.gbs-modal {
+  align-items: center;
+  background: rgba(0, 0, 0, .78) !important;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  padding: 16px;
+  position: fixed !important;
+  right: 0;
+  top: 0;
+  z-index: 100 !important;
+}
+.gbs-modal[hidden] { display: none !important; }
+.gbs-modal__card { box-shadow: 0 10px 40px rgba(0, 0, 0, .6); font-family: var(--work-font); max-width: 380px; width: 100%; }
+.gbs-modal__text { color: var(--work-text); font-size: 15px; line-height: 1.5; margin-bottom: 16px; white-space: pre-line; }
+.gbs-modal .gbs-sys__input { margin-bottom: 14px; }
+
+.gbs-chip--save.gbs-modal__risky { background: var(--danger) !important; color: #000 !important; }
+
+/* v107n: the Líneas row of the Modo card */
+.gbs-lines { margin-top: 14px; }
+.gbs-lines__label { margin-bottom: 8px; }
+.gbs-chip--dolor { display: flex; flex-direction: column; justify-content: center; }
+.gbs-chip--dolor span { letter-spacing: .08em; font-weight: 600; }
+/* a control locked by the mode (size buttons and scanlines in DOLOR) */
+.gbs-chip[disabled], .gbs-sw[disabled], .gbs-step__b[disabled] { opacity: .35; pointer-events: none; }
+
+/* (after v107r) the three undo buttons: two lines, "deshacer" small on top */
+.gbs-adj__undo button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0; }
+.gbs-adj__undo button small { font-size: 11px; color: var(--work-faint); letter-spacing: .04em; }
+.gbs-adj__undo button span { font-size: 14px; }
+
+/* (after v107r) a plain description right under a fieldset title (Sync block) */
+.gbs-fieldset__desc { color: var(--color-silver-chalice); font-size: 13px; line-height: 1.5; margin: 0 0 14px; }
+
+/* (after v107s) his design: a bigger pad across the whole width, and in Bordes two arrows per key */
+.gbs-adj__pad { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 112px); gap: 10px; justify-content: stretch; }
+.gbs-adj__pad .gbs-pad__k { font-size: 28px; }
+.gbs-adj__pad .gbs-pad__k--dbl { background: transparent; display: flex; gap: 6px; padding: 0; align-items: stretch; }
+.gbs-adj__pad .gbs-pad__k--dbl.gbs-pad__k--v { flex-direction: column; }
+.gbs-adj__pad .gbs-pad__k--dbl > span {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: #2a2a2a; border-radius: 14px; color: var(--color-white); font-size: 26px;
+}
+.gbs-adj__pad .gbs-pad__k--dbl > span:active { background: var(--color-mine-shaft-light); }
+.gbs-adj__pad .gbs-pad__k--dbl > span.gbs-pad__out { color: var(--color-primary); }
+.gbs-adj__pad .gbs-pad__mid { font-size: 11px; }
+
+/* (after v108d) the fine step as a key of the pad (its middle), his request */
+.gbs-adj__pad .gbs-pad__fine {
+  background: #2a2a2a;
+  border: 1px solid transparent;
+  color: var(--work-text);
+  font-family: var(--work-font);
+  font-size: 11px;
+  letter-spacing: .06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+.gbs-adj__pad .gbs-pad__fine[active] { background: var(--work-chip-on); border-color: var(--color-primary); color: var(--color-primary); }
+
+/* (after v108e) his request: with a mouse, every text of the interface can be selected and copied (to quote it when
+   something has to be corrected). On touch screens it stays blocked as in Rama's original, so a tap on a button never
+   starts a selection. */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}
+
+/* (after v108f) the Dreamcast's «Normal» / «Panorámico»: a small outline of each shape in front of the name */
+.gbs-asp button { align-items: center; display: inline-flex; gap: 6px; justify-content: center; }
+.gbs-asp__ic { border: 1.5px solid currentColor; border-radius: 2px; display: inline-block; flex-shrink: 0; height: 9px; opacity: .85; }
+.gbs-asp__ic--n { width: 12px; }
+.gbs-asp__ic--w { width: 16px; }
