@@ -338,7 +338,7 @@ void setup()
 
             uopt->enableFrameTimeLock = (uint8_t)(f.read() - '0');
             if (uopt->enableFrameTimeLock > 1)
-                uopt->enableFrameTimeLock = 0;
+                uopt->enableFrameTimeLock = 1; // (after v110c) on by default
 
             uopt->presetSlot = lowByte(f.read());
 
@@ -550,6 +550,11 @@ void setup()
                 if (f.available()) {
                     const uint8_t v = (uint8_t)(f.read() - '0');
                     uopt->x3Wide = (v == 0) ? 0 : 1;
+                }
+                // (after v108h) the Mega Drive's 1080p x4 shape (#213). Missing in older files: 16:9.
+                if (f.available()) {
+                    const uint8_t v = (uint8_t)(f.read() - '0');
+                    uopt->integer1080Tv43 = (v == 1) ? 1 : 0;
                 }
             } else {
                 // A file from before v107m: one value per mode. Where the mode has no measurements per step, that value meant

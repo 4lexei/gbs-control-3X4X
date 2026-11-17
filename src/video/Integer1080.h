@@ -103,4 +103,9 @@ uint8_t *memPhaseOwn();
 // v43: place the picture again for the current console profile (SNES / NES / Mega Drive).
 void integerProfileRefresh();
 
+// (after v108h) the Mega Drive's 1080p x4 «4:3» (uopt->integer1080Tv43) and the 256 / 320 clock change in place
+bool md43Able();
+bool tv43Active();
+bool integer1080ClockLive(bool narrow);
+
 #endif // INTEGER1080_H_

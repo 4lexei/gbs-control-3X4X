@@ -25,6 +25,7 @@ void setOutModeHdBypass(bool regsInitialized);
 void bypassModeSwitch_RGBHV();
 float getSourceFieldRate(boolean useSPBus);
 float getOutputFrameRate();
+uint16_t integer1080NormalMd(bool pal); // (after v108h)
 void setIfHblankParameters();
 
 #endif // GBS_CONTROLLER_H

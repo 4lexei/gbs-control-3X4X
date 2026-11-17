@@ -21,7 +21,7 @@ struct ConsoleMode
     uint8_t fill;     // uopt->integer720Fill (NTSC)
     uint8_t wide;     // uopt->integer1080Wide (NTSC)
     uint8_t narrow;   // uopt->integer1080Narrow (the 256 px loads that need the ADC clock at 80 %)
-    uint8_t spare;
+    uint8_t spare;    // (after v108h) uopt->integer1080Tv43: the Mega Drive's 1080p x4 in «4:3» (0 in every older record)
 };
 
 #define CM_RECORDS 34 // profiles 1..17, 60 Hz and 50 Hz (fixed: «Otras» goes after the Dreamcast's two, see below)
@@ -94,6 +94,7 @@ static void normalize(ConsoleMode &m, bool pal)
     } else if (m.pref == Output1080P && m.i1080) {
         n.i1080 = m.i1080;
         n.narrow = m.narrow;
+        n.spare = m.spare; // (after v108h) its 4:3
         if (pal) {
             n.step = m.step & 3;
         } else {
@@ -138,6 +139,7 @@ static bool snapshotNow(ConsoleMode &m, bool pal)
         m.i1080 = uopt->integer1080;
         m.wide = uopt->integer1080Wide;
         m.narrow = uopt->integer1080Narrow;
+        m.spare = uopt->integer1080Tv43 ? 1 : 0; // (after v108h)
     } else if ((m.pref == Output960P || m.pref == Output480P) && uopt->integerLow) {
         if (!rto->integerLowActive || rto->integer1080Centered == 0)
             return false;
@@ -167,7 +169,7 @@ static void saveFile()
 {
     File f = LittleFS.open(CM_FILE, "w");
     if (!f) {
-        SerialM.println(F("[3x4x-v108h] console modes: could not open the file"));
+        SerialM.println(F("[3x4x-v111] console modes: could not open the file"));
         return;
     }
     f.write(CM_VERSION);
@@ -207,6 +209,7 @@ void consoleModesLoad()
         pendingWidth = r.centered;
         uopt->integer1080Wide = r.wide;
         uopt->integer1080Narrow = r.narrow;
+        uopt->integer1080Tv43 = r.spare ? 1 : 0; // (after v108h)
     } else if ((r.pref == Output960P || r.pref == Output480P) && r.iLow && r.iLow == uopt->integerLow) {
         pendingWidth = r.centered;
         uopt->integer1080Narrow = r.narrow;
@@ -237,7 +240,7 @@ bool consoleModeCheck()
     if (settled && sameMode(cur, recs[key]))
         return false;
     if (recs[key].pref == OutputCustomized && !slotStillThere(recs[key].slot)) {
-        SerialM.println(F("[3x4x-v108h] console mode: its personal preset is gone, the mode stays as it is"));
+        SerialM.println(F("[3x4x-v111] console mode: its personal preset is gone, the mode stays as it is"));
         return false;
     }
     restoreKey = key;
@@ -264,6 +267,7 @@ static void restoreNow(int16_t key)
         uopt->integer1080 = r.i1080;
         uopt->integer1080Wide = r.wide;
         uopt->integer1080Narrow = r.narrow;
+        uopt->integer1080Tv43 = r.spare ? 1 : 0; // (after v108h)
     } else if (r.pref == Output960P || r.pref == Output480P) {
         uopt->integerLow = r.iLow;
         uopt->integer720 = 0;
@@ -277,7 +281,7 @@ static void restoreNow(int16_t key)
     else
         pendingWidth = r.centered;
     saveUserPrefs(); // first: a personal preset is read from the slot the preferences file names
-    SerialM.print(F("[3x4x-v108h] console mode: "));
+    SerialM.print(F("[3x4x-v111] console mode: "));
     if (key >= CM_OTHERS)
         SerialM.print(F("Others"));
     else if (key >= CM_DC_INTERLACED)

@@ -2722,7 +2722,7 @@ section[name="alert"] {
             <div class="gbs-card">
               <div class="gbs-card__label">Update firmware</div>
               <div class="gbs-card__desc gbs-col__desc">Choose the firmware.bin file of the compiled project (.pio/build/gbsc_en/firmware.bin) and press upload. Don't switch the device off until it finishes.</div>
-              <div class="gbs-sys__ver">Web version: <b>3x4x-v108h</b></div>
+              <div class="gbs-sys__ver">Web version: <b>3x4x-v111</b></div>
               <label class="gbs-chip gbs-chip--flat gbs-sys__file"><span>choose file</span><small gbs-update-filename>none chosen</small><input type="file" accept=".bin" gbs-update-file /></label>
               <div class="gbs-sys__status" gbs-update-status></div>
               <div class="gbs-sys__bar" gbs-update-bar-wrap hidden><div gbs-update-bar></div></div>
@@ -3891,6 +3891,8 @@ const WORK_DESC = {
     "720p x5 16:9": ["Experimental. Recommended for Super Game Boy and games with very small windows. 144 of the 224 lines are shown: Game Boy full screen.", "For a 16:9 screen."],
     "1080p x4": ["", // (after v107v) his decision: the "224 lines" sentence is not needed here
         "For a 16:9 screen at 1080p."],
+    // (after v108h) the Mega Drive's 1080p x4 «4:3»: the picture 4/3 wider, for a 16:9 set switched to 4:3 by its remote
+    "1080p x4 4:3": ["", "For a 16:9 TV set to 4:3 mode."],
     "1080p x5": ["216 of the 224 lines are shown: 4 are missing at the top and 4 at the bottom, barely noticeable in many games.", "For a 16:9 screen at 1080p."],
 };
 // v107n: with any console other than the SNES the Super Game Boy means nothing, so x4 and x5 have their own sentence
@@ -4013,6 +4015,9 @@ const barProfile = (text) => {
 const CONSOLE_DESC = "Choose the system you are going to use so it looks its best. For now the firmware only detects and has been tested with a few.";
 // (after v107v) his text of 2026-11-14 for the profiles without measurements
 const CONSOLE_DESC_EMPTY = "Profile without measurements; for now it only keeps the color, filters, borders and states from the last use. If you know how to work out pixel perfect for this system, get in touch with Alexei. Sharing your measurements and your system's fingerprint will help include it in the next firmware.";
+// (after v110b) his request: the bar no longer says "paso 1 de 3": it names the width the user chose, with the same
+// words as its button (the Mega Drive's second size is its 320 px, everybody else's is CRT)
+const STEP_LABEL = { square: "256 px", wide: "wide", fill: "fill" };
 const translateStatus = (text) => text
     .replace(/^detected not yet/m, "console not detected")
     .replace(/^detected /m, "")
@@ -4020,13 +4025,11 @@ const translateStatus = (text) => text
     .replace(/profile /g, "profile ")
     .replace(/\bperfil (auto )?Others\b/, "profile $1Others") // (after v108f) the bar says "Others"; on the screen it is «Otras»
     .replace(/stock preset/g, "stock preset")
+    .replace(/\(interlaced\)/g, "(interlaced)") // (after v108h) a Mega Drive / SNES kept through an interlaced game
     .replace(/watcher off/g, "watcher off")
     .replace(/retrying/g, "retrying")
     .replace(/losses (\d+) retries (\d+)/g, "losses $1, retries $2")
-    .replace(/step (\d)\/(\d) square/g, "step $1 of $2, square")
-    .replace(/step (\d)\/(\d) CRT/g, "step $1 of $2, CRT")
-    .replace(/step (\d)\/(\d) wide/g, "step $1 of $2, wide")
-    .replace(/step (\d)\/(\d) fill/g, "step $1 of $2, fill")
+    .replace(/step \d\/\d (square|CRT|wide|fill)/g, (all, name) => name === "CRT" ? (/profile (auto )?MD\b/.test(text) ? "320 px" : "CRT") : STEP_LABEL[name] || name)
     .replace(/\| wide$/m, "| wide")
     .replace(/\| fine$/m, "| fine tune")
     // (after v108e) the Dreamcast in 480i / 576i / VGA: no multiplier on its modes (2 and 1.5 lines), as on its buttons
@@ -4057,7 +4060,8 @@ const parseWork = (text) => {
     const md = /profile (auto )?MD\b/.test(lines[1] || "") || (!!bp && (EMPTY_PROFILES.indexOf(bp.name) >= 0 || bp.name === "Others"));
     const snes = /profile (auto )?SNES\b/.test(lines[1] || "");
     const pce = /profile (auto )?PC-Engine\b/.test(lines[1] || "");
-    return { mode, aspect, step, steps, key: mode.indexOf("720p") === 0 ? `${mode} ${aspect}` : mode, md, snes, pce, fine: last.indexOf("fine") >= 0 };
+    // (after v108h) 1080p x4 has shapes too with the Mega Drive (and the Dreamcast): its key carries the shape
+    return { mode, aspect, step, steps, key: mode.indexOf("720p") === 0 || (mode === "1080p x4" && aspect) ? `${mode} ${aspect}` : mode, md, snes, pce, fine: last.indexOf("fine") >= 0 };
 };
 // what the pad has done since the mode was last placed
 const work = {
@@ -4177,7 +4181,9 @@ const updateWorkScreen = (raw) => {
             dcNow >= 3 && dcNow <= 5 && s.mode === "1080p x4" ? "1080p" : dcNow >= 3 && dcNow <= 5 && s.mode === "720p x3" ? "720p" : s.mode;
         // (after v107z) the Dreamcast in 480i: its 1080p has the two shapes too
         const dc43 = dcNow >= 3 && dcNow <= 5 && s.mode === "1080p x4";
-        dcAspect1080 = dc43 || (dcNow === 5 && s.mode === "720p x3"); // (after v108f) the VGA's 720p switches live too
+        // (after v108h) the Mega Drive's 1080p x4: the firmware names its shape in the bar only where it has the two
+        const md43 = !dcNow && s.mode === "1080p x4" && !!s.aspect;
+        dcAspect1080 = dc43 || md43 || (dcNow === 5 && s.mode === "720p x3"); // (after v108f) the VGA's 720p switches live too
         // v107f: both shapes always in view, the one in use marked. Only 720p x3 can switch; every other mode is 16:9
         // only, so there 4:3 is shown switched off, so it reads as "not available here" rather than missing.
         aspect.removeAttribute("hidden");
@@ -4199,7 +4205,7 @@ const updateWorkScreen = (raw) => {
             b.style.order = dcNames && v === "4:3" ? "2" : "";
             // v107h: a shape that does not exist in this mode is not shown at all (greyed out it only confused)
             // (after v107z) the Dreamcast in 480i / 576i: 720p x3 has only its 4:3 (the whole width)
-            v === "4:3" && s.mode !== "720p x3" && !dc43 // (after v108e) every Dreamcast 720p has both shapes now
+            v === "4:3" && s.mode !== "720p x3" && !dc43 && !md43 // (after v108e) every Dreamcast 720p has both shapes now
                 ? b.setAttribute("hidden", "")
                 : b.removeAttribute("hidden");
         });
@@ -4335,7 +4341,10 @@ const updateWorkScreen = (raw) => {
     nodelistToArray(document.querySelectorAll("#workSteps [data-step]")).forEach((c) => {
         const n = parseInt(c.getAttribute("data-step") || "0", 10);
         // v107q: three sizes (the Mega Drive in PAL 1080p x4, "step n/3"): no llenar
-        const hide = (n >= 2 && twoSizes) || (n === 2 && oldFill) || (n === 3 && s.steps === 3);
+        // (after v108h) his decision of 2026-11-17: the Mega Drive in NTSC 720p x5 (no size steps, so the old llenar button
+        // stood) already fills the screen at 1280 columns: no llenar there either
+        const x5NoFill = n === 3 && oldFill && (s.mode === "720p x5" || s.key === "1080p x4 4:3"); // (after v108h) nor in its 1080p x4 «4:3»
+        const hide = (n >= 2 && twoSizes) || (n === 2 && oldFill) || (n === 3 && s.steps === 3) || x5NoFill;
         hide ? c.setAttribute("hidden", "") : c.removeAttribute("hidden");
         const st = twoSizes ? Math.min(s.step, 1) : s.steps === 3 ? Math.min(s.step, 2) : s.step;
         const on = !!s.mode && (oldFill && n === 3 ? st >= 2 : st === n);
@@ -4811,7 +4820,7 @@ const buildDiagnosticsText = () => {
     const log = GBSControl.ui.terminal.value;
     const tail = log.length > 6000 ? log.substring(log.length - 6000) : log;
     return [
-        "GBS-Control diagnostics (web UI 3x4x-v108h)",
+        "GBS-Control diagnostics (web UI 3x4x-v111)",
         new Date().toISOString(),
         "Status: " + (statusBar ? statusBar.textContent : "n/a"),
         "----- log (video timings first requested) -----",
@@ -4951,7 +4960,7 @@ const exportProfile = () => {
         .then((files) => {
         const profile = {
             gbsProfile: 1,
-            firmware: "3x4x-v108h",
+            firmware: "3x4x-v111",
             name: meta.name,
             meta: {
                 presetID: meta.presetID,
@@ -5422,7 +5431,7 @@ const colorExport = () => {
                 gbsAlert(`The profile of ${name} has nothing saved. Press SAVE before exporting.`);
                 return;
             }
-            const payload = { gbsColor: 1, firmware: "3x4x-v108h", consola: name, perfil: slot, datos: data };
+            const payload = { gbsColor: 1, firmware: "3x4x-v111", consola: name, perfil: slot, datos: data };
             downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), `color-${COLOR_FILE_SLUGS[slot] || "console"}.gbsc`);
         })
             .catch(() => gbsAlert("Could not export. Try again."));

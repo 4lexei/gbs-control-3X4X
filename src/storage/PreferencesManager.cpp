@@ -18,7 +18,7 @@ void syncReverseRotaryEncoderIsrMirror()
 void loadDefaultUserOptions()
 {
     uopt->presetPreference = Output960P;    // #1
-    uopt->enableFrameTimeLock = 0; // permanently adjust frame timing to avoid glitch vertical bar. does not work on all displays!
+    uopt->enableFrameTimeLock = 1; // (after v110c) his decision of 2026-11-17: on by default, so the output follows a source that changes rate (240p <-> 480i). Stock: 0, "does not work on all displays"
     uopt->presetSlot = 'A';          //
     uopt->frameTimeLockMethod = 0; // compatibility with more displays
     uopt->enableAutoGain = 0;
@@ -62,6 +62,7 @@ void loadDefaultUserOptions()
         uopt->linesMode[i] = 0; // v107n
     }
     uopt->x3Wide = 1; // v107o: 720p x3 opens in 16:9
+    uopt->integer1080Tv43 = 0; // (after v108h) the Mega Drive's 1080p x4 opens in 16:9
     uopt->autoRetrySync = 0;
     uopt->peakLevel = 1;                     // #22 stock peaking strength
     uopt->stepLevel = 1;                     // #23 stock step response strength
@@ -128,6 +129,7 @@ void saveUserPrefs()
     for (uint8_t i = 0; i < 16; i++)
         f.write((uopt->linesMode[i] <= 2 ? uopt->linesMode[i] : 0) + '0'); // #196..#211 v107n: the "Líneas" row, per mode
     f.write((uopt->x3Wide ? 1 : 0) + '0');                // #212 v107o: the shape 720p x3 was last used in
+    f.write((uopt->integer1080Tv43 ? 1 : 0) + '0');       // #213 (after v108h) the Mega Drive's 1080p x4 shape (1 = 4:3)
 
     f.close();
     syncReverseRotaryEncoderIsrMirror();

@@ -280,10 +280,6 @@
   "vigilante parado": "watcher off",
   "reintentando": "retrying",
   "pérdidas $1, reintentos $2": "losses $1, retries $2",
-  "paso $1 de $2, cuadrado": "step $1 of $2, square",
-  "paso $1 de $2, CRT": "step $1 of $2, CRT",
-  "paso $1 de $2, ancho": "step $1 of $2, wide",
-  "paso $1 de $2, llenar": "step $1 of $2, fill",
   "| ancho": "| wide",
   "| ajuste fino": "| fine tune",
   "paso": "step",
@@ -396,6 +392,8 @@
   "Subiendo... 0%": "Uploading... 0%",
   "Actualizado. El aparato se está reiniciando: recarga esta página en unos 20 segundos.": "Updated. The device is restarting: reload this page in about 20 seconds.",
   "La actualización falló o el archivo no era válido. No se ha cambiado nada.": "The update failed or the file was not valid. Nothing has been changed.",
-  "Se ha perdido la conexión. Si la subida había terminado, el aparato puede estar reiniciándose.": "The connection was lost. If the upload had finished, the device may be restarting."
+  "Se ha perdido la conexión. Si la subida había terminado, el aparato puede estar reiniciándose.": "The connection was lost. If the upload had finished, the device may be restarting.",
+  "(entrelazado)": "(interlaced)",
+  "Para una tele 16:9 puesta en modo 4:3.": "For a 16:9 TV set to 4:3 mode."
  }
 }

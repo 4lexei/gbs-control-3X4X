@@ -203,6 +203,12 @@ static void sendStatusBar(float sfr, float ofr)
             guess = !rto->syncTypeCsync ? "Dreamcast VGA" : ((sfr < 49.95f) ? "Dreamcast 288p" : ((sfr < 55.0f) ? "Dreamcast PAL" : (sfr < 59.9f ? "Dreamcast 240p" : "Dreamcast @60Hz")));
         else if (rto->consoleDetected == 0 && !rto->consoleIsMd)
             guess = "";
+        // (after v108h) a Mega Drive or SNES kept through an interlaced game (Sonic 2 for two players): its rate reads as
+        // another console's (59.81 is the PC Engine window), so the bar names the console the detection kept
+        else if (rto->consoleIsMd && strncmp(guess, "Mega Drive", 10) != 0)
+            guess = "Mega Drive (interlaced)";
+        else if (rto->consoleDetected == 1 && !rto->consoleIsMd && strncmp(guess, "SNES", 4) != 0)
+            guess = "SNES (interlaced)";
     }
     char prof[40] = "";
     // v62: PC Engine has a profile of its own (Mega Drive values for now), so the bar names it instead of MD
@@ -227,6 +233,8 @@ static void sendStatusBar(float sfr, float ofr)
     const char *aspect = "";
     if (rto->integer1080Active) {
         mode = (uopt->integer1080 == 4) ? "1080p x5" : "1080p x4";
+        if (md43Able()) // (after v108h) the Mega Drive's 1080p x4 has the two shapes, as 720p x3
+            aspect = tv43Active() ? " | 4:3" : " | 16:9";
     } else if (rto->integer720Active) {
         mode = (uopt->integer720 == 2) ? "720p x5" : (uopt->integer720 == 3) ? "720p x4" : "720p x3";
         // v107f: only x3 has a 4:3 version (integer720 == 1). x4 and x5 are 16:9 modes; they were labelled 4:3 here, so the
@@ -252,7 +260,7 @@ static void sendStatusBar(float sfr, float ofr)
         // v107f: 720p x3 4:3 and x5 PAL have two sizes only (256 and CRT), so they count to 2
         // v107q: and the Mega Drive in 720p x4 (256 and 320 only, his decision)
         const bool two = (rto->presetID == 0x13 && rto->integer720Active && (uopt->integer720 == 1 || uopt->integer720 == 2)) ||
-                         sizeStepsTwoMd();
+                         sizeStepsTwoMd() || tv43Active(); // (after v108h) the Mega Drive's 1080p x4 «4:3»: 256 and 320
         // v107q: and the Mega Drive in PAL 1080p x4 has three (no fill step: its line does not fit stretched to 1920)
         const bool three = !two && sizeStepsThree();
         uint8_t st = two ? ((uopt->sizeStep & 3) ? 1 : 0) : (uopt->sizeStep & 3);
@@ -368,7 +376,10 @@ static bool externalClockGenSyncImpl()
         }
     }
     (void)fixedRate;
-    if (fabsf(ofr - targetRate) < 0.03f) {
+    // (after v108h) his report of 2026-11-17: set to 60.00 Hz, a Mega Drive (59.92) stopped at 59.9772, and 59.94 did
+    // nothing at all, because 0.03 Hz was taken as "on target". The output rate is timed with the CPU clock over three
+    // samples with the odd one dropped, so its error is a few thousandths at most: 0.005 Hz now.
+    if (fabsf(ofr - targetRate) < 0.005f) {
         // already on target (within measurement noise): leave the clock alone, but keep the
         // frequency mapping used by runFrequency() initialized
         FrameSync::initFrequency(ofr, rto->freqExtClockGen);
@@ -450,6 +461,17 @@ void statusBarTick()
     if (smoothed < 10.0f || fabsf(sfr - smoothed) > 0.5f) {
         smoothed = sfr; // first value or mode change
     }
+    // (after v108h) his report of 2026-11-17: Sonic 2 in two-player mode turns the Mega Drive interlaced, and the field
+    // rate drops from 59.92 to 59.81 Hz (half a line more per field). Blended slowly, the rate crossed the PC Engine window
+    // on the way down and on the way back. So when a 15 kHz source changes between progressive and interlaced (odd or
+    // even line count), the new rate is taken at once instead of being blended with the old one.
+    if (rto->videoStandardInput == 1 || rto->videoStandardInput == 2) {
+        static int8_t lastParity = -1;
+        const int8_t parity = (int8_t)(GBS::VPERIOD_IF::read() % 2);
+        if (lastParity >= 0 && parity != lastParity)
+            smoothed = sfr;
+        lastParity = parity;
+    }
     smoothed = 0.3f * sfr + 0.7f * smoothed;
     // v43: SNES / NES detection from the field rate (user measurements: NTSC 60.10 Hz, PAL forced to NTSC 59.55 Hz, PAL 50.007 Hz).
     // Everything else (Mega Drive 59.92, PC Engine / PSX / N64 59.82, ...) uses the default placement.
@@ -478,8 +500,33 @@ void statusBarTick()
             const bool interlaced = ((vpi >= 520 && vpi <= 528) || (vpi >= 620 && vpi <= 628)) && (vpi % 2 == 0);
             if (interlaced) {
                 const bool dc = (smoothed > 49.996f && smoothed < 50.002f) || (smoothed > 59.936f && smoothed < 59.942f);
+                // (after v108h) his report of 2026-11-17 (Sonic 2, two players: vp 524, fr 59.8076; normal play vp 523,
+                // fr 59.9217). An interlaced field carries half a line more, so the rate drops by 262 / 262.5 (60 Hz
+                // family) or 312 / 312.5 (50 Hz family): 59.92 -> 59.81, which sits in the PC Engine window and lost the
+                // Mega Drive's profile. A console that was ALREADY recognised keeps its profile anywhere between its
+                // interlaced rate and its progressive one. Only measured on the NTSC Mega Drive; the other windows are
+                // the same arithmetic on the measured progressive rates.
+                const float r = smoothed;
+                // (after v110b) his PAL fingerprint of Sonic 2 for two players (his Japanese console at 50 Hz): fr 50.2378,
+                // vp 624, against 50.158 in normal play. At 50 Hz the field gets SHORTER (x 312 / 311.5, +0.16 %), not
+                // longer as at 60 Hz, so the 50 Hz windows reach both ways now: 49.70 -> ~49.78 for a real PAL console.
+                const bool keepMd = rto->consoleIsMd &&
+                                    ((r > 59.79f && r < 59.93f) ||   // NTSC 59.92 -> 59.81 (measured)
+                                     (r > 59.23f && r < 59.50f) ||   // PAL at 60 Hz 59.40 (either way, not measured)
+                                     (r > 49.52f && r < 49.88f) ||   // PAL 49.70 -> ~49.78 (from the 50 Hz measurement)
+                                     (r > 50.04f && r < 50.30f));    // NTSC at 50 Hz 50.158 -> 50.238 (measured)
+                const bool keepSnes = !rto->consoleIsMd && rto->consoleDetected == 1 &&
+                                      ((r > 59.96f && r < 60.12f) || // NTSC 60.10 -> 59.98
+                                       (r > 59.38f && r < 59.65f) || // PAL forced to 60 Hz 59.55 (either way)
+                                       (r > 49.91f && r < 50.12f));  // PAL 50.007 (either way, not measured)
                 if (dc) {
                     detected = 3;
+                    mdNow = 0;
+                } else if (keepMd) {
+                    detected = 0;
+                    mdNow = 1;
+                } else if (keepSnes) {
+                    detected = 1;
                     mdNow = 0;
                 } else if ((detected != 0 || mdNow) && !(detected == rto->consoleDetected && mdNow == rto->consoleIsMd)) {
                     detected = 0;
@@ -570,7 +617,11 @@ void externalClockGenRateModeTick()
         lastMode = uopt->outputRateMode;
         settled = false; // new mode: steer (also when going back to "follow")
     }
-    if (uopt->outputRateMode == 0 && settled) {
+    // (after v110c) his report of 2026-11-17: in «follow» with the frame time lock off, the output was steered only after a
+    // preset load or a change of output mode, so when the source changed rate on its own (the 240p suite switched to 480i:
+    // IN 59.8075, OUT 59.8312) nobody corrected it. Now «follow» re-checks every 5 s like the fixed rates, and changes the
+    // clock only when the output is more than 0.005 Hz off. With the frame time lock on, it is the lock that follows.
+    if (uopt->outputRateMode == 0 && settled && uopt->enableFrameTimeLock) {
         return;
     }
     // v68 / v69: with the watcher stopped the stable count sits where it stopped, which used to switch the output rate

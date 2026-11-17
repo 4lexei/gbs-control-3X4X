@@ -1267,7 +1267,7 @@
             <div class="gbs-card">
               <div class="gbs-card__label">Actualizar firmware</div>
               <div class="gbs-card__desc gbs-col__desc">Elige el archivo firmware.bin del proyecto compilado (.pio/build/gbsc/firmware.bin) y pulsa subir. No apagues el aparato hasta que termine.</div>
-              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v108h</b></div>
+              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v111</b></div>
               <label class="gbs-chip gbs-chip--flat gbs-sys__file"><span>elegir archivo</span><small gbs-update-filename>ninguno elegido</small><input type="file" accept=".bin" gbs-update-file /></label>
               <div class="gbs-sys__status" gbs-update-status></div>
               <div class="gbs-sys__bar" gbs-update-bar-wrap hidden><div gbs-update-bar></div></div>

@@ -372,6 +372,17 @@ static void writeProgramArrayInteger1080()
     writeProgramArrayNew(table, false);
 }
 
+// (after v108h) the ADC clock the 1080p x4 / x5 tables load with when the 80 % clock is NOT asked for (the same arithmetic
+// as the two writers here), so the 256 px <-> 320 px switch can change the clock in place instead of loading again
+uint16_t integer1080NormalMd(bool pal)
+{
+    if (pal)
+        return 2230;
+    uint8_t lo = pgm_read_byte(&ntsc_1920x1080[338]);
+    uint8_t hi = pgm_read_byte(&ntsc_1920x1080[339]);
+    return (uint16_t)(((uint32_t)(lo | ((hi & 0x0f) << 8)) * 973 + 500) / 1000);
+}
+
 // [patch 1080p-integer] PAL 1080p (50 Hz) table with a lowered ADC clock. Measured on the stock PAL preset (Mega Drive,
 // 320 px mode): 4.58 columns per pixel (5.73 for 256 px); 4.0 / 5.0 needs PLLAD_MD x0.8734: 2553 -> 2230.
 // v103: EXPERIMENT (uopt->x5Oversample, off by default). The PAL 720p table samples the input at PLLAD_MD 1458; the
@@ -392,7 +403,7 @@ static void writeProgramArray720Pal()
     const uint16_t md = X5_OVERSAMPLE_MD;
     table[338] = md & 0xff;
     table[339] = (table[339] & 0xf0) | ((md >> 8) & 0x0f);
-    SerialM.print(F("[3x4x-v108h] 720p x5 PAL EXPERIMENT: PLLAD_MD raised "));
+    SerialM.print(F("[3x4x-v111] 720p x5 PAL EXPERIMENT: PLLAD_MD raised "));
     SerialM.print(X5_STOCK_MD);
     SerialM.print(F(" -> "));
     SerialM.print(md);
@@ -404,7 +415,8 @@ static void writeProgramArrayInteger1080Pal()
 {
     uint8_t table[432];
     memcpy_P(table, pal_1920x1080, sizeof(table));
-    const uint16_t md = uopt->integer1080Narrow ? 1784 : 2230; // v42: narrow = 80% (round 1, estimate; below the verified 1873)
+    // (after v110) the Mega Drive's narrow PAL clock is 1759 (1784 took the wifi down, 1750 rippled); SNES / PC Engine 1784
+    const uint16_t md = uopt->integer1080Narrow ? (integerIsSnesProfile() ? 1784 : 1759) : 2230; // v42: narrow = 80% (round 1, estimate; below the verified 1873)
     table[338] = md & 0xff;
     table[339] = (table[339] & 0xf0) | ((md >> 8) & 0x0f);
     SerialM.print(F("1080p integer PAL: PLLAD_MD "));
@@ -579,7 +591,7 @@ void applyPresets(uint8_t result)
     if (result == 1 || result == 3 || result == 8 || result == 9 || result == 14) {
         // NTSC input
         if (!ours && (uopt->integer1080 || uopt->integer720 || uopt->integerLow))
-            SerialM.println(F("[3x4x-v108h] not a 15 kHz source: Rama's preset for this resolution, not ours"));
+            SerialM.println(F("[3x4x-v111] not a 15 kHz source: Rama's preset for this resolution, not ours"));
         if (uopt->presetPreference == 0) {
             writeProgramArrayNew(ntsc_240p, false);
             if (uopt->integerLow == 1 && ours) // v62: 960p x4 (the stock table, only the scaling and the windows change)
@@ -1373,7 +1385,7 @@ void doPostPresetLoadSteps()
     // peaking, white balance and, since v72, the ADC black level). Writing the console profile's colour preset over it threw
     // that away, so a slot tuned for one game came back wearing the console's colours. His own slot wins.
     if (rto->isCustomPreset) {
-        SerialM.println(F("[3x4x-v108h] custom preset: its own colours kept, the console colour preset is not applied"));
+        SerialM.println(F("[3x4x-v111] custom preset: its own colours kept, the console colour preset is not applied"));
     } else if (uopt->consoleProfile == 0 && !rto->consoleDetectIsFresh) {
         // v79: auto profile and the detection has not run yet on this source, so it still names whatever was connected
         // before. Applying a colour preset now would write the previous console's picture; the detection routine applies it
@@ -1542,7 +1554,7 @@ void doPostPresetLoadSteps()
             w256 = false; // (after v107z) the Dreamcast's states are all measured from the 320 px placement
         integer1080Apply(w256 ? 256 : 320);
         rto->integer1080Centered = w256 ? 2 : 1;
-        SerialM.print(F("[3x4x-v108h] 1080p x"));
+        SerialM.print(F("[3x4x-v111] 1080p x"));
         SerialM.print(uopt->integer1080 == 4 ? 5 : 4);
         // v88: in PAL the placement comes from uopt->sizeStep, not from this nativeWidth argument, so saying "256 px sources"
         // here described a variable that has nothing to do with what was written. Name the step instead.

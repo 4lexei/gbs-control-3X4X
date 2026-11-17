@@ -68,6 +68,9 @@ struct userOptions
     // v107o: the shape 720p x3 was last used in (0 = 4:3, 1 = 16:9), so its button in the Modo tab opens it the same way
     // again. 16:9 by default, today's normal screen. Saved (#212)
     uint8_t x3Wide;
+    // (after v108h) his request of 2026-11-17: the Mega Drive's 1080p x4 in «4:3», for a 16:9 set switched to 4:3 by its
+    // remote (5.33 columns per pixel, the picture 4/3 wider than the 16:9 one, same height). 0 = 16:9, 1 = 4:3. Saved (#213)
+    uint8_t integer1080Tv43;
 
     uint8_t tolerantSync; // v63: 0 = stock, 1 = hold the preset through short sync dropouts (for sources the watcher keeps dropping). Saved (#30)
     uint8_t integerLow; // v62: low-res integer modes: 0 = off, 1 = 960p x4 (1280x960), 2 = 480p x2 (720x480). Saved (#29)
