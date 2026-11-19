@@ -27,7 +27,7 @@
 
 - [Objetivos del Firmware](#objetivos-del-firmware)
 - [Muy importante](#muy-importante)
-- [Instalación con Visual Studio Code](#instalación-con-visual-studio-code)
+- [Cómo instalar mi firmware por primera vez](#cómo-instalar-mi-firmware-por-primera-vez)
 - [Sobre los modos experimentales](#sobre-los-modos-experimentales)
 - [NOVEDADES DEL FIRMWARE 3X4X](#novedades-del-firmware-3x4x)
 - [Método experimental para sincronías muy difíciles (ODV-II)](#método-experimental-para-sincronías-muy-difíciles-odv-ii)
@@ -37,7 +37,7 @@
 
 ## Objetivos del firmware
 
-El objetivo principal de este firmware es la detección de la consola conectada, cargando su perfil automáticamente sin la intervención del usuario, y procurando configuraciones de escalado vertical y píxel entero sin tocar nada. Esto permite encender, configurar una sola vez y jugar, con la capacidad de recordar tu configuración de cada sistema la próxima vez que vuelva a detectarse. Sencillo como nuestras consolas de los años 90, ¿no? Sin embargo, es un ambicioso propósito quizá imposible de alcanzar al 100% en todos los escenarios.
+**El objetivo principal de este firmware es la detección de la consola conectada, cargando su perfil automáticamente sin la intervención del usuario, y procurando configuraciones de escalado perfecto y píxel entero sin tocar nada.** Esto permite encender, configurar una sola vez y jugar, con la capacidad de recordar tu configuración de cada sistema la próxima vez que vuelva a detectarse. Sencillo como nuestras consolas de los años 90, ¿no? Sin embargo, es un ambicioso propósito quizá imposible de alcanzar al 100% en todos los escenarios.
 
 Actualmente el firmware es capaz de reconocer Mega Drive JAP (60hz), Mega Drive PAL (a 50hz o 60hz), Super Nintendo PAL (a 50hz o 60hz), Dreamcast PAL y PC-Engine (experimental*). Para ampliar el número de sistemas necesitaré colaboración de otros usuarios del GBS-Control. Información más abajo.
 
@@ -59,22 +59,59 @@ No puedo asegurar que este firmware funcione en versiones del GBS-Control distin
 
 El vídeo anterior es antiguo y probablemente desfasado, he aprendido unas cuantas cosas nuevas desde entonces.
 
-Este firmware se instala mediante Visual Sudio Code o desde el apartado Update de la interfaz web (sólo si tu firmware ya estaba preparado para esta función). No puedo detallar mejor en este momento los pasos de instalación, busca en internet cómo instalar un proyecto PlatformIO o pídele ayuda a la IA.
+Este firmware se instala mediante Visual Sudio Code o desde el apartado Update de la interfaz web (sólo si tu firmware ya estaba preparado para esta función).
 
-## Instalación con Visual Studio Code
+## Cómo instalar mi firmware por primera vez
 
-1. **Instala Visual Studio Code** (code.visualstudio.com) y, dentro de él, la extensión **PlatformIO IDE** desde el apartado de extensiones (el icono de los cuadraditos en la barra izquierda). Al terminar, reinicia Visual Studio Code.
-2. **Descarga el proyecto:** en esta página de GitHub, botón verde «Code» › «Download ZIP». Descomprímelo en una carpeta sin caracteres raros en la ruta.
-3. **Abre el proyecto:** en Visual Studio Code, «File» › «Open Folder» y elige la carpeta que contiene el archivo `platformio.ini`. La primera vez, PlatformIO descargará lo que necesita; puede tardar unos minutos.
-4. **Conecta el ESP8266** al ordenador por USB. Si Windows no lo reconoce, instala el driver de su chip USB (normalmente CH340 o CP2102).
-5. **Elige el idioma y sube el firmware:** abre el panel de PlatformIO (el icono de la hormiga en la barra izquierda) y, en «Project Tasks», despliega:
-   - `gbsc` para la interfaz en **español**,
-   - `gbsc_en` para la interfaz en **inglés**,
+1. Instalar Visual Studio Code y PlatformIO
 
-   y pulsa «Upload» dentro de ese entorno. No uses el botón «Upload» general de la barra inferior: sin un entorno elegido, PlatformIO compila y sube todos los del proyecto, uno detrás de otro.
-6. Cuando termine, el GBS-Control se reinicia con el firmware nuevo.
+    Descarga e instala Visual Studio Code desde su página oficial.
 
-**Actualizar desde la interfaz web** (si tu GBS-Control ya tiene un firmware con esta función): en el mismo panel, pulsa «Build» en lugar de «Upload». El archivo queda en `.pio/build/gbsc/firmware.bin` (o `.pio/build/gbsc_en/firmware.bin` para el inglés). Súbelo desde la pestaña Sistema › Actualizar firmware.
+    Abre VS Code y toco el icono de extensiones en la barra lateral izquierda (o pulsa Ctrl + Shift + X en Windows/Linux o Cmd + Shift + X en Mac).
+
+    Escribe PlatformIO IDE en la barra de búsqueda.
+
+    Clic en Install. Paciencia que a veces tarda, tiene que descargar COSITAS. Cuando acabe, cierra y vuelve a abrir Visual Studio.
+
+    Si se instaló bien, ahora en la barra lateral izquierda saldrá un icono que parece una hormiga. ¿Sí? Perfecto.
+
+2. Descarga del firmware
+
+    Entra en la dirección https://github.com/4lexei/gbs-control-3X4X.
+
+    Descarga el ZIP pulsando el botón verde en el que pone "<>CODE".
+
+    Descomprime el ZIP, por ejemplo en el escritorio, para tener la carpeta del firmware bien a mano.
+
+3. Preparativos
+
+    Abre Visual Studio Code.
+
+    Conecta el GBS (bueno, mejor dicho, el ESP8266) por USB al PC. Si no dispones del driver para que tu ordenador lo reconozca, busca "driver ch341" en internet.
+    
+  Si tu sistema detectó correctamente el ESP8266 por USB, en principio el modo AUTO (barra inferior, icono del enchufe), debería bastar, pero tócalo y asegúrate de que aparece en la lista (es poco intuitivo, la aparecerá en la parte superior de la pantalla, justo donde no estás mirando).
+
+    Si el ESP está en esa lista, elige su puerto COM. Si no lo está, instala drivers.
+
+4. ¡Vamos a flashear!    
+
+    En el menú superior selecciona File > Open Folder... (Archivo > Abrir carpeta...).
+
+    Selecciona la carpeta del firmware, la que acabas de descomprimir.
+
+    Clic en Seleccionar carpeta y espera un poco a que Visual Studio realice sus tareas.
+
+    Haz clic en el icono de la hormiga y espera a que aparezca un listado de tareas que incluye Default, gbsc, gbsc_en y gbsc_esp32 (lo siento, por ahora no es compatible con el ESP32, lo solucionaré tan pronto como pueda).
+
+    Haz clic sobre GBSC (firmware en español) o GBSC_EN (firmware en inglés). Suele quedarse pensando, deja que acabe y vuelve a hacer clic en GBSC o GBSC_EN.
+
+    Aparecerá un listado, toca en BUILD para compilar el firmware. Si toda ha ido bien, se construirá sin errores con el mensaje final de SUCCESS.
+
+    Toca en UPLOAD y crucemos los dedos. Si la conexión con el ESP es correcta, lo flasheará en pocos segundos y leerás SUCCESS.
+
+## Instalar futuros firmwares desde la interfaz web
+
+A partir de ahora, si ya estás usando GBS-3X4X, podrás descargar el firmware.bin desde el apartado RELEASES https://github.com/4lexei/gbs-control-3X4X/releases y actualizar desde la interfaz web del GBS, última pestaña, Actualizar firmware.
 
 ## Sobre los modos experimentales
 
@@ -203,5 +240,7 @@ Cuando finalice de medir los sistemas a mi alcance, actualizaré solicitando la 
 
 - **Rama (ramapcsx2/gbs-control):** el firmware original.
 - **Kwakx (gbs-control-nx):** la base de esta rama.
-- **Artemio:** su 240p Test Suite, sin la que este firmware habría sido imposible.
+- **Artemio**: sin la suite 240p este firmware habría sido imposible.
 - **Alexei:** ¡yo mismo! 4lexei.com
+
+  Si el GBS de Rama o Kwakx incorpora un aporte tuyo, dímelo para añadir tu nombre. ¡Muchas gracias a todos!
