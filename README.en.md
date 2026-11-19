@@ -29,7 +29,7 @@ Translation done entirely with AI to speed up the work. Sorry, friends, this tak
 
 - [Firmware goals](#firmware-goals)
 - [Very important](#very-important)
-- [Installing with Visual Studio Code](#installing-with-visual-studio-code)
+- [How to install my firmware for the first time](#how-to-install-my-firmware-for-the-first-time)
 - [About the experimental modes](#about-the-experimental-modes)
 - [WHAT'S NEW IN 3X4X](#whats-new-in-3x4x)
 - [Experimental method for very difficult sync (ODV-II)](#experimental-method-for-very-difficult-sync-odv-ii)
@@ -39,44 +39,81 @@ Translation done entirely with AI to speed up the work. Sorry, friends, this tak
 
 ## Firmware goals
 
-The main goal of this firmware is to detect the connected console and load its profile automatically, without any user intervention, providing vertical scaling and integer pixel settings without touching a thing. This means you can switch on, set it up once and play, and it will remember your settings for each system the next time it is detected. As simple as our 90s consoles, right? Still, it is an ambitious goal that may be impossible to reach 100% in every scenario.
+**The main goal of this firmware is to detect the connected console and load its profile automatically, without any user intervention, providing perfect scaling and integer pixel settings without touching a thing.** This means you can switch on, set it up once and play, and it will remember your settings for each system the next time it is detected. As simple as our 90s consoles, right? Still, it is an ambitious goal that may be impossible to reach 100% in every scenario.
 
 The firmware can currently recognise Mega Drive JAP (60 Hz), Mega Drive PAL (at 50 Hz or 60 Hz), Super Nintendo PAL (at 50 Hz or 60 Hz), Dreamcast PAL and PC-Engine (experimental*). To increase the number of systems I will need help from other GBS-Control users. More information below.
 
 \* My PC-Engine is not modded for RGB; it has only been tested through a very troublesome ODV-II (composite to component transcoder). More information further down.
 
-The second key goal for me was being able to switch between integer and perfect pixels, or play with proportions similar to how we played back then. You know what I mean: the eternal debate over whether a Super Nintendo should be played in the 4:3 format of an old TV, or whether it is better to respect its integer pixels at 8:7. Let everyone choose what they like, right? You just press a button, no maths needed: it is written into the firmware.
+**The second key goal for me was being able to switch between integer and perfect pixels, or play with proportions similar to how we played back then.** You know what I mean: the eternal debate over whether a Super Nintendo should be played in the 4:3 format of an old TV, or whether it is better to respect its integer pixels at 8:7. Let everyone choose what they like, right? You just press a button, no maths needed: it is written into the firmware.
 
-The third goal was playing at 1080p in anamorphic widescreen. Consoles from the so-called 128-bit generation have quite a few games with a widescreen mode, and even the Dreamcast has a handful, like Rayman 2, F355, Metropolis Street Racer... The two video modes I have focused on (more in the future, God willing), the usual 720p and 1080p, now let you play in 4:3 or fill the whole screen.
+**The third goal was playing at 1080p in anamorphic widescreen.** Consoles from the so-called 128-bit generation have quite a few games with a widescreen mode, and even the Dreamcast has a handful, like Rayman 2, F355, Metropolis Street Racer... The two video modes I have focused on (more in the future, God willing), the usual 720p and 1080p, now let you play in 4:3 or fill the whole screen.
 
-The fourth essential goal was being able to import and export custom presets. You can now share all your favourite settings with your friends in just a couple of taps, including the colour profiles for each console.
+**The fourth essential goal was being able to import and export custom presets.** You can now share all your favourite settings with your friends in just a couple of taps, including the colour profiles for each console.
 
-And a fresh new look. Well, and a few more things, but let's not drag this introduction out forever.
+**And a fresh new look.** Well, and a few more things, but let's not drag this introduction out forever.
 
 ## Very important
 
-The 3X4X firmware is a variant of Rama's [gbs-control](https://github.com/ramapcsx2/gbs-control) firmware, but it is based on Kwakx's gbs-control-nx. I found it interesting to start from there because its author focused on improving Wi-Fi stability, one of the best-remembered historical problems of this device. Even so, the only thing that really works for me is moving my wireless network to channel 11. One example is the sampling clock I use in the Dreamcast "1080p 16:9 VGA" mode: it is hell for the Wi-Fi, and if I am not on channel 11 it is completely knocked out.
+The 3X4X firmware is a variant of Rama's [gbs-control](https://github.com/ramapcsx2/gbs-control) firmware, but it is based on Kwakx's [gbs-control-nx](https://github.com/Kwakx). I found it interesting to start from there because its author focused on improving Wi-Fi stability, one of the best-remembered historical problems of this device. Even so, the only thing that really works for me is moving my wireless network to channel 11. One example is the sampling clock I use in the Dreamcast "1080p 16:9 VGA" mode: it is hell for the Wi-Fi, and if I am not on channel 11 it is completely knocked out.
 
 I cannot guarantee this firmware works on GBS-Control builds other than mine: GBS-8200, ESP8266 and Si5351 clock. It makes no difference if you describe your scaler's hardware in detail, or if it is a redesigned Chinese variant on a better PCB than mine. I don't know, because I can't test it: I have what I have. You can see my GBS-Control in my YouTube video about building it: [https://www.youtube.com/watch?v=-gFRIrJZsR8](https://www.youtube.com/watch?v=-gFRIrJZsR8)
 
 That video is old and probably outdated; I have learned quite a few new things since then.
 
-This firmware is installed with Visual Studio Code or from the Update section of the web interface (only if your firmware already supported this feature). I can't detail the installation steps any further right now; search the internet for how to install a PlatformIO project or ask an AI for help.
+This firmware is installed with Visual Studio Code or from the Update section of the web interface (only if your firmware already supported this feature).
 
-## Installing with Visual Studio Code
+## How to install my firmware for the first time
 
-1. **Install Visual Studio Code** (code.visualstudio.com) and, inside it, the **PlatformIO IDE** extension from the extensions panel (the four-squares icon on the left bar). When it finishes, restart Visual Studio Code.
-2. **Download the project:** on this GitHub page, green "Code" button › "Download ZIP". Unzip it into a folder whose path has no unusual characters.
-3. **Open the project:** in Visual Studio Code, "File" › "Open Folder" and choose the folder that contains the `platformio.ini` file. The first time, PlatformIO will download what it needs; this can take a few minutes.
-4. **Connect the ESP8266** to the computer over USB. If Windows doesn't recognise it, install the driver for its USB chip (usually CH340 or CP2102).
-5. **Choose the language and upload the firmware:** open the PlatformIO panel (the ant icon on the left bar) and, under "Project Tasks", expand:
-   - `gbsc` for the interface in **Spanish**,
-   - `gbsc_en` for the interface in **English**,
+  1. Install Visual Studio Code and PlatformIO
 
-   and press "Upload" inside that environment. Don't use the general "Upload" button on the bottom bar: with no environment chosen, PlatformIO builds and uploads every environment in the project, one after another.
-6. When it finishes, the GBS-Control restarts with the new firmware.
+  Download and install Visual Studio Code from its official website.
 
-**Updating from the web interface** (if your GBS-Control already has firmware with this feature): in the same panel, press "Build" instead of "Upload". The file ends up in `.pio/build/gbsc/firmware.bin` (or `.pio/build/gbsc_en/firmware.bin` for English). Upload it from the System tab › Update firmware.
+  Open VS Code and tap the extensions icon on the left sidebar (or press Ctrl + Shift + X on Windows/Linux or Cmd + Shift + X on Mac).
+
+  Type PlatformIO IDE in the search bar.
+
+  Click Install. Be patient because it sometimes takes a while, it has to download STUFF. When it finishes, close and reopen Visual Studio.
+
+  If it installed correctly, an icon that looks like an ant will now appear on the left sidebar. Yes? Perfect.
+
+  2. Download the firmware
+
+  Go to the address https://github.com/4lexei/gbs-control-3X4X.
+  
+  Download the ZIP by clicking the green button that says "<>CODE".
+  
+  Extract the ZIP, for example on the desktop, to have the firmware folder close at hand.
+
+  3. Preparations
+
+  Open Visual Studio Code.
+
+  Connect the GBS (well, better said, the ESP8266) via USB to the PC. If you don't have the driver for your computer to recognize it, search for "ch341 driver" on the internet.
+
+  If your system correctly detected the ESP8266 via USB, in principle the AUTO mode (bottom bar, plug icon) should be enough, but tap it and make sure it appears in the list (it's not very intuitive, it will appear at the top of the screen, right where you aren't looking).
+
+  If the ESP is in that list, choose its COM port. If it isn't, install drivers.
+
+  4. Let's flash it!
+
+  In the top menu select File > Open Folder...
+
+  Select the firmware folder, the one you just extracted.
+
+  Click Select Folder and wait a bit for Visual Studio to do its tasks.
+
+  Click on the ant icon and wait for a list of tasks to appear that includes Default, gbsc, gbsc_en and gbsc_esp32 (sorry, for now it is not compatible with the ESP32, I will fix it as soon as I can).
+
+  Click on GBSC (firmware in Spanish) or GBSC_EN (firmware in English). It usually hangs thinking, let it finish and click on GBSC or GBSC_EN again.
+
+  A list will appear, tap on BUILD to compile the firmware. If everything went well, it will build without errors with the final message SUCCESS.
+
+  Tap on UPLOAD and cross your fingers. If the connection with the ESP is correct, it will flash it in a few seconds and you will read SUCCESS.
+
+## Installing future firmwares from the web interface
+
+From now on, if you are already using GBS-3X4X, you can download the firmware.bin from the RELEASES section https://github.com/4lexei/gbs-control-3X4X/releases and update from the GBS web interface, last tab, Update firmware.
 
 ## About the experimental modes
 
@@ -204,6 +241,8 @@ When I finish measuring the systems within my reach, I'll post an update asking 
 ## Credits
 
 - **Rama (ramapcsx2/gbs-control):** the original firmware.
-- **Kwakx (gbs-control-nx):** the base of this branch.
-- **Artemio:** for his 240p Test Suite, without which this firmware would have been impossible.
+- **Kwakx (gbs-control-nx):** https://github.com/Kwakx the base of this branch.
+- **Artemio:** without his 240p Test Suite this firmware would have been impossible.
 - **Alexei:** me! 4lexei.com
+
+If Rama or Kwakx's GBS incorporates a contribution of yours, let me know so I can add your name. Thank you very much, everyone!
