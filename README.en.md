@@ -3,7 +3,7 @@
 Translation done entirely with AI to speed up the work. Sorry, friends, this takes up too much of my time. Thanks for understanding.
 
 # gbs-control-3X4X
-<b>GBS-Control firmware with automatic console detection, integer pixels and perfect vertical scaling without touching a thing.</b><br>
+<b>GBS-Control firmware with automatic console detection, integer pixels and perfect scaling without touching a thing.</b><br>
   <i>Switch on, set it up once and play.</i>
 </p>
 
