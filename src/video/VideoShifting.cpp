@@ -248,13 +248,13 @@ void moveHS(uint16_t amountToAdd, bool subtracting)
             newVDS_HS_ST -= amountToAdd;
             newVDS_HS_SP -= amountToAdd;
         } else
-            SerialM.println("limit");
+            SerialM.println(F("limit"));
     } else {
         if ((newVDS_HS_SP + amountToAdd) < htotal) {
             newVDS_HS_ST += amountToAdd;
             newVDS_HS_SP += amountToAdd;
         } else
-            SerialM.println("limit");
+            SerialM.println(F("limit"));
     }
 
     GBS::VDS_HS_ST::write(newVDS_HS_ST);
@@ -276,13 +276,13 @@ void moveVS(uint16_t amountToAdd, bool subtracting)
             newVDS_VS_ST -= amountToAdd;
             newVDS_VS_SP -= amountToAdd;
         } else
-            SerialM.println("limit");
+            SerialM.println(F("limit"));
     } else {
         if ((newVDS_VS_SP + amountToAdd) < vtotal) {
             newVDS_VS_ST += amountToAdd;
             newVDS_VS_SP += amountToAdd;
         } else
-            SerialM.println("limit");
+            SerialM.println(F("limit"));
     }
 
     GBS::VDS_VS_ST::write(newVDS_VS_ST);
@@ -324,13 +324,13 @@ void moveCanvasHorizontal(bool right)
                     GBS::IF_LINE_SP::write(GBS::IF_LINE_SP::read() - rstStep);
                 }
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
             }
         } else {
             if (GBS::IF_HBIN_SP::read() < 0x150) {
                 GBS::IF_HBIN_SP::write(GBS::IF_HBIN_SP::read() + step);
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
             }
         }
     } else if (!rto->outModeHdBypass) {

@@ -26,7 +26,7 @@ uint8_t detectAndSwitchToActiveInput()
             currentInput = GBS::ADC_INPUT_SEL::read();
             SerialM.print(F("Activity detected, input: "));
             if (currentInput == 1)
-                SerialM.println("RGB");
+                SerialM.println(F("RGB"));
             else
                 SerialM.println(F("Component"));
 
@@ -206,7 +206,7 @@ uint8_t detectAndSwitchToActiveInput()
                 return 2; //anyway, let later stage deal with it
             }
 
-            SerialM.println(" lost..");
+            SerialM.println(F(" lost.."));
             rto->currentLevelSOG = 2;
             setAndUpdateSogLevel(rto->currentLevelSOG);
         }
@@ -544,16 +544,16 @@ void optimizeSogLevel()
                     }
                 }
                 if (syncGoodCounter >= 49) {
-                    //SerialM.print("OK @SOG "); SerialM.println(rto->currentLevelSOG); printInfo();
+                    //SerialM.print(F("OK @SOG ")); SerialM.println(rto->currentLevelSOG); printInfo();
                     break; // found, exit
                 } else {
-                    //Serial.print(" inner test failed syncGoodCounter: "); Serial.println(syncGoodCounter);
+                    //Serial.print(F(" inner test failed syncGoodCounter: ")); Serial.println(syncGoodCounter);
                 }
             } else { // getVideoMode() == 0
-                     //Serial.print("sog-- syncGoodCounter: "); Serial.println(syncGoodCounter);
+                     //Serial.print(F("sog-- syncGoodCounter: ")); Serial.println(syncGoodCounter);
             }
         } else { // syncGoodCounter < 40
-                 //Serial.print("outer test failed syncGoodCounter: "); Serial.println(syncGoodCounter);
+                 //Serial.print(F("outer test failed syncGoodCounter: ")); Serial.println(syncGoodCounter);
         }
 
         if (rto->currentLevelSOG >= 2) {
@@ -637,13 +637,13 @@ boolean optimizePhaseSP()
 
             prevPrevBadHt = prevBadHt;
             prevBadHt = badHt;
-            //Serial.print(rto->phaseSP); Serial.print(" badHt: "); Serial.println(badHt);
+            //Serial.print(rto->phaseSP); Serial.print(F(" badHt: ")); Serial.println(badHt);
         }
 
         //Serial.println(goodHt);
 
         if (goodHt < 17) {
-            //Serial.println("pxClk unstable");
+            //Serial.println(F("pxClk unstable"));
             return 0;
         }
 
@@ -658,13 +658,13 @@ boolean optimizePhaseSP()
             // shift ADC phase 180 degrees for the following
             if (rto->videoStandardInput >= 5 && rto->videoStandardInput <= 7) {
                 if (rto->osr == 2) {
-                    //Serial.println("shift adc phase");
+                    //Serial.println(F("shift adc phase"));
                     rto->phaseADC += 16;
                     rto->phaseADC &= 0x1f;
                 }
             } else if (rto->videoStandardInput > 0 && rto->videoStandardInput <= 4) {
                 if (rto->osr == 4) {
-                    //Serial.println("shift adc phase");
+                    //Serial.println(F("shift adc phase"));
                     rto->phaseADC += 16;
                     rto->phaseADC &= 0x1f;
                 }
@@ -683,12 +683,12 @@ boolean optimizePhaseSP()
     }
 
     //Serial.println(millis() - startTime);
-    //Serial.print("worstPhaseSP: "); Serial.println(worstPhaseSP);
+    //Serial.print(F("worstPhaseSP: ")); Serial.println(worstPhaseSP);
 
     /*static uint8_t lastLevelSOG = 99;
   if (lastLevelSOG != rto->currentLevelSOG) {
-    SerialM.print("Phase: "); SerialM.print(rto->phaseSP);
-    SerialM.print(" SOG: ");  SerialM.print(rto->currentLevelSOG);
+    SerialM.print(F("Phase: ")); SerialM.print(rto->phaseSP);
+    SerialM.print(F(" SOG: "));  SerialM.print(rto->currentLevelSOG);
     SerialM.println();
   }
   lastLevelSOG = rto->currentLevelSOG;*/

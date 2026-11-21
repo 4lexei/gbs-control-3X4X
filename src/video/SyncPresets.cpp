@@ -117,7 +117,7 @@ void syncPresetsLoad()
     f.close();
     for (uint8_t s = 0; s < SYNC_PRESET_SLOTS; s++) {
         if (slots[s].valid) {
-            SerialM.print(F("[3x4x-v111] sync state saved for "));
+            SerialM.print(F("[3x4x-v122] sync state saved for "));
             SerialM.println(slotName(s));
         }
     }
@@ -152,7 +152,7 @@ void syncPresetCaptureNow()
     p.clampWasSet = rto->clampPositionIsSet ? 1 : 0;
     rto->syncPresetActive = true; // v70: from now on the recovery leaves these values alone
     saveToFile();
-    SerialM.print(F("[3x4x-v111] sync state captured for "));
+    SerialM.print(F("[3x4x-v122] sync state captured for "));
     SerialM.print(slotName(s));
     SerialM.print(F(": SOG level "));
     SerialM.print(p.sogLevel);
@@ -194,7 +194,7 @@ void syncPresetApply(bool quiet)
     const SyncPreset &p = slots[s];
     if (!p.valid) {
         if (!quiet) {
-            SerialM.print(F("[3x4x-v111] no sync state saved for "));
+            SerialM.print(F("[3x4x-v122] no sync state saved for "));
             SerialM.println(slotName(s));
         }
         return;
@@ -207,7 +207,7 @@ void syncPresetApply(bool quiet)
     rto->phaseADC = p.phaseADC;
     setAndUpdateSogLevel(rto->currentLevelSOG); // re-latches SP / ADPLL with the phase above
     rto->phaseIsSet = true;                     // do not search for a phase over the captured one
-    SerialM.print(F("[3x4x-v111] sync state written for "));
+    SerialM.print(F("[3x4x-v122] sync state written for "));
     SerialM.print(slotName(s));
     SerialM.print(F(": SOG level "));
     SerialM.print(p.sogLevel);
@@ -227,7 +227,7 @@ void syncPresetClear()
     memset(&slots[s], 0, sizeof(SyncPreset));
     rto->syncPresetActive = false;
     saveToFile();
-    SerialM.print(F("[3x4x-v111] sync state removed for "));
+    SerialM.print(F("[3x4x-v122] sync state removed for "));
     SerialM.println(slotName(s));
 }
 
@@ -235,7 +235,7 @@ void syncPresetPrintSaved()
 {
     const uint8_t s = activeSlot();
     const SyncPreset &p = slots[s];
-    SerialM.print(F("[3x4x-v111] saved sync state for "));
+    SerialM.print(F("[3x4x-v122] saved sync state for "));
     SerialM.print(slotName(s));
     if (!p.valid) {
         SerialM.println(F(": none"));
@@ -281,5 +281,5 @@ void syncPresetApplyOdvRecipe()
     writeState(14, 16, 256, 9, 9, 51, GBS::SP_H_PROTECT::read(), GBS::SP_NO_COAST_REG::read(), false, false);
     rto->syncPresetActive = true;
     syncFinishSetup();
-    SerialM.println(F("[3x4x-v111] ODV recipe written: SOG level 14, coast 16/256 unfixed, pulse ignore 51. Capture it if the picture comes out right"));
+    SerialM.println(F("[3x4x-v122] ODV recipe written: SOG level 14, coast 16/256 unfixed, pulse ignore 51. Capture it if the picture comes out right"));
 }

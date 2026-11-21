@@ -31,7 +31,7 @@ extern const char *ap_password;
 extern const char *device_hostname_full;
 extern const char *FIRMWARE_VERSION;
 extern WebSocketsServer webSocket;
-extern OLEDMenuManager oledMenu;
+extern OLEDMenuManager *oledMenuPtr; // (after v111e) created in setup() only when a screen answers
 extern OSDManager osdManager;
 unsigned long oledMenuFreezeStartTime;
 unsigned long oledMenuFreezeTimeoutInMS;
@@ -708,37 +708,37 @@ bool firmwareUpdateMenuHandler(OLEDMenuManager *manager, OLEDMenuItem *item, OLE
 
 void initOLEDMenu()
 {
-    OLEDMenuItem *root = oledMenu.rootItem;
+    OLEDMenuItem *root = oledMenuPtr->rootItem;
 
     // OSD Menu
-    oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_OSD), osdMenuHanlder);
+    oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_OSD), osdMenuHanlder);
 
     // Resolutions
-    OLEDMenuItem *resMenu = oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_RESOLUTION));
+    OLEDMenuItem *resMenu = oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_RESOLUTION));
     const char *resolutions[5] = {"1280x960", "1280x1024", "1280x720", "1920x1080", "480/576"};
     uint8_t tags[5] = {MT_1280x960, MT1280x1024, MT1280x720, MT1920x1080, MT_480s576};
     for (int i = 0; i < 5; ++i) {
-        oledMenu.registerItem(resMenu, tags[i], resolutions[i], resolutionMenuHandler);
+        oledMenuPtr->registerItem(resMenu, tags[i], resolutions[i], resolutionMenuHandler);
     }
     // downscale and passthrough
-    oledMenu.registerItem(resMenu, MT_DOWNSCALE, IMAGE_ITEM(OM_DOWNSCALE), resolutionMenuHandler);
-    oledMenu.registerItem(resMenu, MT_BYPASS, IMAGE_ITEM(OM_PASSTHROUGH), resolutionMenuHandler);
+    oledMenuPtr->registerItem(resMenu, MT_DOWNSCALE, IMAGE_ITEM(OM_DOWNSCALE), resolutionMenuHandler);
+    oledMenuPtr->registerItem(resMenu, MT_BYPASS, IMAGE_ITEM(OM_PASSTHROUGH), resolutionMenuHandler);
 
     // Presets
-    oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_PRESET), presetsCreationMenuHandler);
+    oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_PRESET), presetsCreationMenuHandler);
 
     // WiFi
-    oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_WIFI), wifiMenuHandler);
+    oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_WIFI), wifiMenuHandler);
 
     // Current Settings
-    oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_CURRENT), currentSettingHandler);
+    oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_CURRENT), currentSettingHandler);
 
     // System (contains firmware version and update check)
-    oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_SYSTEM), systemMenuHandler);
+    oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_SYSTEM), systemMenuHandler);
 
     // Reset (Misc.)
-    OLEDMenuItem *resetMenu = oledMenu.registerItem(root, MT_NULL, IMAGE_ITEM(OM_RESET_RESTORE));
-    oledMenu.registerItem(resetMenu, MT_RESET_GBS, IMAGE_ITEM(OM_RESET_GBS), resetMenuHandler);
-    oledMenu.registerItem(resetMenu, MT_RESTORE_FACTORY, IMAGE_ITEM(OM_RESTORE_FACTORY), resetMenuHandler);
-    oledMenu.registerItem(resetMenu, MT_RESET_WIFI, IMAGE_ITEM(OM_RESET_WIFI), resetMenuHandler);
+    OLEDMenuItem *resetMenu = oledMenuPtr->registerItem(root, MT_NULL, IMAGE_ITEM(OM_RESET_RESTORE));
+    oledMenuPtr->registerItem(resetMenu, MT_RESET_GBS, IMAGE_ITEM(OM_RESET_GBS), resetMenuHandler);
+    oledMenuPtr->registerItem(resetMenu, MT_RESTORE_FACTORY, IMAGE_ITEM(OM_RESTORE_FACTORY), resetMenuHandler);
+    oledMenuPtr->registerItem(resetMenu, MT_RESET_WIFI, IMAGE_ITEM(OM_RESET_WIFI), resetMenuHandler);
 }

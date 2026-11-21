@@ -1,4 +1,5 @@
 #include "WebServer.h"
+#include "../clock/ClockTools.h" // (after v111b)
 #include "../core/Globals.h"
 #include "../web/SerialMirror.h"
 #include "../config/WiFiConfig.h"
@@ -49,13 +50,13 @@ void startWebserver()
         SerialM.println(WiFi.localIP().toString());
 #ifdef ESP8266
         if (MDNS.begin(device_hostname_partial, WiFi.localIP())) { // MDNS request for gbscontrol.local
-            //Serial.println("MDNS started");
+            //Serial.println(F("MDNS started"));
             MDNS.addService("http", "tcp", 80); // Add service to MDNS-SD
             MDNS.announce();
         }
 #else
         if (MDNS.begin(device_hostname_partial)) { // MDNS request for gbscontrol.local
-            //Serial.println("MDNS started");
+            //Serial.println(F("MDNS started"));
             MDNS.addService("http", "tcp", 80); // Add service to MDNS-SD
             // MDNS.announce(); // Not needed on ESP32
         }
@@ -69,18 +70,18 @@ void startWebserver()
 
 #ifdef ESP8266
     disconnectedEventHandler = WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected &event) {
-        Serial.print("Station disconnected, reason: ");
+        Serial.print(F("Station disconnected, reason: "));
         Serial.println(event.reason);
     });
 #else
     WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
-        Serial.print("Station disconnected, reason: ");
+        Serial.print(F("Station disconnected, reason: "));
         Serial.println(info.wifi_sta_disconnected.reason);
     }, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
 #endif
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        //Serial.println("sending web page");
+        //Serial.println(F("sending web page"));
         if (ESP.getFreeHeap() > 10000) {
             AsyncWebServerResponse *response = request->beginResponse(200, "text/html", webui_html, webui_html_len);
             response->addHeader("Content-Encoding", "gzip");
@@ -91,7 +92,7 @@ void startWebserver()
     server.on("/sc", HTTP_GET, [](AsyncWebServerRequest *request) {
         if (ESP.getFreeHeap() > 10000) {
             int params = request->params();
-            //Serial.print("got serial request params: ");
+            //Serial.print(F("got serial request params: "));
             //Serial.println(params);
             if (params > 0) {
                 const AsyncWebParameter *p = request->getParam(0);
@@ -110,7 +111,7 @@ void startWebserver()
     server.on("/uc", HTTP_GET, [](AsyncWebServerRequest *request) {
         if (ESP.getFreeHeap() > 10000) {
             int params = request->params();
-            //Serial.print("got user request params: ");
+            //Serial.print(F("got user request params: "));
             //Serial.println(params);
             if (params > 0) {
                 const AsyncWebParameter *p = request->getParam(0);
@@ -130,10 +131,30 @@ void startWebserver()
             // without disturbing the letters already in use (the character is only a dispatch key inside the main loop).
             // v107j: 45 is now taken (console profile PC Engine). v107m: 46 / 47 are the wide / fill size steps. v107n: 48..50 the Líneas row, 51 / 52 the vertical memory window. v107o: 53 = 720p x3 in its last shape, 54 = ver huella. (after v107r) 55..57 the three undo buttons (move, edge, scale). (after v107v) 58 / 59 colour export / import; 60..73 the console profiles without measurements; (after v107z) 74 the Dreamcast's 4:3 / 16:9 in 1080p, and 74 is the last: 75 would land on 'a' (code 0). (A code 75 or above would need its own character: 'a'..'z' are codes 0..25.) A new code needs this limit raised AND a mapping in
             // the main loop that does not land on a character another command already uses.
-            if (n.length() >= 1 && n.length() <= 2 && code >= 0 && code <= 76 && imgCommandBuffer.length() < 16) {
+            if (n.length() >= 1 && n.length() <= 2 && code >= 0 && code <= 87 && // (after v120c) 85 / 86 the console's gain, 87 factory memory
+                // (after v111c) 82..84 memory reset, FTL phase -/+
+                // (after v111) 77..80 the register tests of Developer; (after v111b) 81 exact output rate
+                 imgCommandBuffer.length() < 16) {
                 // (after v107z) 75 and up go straight to their command character ('\xa3' and on): '0' + 49 would be 'a'
                 imgCommandBuffer += (code < 26) ? (char)('a' + code) : (code >= 75) ? (char)(0xa3 + (code - 75)) : (char)('0' + (code - 26));
             }
+        }
+        request->send(200);
+    });
+
+    // (after v111b) numbers typed in the web: /set?hz=<1/10000 Hz> (exact output rate), /set?adc=<PLLAD_MD>, /set?si=<Hz>.
+    // Only stored here; the main loop applies them (clockToolsTick), never this callback.
+    server.on("/set", HTTP_GET, [](AsyncWebServerRequest *request) {
+        if (request->params() > 0) {
+            const String k = request->getParam(0)->name();
+            const String v = request->getParam(0)->value();
+            const uint32_t n = (uint32_t)strtoul(v.c_str(), nullptr, 10);
+            if (k == "hz")
+                clockToolsPendingHz = n;
+            else if (k == "adc")
+                clockToolsPendingAdc = (uint16_t)(n > 65535 ? 0 : n);
+            else if (k == "si")
+                clockToolsPendingSi = n;
         }
         request->send(200);
     });
@@ -175,7 +196,7 @@ void startWebserver()
             esp_wifi_set_storage(WIFI_STORAGE_FLASH);
             esp_wifi_set_config(WIFI_IF_STA, &conf);
             
-            SerialM.println("Saved WiFi creds to NVS (ESP32) - Safe Method");
+            SerialM.println(F("Saved WiFi creds to NVS (ESP32) - Safe Method"));
 #else
             // ESP8266 logic
             if (pass.length()) { // p holds password
@@ -238,6 +259,7 @@ void startWebserver()
                 slotParamValue.toCharArray(slotValue, sizeof(slotValue));
                 uopt->presetSlot = (uint8_t)slotValue[0];
                 uopt->presetPreference = OutputCustomized;
+                uopt->outputChosen = 1; // (after v111f)
                 saveUserPrefs();
                 result = true;
             }
@@ -323,7 +345,7 @@ void startWebserver()
         {
             if (param == '0')
             {
-                SerialM.println("Wait...");
+                SerialM.println(F("Wait..."));
                 result = true;
             }
             else
@@ -589,7 +611,7 @@ void startWebserver()
                 SerialM.println(F("on (Line Filter recommended)"));
             } else {
                 disableScanlines();
-                SerialM.println("off");
+                SerialM.println(F("off"));
             }
             saveUserPrefs();
 
@@ -697,23 +719,23 @@ void initUpdateOTA()
         SerialM.println("Start updating " + type);
     });
     ArduinoOTA.onEnd([]() {
-        SerialM.println("\nEnd");
+        SerialM.println(F("\nEnd"));
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        SerialM.printf("Progress: %u%%\r", (progress / (total / 100)));
+        SM_PRINTF("Progress: %u%%\r", (progress / (total / 100)));
     });
     ArduinoOTA.onError([](ota_error_t error) {
-        SerialM.printf("Error[%u]: ", error);
+        SM_PRINTF("Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR)
-            SerialM.println("Auth Failed");
+            SerialM.println(F("Auth Failed"));
         else if (error == OTA_BEGIN_ERROR)
-            SerialM.println("Begin Failed");
+            SerialM.println(F("Begin Failed"));
         else if (error == OTA_CONNECT_ERROR)
-            SerialM.println("Connect Failed");
+            SerialM.println(F("Connect Failed"));
         else if (error == OTA_RECEIVE_ERROR)
-            SerialM.println("Receive Failed");
+            SerialM.println(F("Receive Failed"));
         else if (error == OTA_END_ERROR)
-            SerialM.println("End Failed");
+            SerialM.println(F("End Failed"));
     });
     ArduinoOTA.begin();
     yield();

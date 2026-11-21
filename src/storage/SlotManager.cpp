@@ -45,7 +45,7 @@ const uint8_t *loadPresetFromLittleFS(byte forVideoMode)
 
     SerialM.print(F("loading from preset slot "));
     SerialM.print((char)slot);
-    SerialM.print(": ");
+    SerialM.print(F(": "));
 
     if (forVideoMode == 1) {
         f = LittleFS.open("/preset_ntsc." + String((char)slot), "r");

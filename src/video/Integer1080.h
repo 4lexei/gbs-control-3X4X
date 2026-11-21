@@ -91,6 +91,10 @@ const char *memModeName();
 // v90: the SDRAM clock and phase that will actually be written for the mode on screen (the user's, else the mode's default).
 void memEffective(uint8_t *clock, uint8_t *phase);
 // v107m: the user's own clock / phase byte for the mode and size step on screen (nullptr outside the integer modes)
+// (after v120c) the memory settings are per console now, in /memsetN.txt; "memoria de fábrica" clears the mode's own
+void memSettingsEnsureLoaded();
+void memSettingsSave();
+void memSettingsResetMode();
 uint8_t *memClockOwn();
 // v107n: the "Líneas" row (224 / 240 or 239 / DOLOR)
 bool linesDolorSlot(uint8_t slot);
@@ -105,6 +109,7 @@ void integerProfileRefresh();
 
 // (after v108h) the Mega Drive's 1080p x4 «4:3» (uopt->integer1080Tv43) and the 256 / 320 clock change in place
 bool md43Able();
+bool md43NoWide(); // (after v120c) no «ancho» / «llenar» in any console that has a 4:3
 bool tv43Active();
 bool integer1080ClockLive(bool narrow);
 

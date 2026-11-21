@@ -50,5 +50,13 @@ public:
 
 extern SerialMirror SerialM;
 
+// (after v111d) printf with the format kept in flash: on the ESP8266 a plain string literal takes RAM for good, and RAM is
+// what the web runs out of. Use it for every new log line.
+#ifdef ESP8266
+#define SM_PRINTF(fmt, ...) SerialM.printf_P(PSTR(fmt), ##__VA_ARGS__)
+#else
+#define SM_PRINTF(fmt, ...) SerialM.printf(fmt, ##__VA_ARGS__)
+#endif
+
 #endif // SERIAL_MIRROR_H
 

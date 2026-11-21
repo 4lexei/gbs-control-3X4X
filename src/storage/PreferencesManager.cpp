@@ -39,6 +39,8 @@ void loadDefaultUserOptions()
     uopt->reverseRotaryEncoderForOledMenu =
         REVERSE_ROTARY_ENCODER_FOR_OLED_MENU > 0 ? 1 : 0; // #20 default from build-time macro
     uopt->outputRateMode = 0;                // #21 follow source
+    uopt->outputRateExact = 0;               // #214..#219 (after v111b)
+    uopt->outputChosen = 0;                  // #220 (after v111f) nothing picked yet: the web shows the red notice
     uopt->integer1080 = 0;
     uopt->integer1080Narrow = 0;
     uopt->consoleProfile = 0;
@@ -130,6 +132,13 @@ void saveUserPrefs()
         f.write((uopt->linesMode[i] <= 2 ? uopt->linesMode[i] : 0) + '0'); // #196..#211 v107n: the "Líneas" row, per mode
     f.write((uopt->x3Wide ? 1 : 0) + '0');                // #212 v107o: the shape 720p x3 was last used in
     f.write((uopt->integer1080Tv43 ? 1 : 0) + '0');       // #213 (after v108h) the Mega Drive's 1080p x4 shape (1 = 4:3)
+    { // #214..#219 (after v111b) the exact output rate, six digits, 1/10000 Hz (599400 = 59.94 Hz)
+        uint32_t v = uopt->outputRateExact <= 999999 ? uopt->outputRateExact : 0;
+        char d[7];
+        for (int8_t i = 5; i >= 0; i--) { d[i] = (char)('0' + v % 10); v /= 10; }
+        f.write((const uint8_t *)d, 6);
+    }
+    f.write((uopt->outputChosen ? 1 : 0) + '0'); // #220 (after v111f) an output was picked by hand
 
     f.close();
     syncReverseRotaryEncoderIsrMirror();

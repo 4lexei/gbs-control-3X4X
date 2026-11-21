@@ -13,6 +13,8 @@
 class Si5351mcu;
 extern struct runTimeOptions *rto;
 extern Si5351mcu Si;
+// (after v111c) the frame time lock's target phase in degrees (stock 90, Attrs::syncTargetPhase), changeable from Developer
+extern int16_t g_ftlTargetPhase;
 
 // SerialMirror needs full definition for printf() calls
 // Include it here since it doesn't create circular dependency
@@ -213,11 +215,11 @@ private:
         // allow ~4 negative (inPeriod is < outPeriod) clock cycles jitter
         if ((inPeriod > outPeriod ? inPeriod - outPeriod : outPeriod - inPeriod) <= 4) {
             /*if (inPeriod >= outPeriod) {
-        Serial.print("inPeriod >= out: ");
+        Serial.print(F("inPeriod >= out: "));
         Serial.println(inPeriod - outPeriod);
       }
       else {
-        Serial.print("inPeriod < out: ");
+        Serial.print(F("inPeriod < out: "));
         Serial.println(outPeriod - inPeriod);
       }*/
             bestHtotal = inHtotal;
@@ -251,11 +253,11 @@ public:
     static void reset(uint8_t frameTimeLockMethod)
     {
 #ifdef FS_DEBUG
-        Serial.print("FS reset(), with correction: ");
+        Serial.print(F("FS reset(), with correction: "));
 #endif
         if (syncLastCorrection != 0) {
 #ifdef FS_DEBUG
-            Serial.println("Yes");
+            Serial.println(F("Yes"));
 #endif
             uint16_t vtotal = 0, vsst = 0;
             VRST_SST::read(vtotal, vsst);
@@ -275,7 +277,7 @@ public:
         }
 #ifdef FS_DEBUG
         else {
-            Serial.println("No");
+            Serial.println(F("No"));
         }
 #endif
         fsDebugPrintf("FrameSyncManager::reset(%d)\n", frameTimeLockMethod);
@@ -434,7 +436,7 @@ public:
         if (!vsyncPeriodAndPhase(&period, NULL, &phase))
             return false;
 
-        target = (syncTargetPhase * period) / 360;
+        target = ((int32_t)g_ftlTargetPhase * period) / 360;
 
         if (phase > target)
             correction = 0;
@@ -579,7 +581,7 @@ public:
             GBS::TEST_BUS_SEL::write(0x0);
             if (!ret) {
                 rto->statRetries++;
-                SerialM.printf("runFrequency(): vsyncPeriodAndPhase failed, retrying...\n");
+                SM_PRINTF("runFrequency(): vsyncPeriodAndPhase failed, retrying...\n");
                 continue;
             }
 
@@ -597,7 +599,7 @@ public:
             GBS::TEST_BUS_SEL::write(0x0);
             uint32_t periodInput2 = getPulseTicks();
             if (periodInput2 == 0) {
-                SerialM.printf("runFrequency(): getPulseTicks failed, retrying...\n");
+                SM_PRINTF("runFrequency(): getPulseTicks failed, retrying...\n");
                 continue;
             }
             float fpsInput2 = clock_freq / (float)periodInput2;
@@ -626,7 +628,7 @@ public:
             break;
         }
         if (!success) {
-            SerialM.printf("FrameSyncManager::runFrequency() failed!\n");
+            SM_PRINTF("FrameSyncManager::runFrequency() failed!\n");
             return false;
         }
 
@@ -634,6 +636,10 @@ public:
         // that otherwise causes the output clock to oscillate.
         constexpr float FPS_EMA_ALPHA = 0.15f;
         if (smoothedFpsInput < 47.0f) smoothedFpsInput = fpsInput;
+        // (after v111f) his log of 2026-11-18 (Sonic 2, 240p -> 480i): the input went 59.92 -> 59.81 at once and the
+        // smoothed rate took ~14 readings to follow (59.90, 59.89 ... 59.82), the output chasing it all the way. The
+        // measurement jitter this filter is for is a few thousandths; a jump of 0.05 Hz or more is a new rate: take it.
+        if (fabsf(fpsInput - smoothedFpsInput) > 0.05f) smoothedFpsInput = fpsInput;
         smoothedFpsInput = FPS_EMA_ALPHA * fpsInput + (1.0f - FPS_EMA_ALPHA) * smoothedFpsInput;
 
         // Use smoothed FPS as the base frequency for phase correction.
@@ -641,7 +647,7 @@ public:
         fpsInput = smoothedFpsInput;
 
         // ESP CPU cycles
-        int32_t target = (syncTargetPhase * periodInput) / 360;
+        int32_t target = ((int32_t)g_ftlTargetPhase * periodInput) / 360;
 
         // Latency error (distance behind target), in fractional frames.
         // If latency increases, boost frequency, and vice versa.
@@ -690,13 +696,13 @@ public:
         fsDebugPrintf(
             "periodInput=%d, fpsInput=%f, latency_err_frames=%f from %f, "
             "fpsOutput=%f := %f\n",
-            periodInput, fpsInput, latency_err_frames, (float)syncTargetPhase / 360.f,
+            periodInput, fpsInput, latency_err_frames, (float)g_ftlTargetPhase / 360.f,
             prevFpsOutput, fpsOutput);
 
         const auto freqExtClockGen = (uint32_t)(maybeFreqExt_per_videoFps * fpsOutput);
 
         int32_t freqDelta = (int32_t)freqExtClockGen - (int32_t)rto->freqExtClockGen;
-        SerialM.printf("runFreq: fps=%.2f(%.2f) corr=%+.4f%% clock=%+.1fkHz\n",
+        SM_PRINTF("runFreq: fps=%.2f(%.2f) corr=%+.4f%% clock=%+.1fkHz\n",
             rawFpsInput, smoothedFpsInput, correction * 100.0f, freqDelta / 1000.0f);
 
         setExternalClockGenFrequencySmooth(freqExtClockGen);

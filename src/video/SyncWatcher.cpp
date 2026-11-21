@@ -85,7 +85,7 @@ boolean snapToIntegralFrameRate(void)
 
     SerialM.print(F("Snap to "));
     SerialM.print(target, 1); // precission 1
-    SerialM.println("Hz");
+    SerialM.println(F("Hz"));
 
     // We'll be adjusting the htotal incrementally, so store current and best match.
     uint16_t currentHTotal = GBS::VDS_HSYNC_RST::read();
@@ -211,15 +211,15 @@ void calibrateAdcOffset()
                 if (i == 0) {
                     GBS::ADC_GOFCTRL::write(GBS::ADC_GOFCTRL::read() + 1); // incr. offset
                     readout = GBS::ADC_GOFCTRL::read();
-                    Serial.print(" G: ");
+                    Serial.print(F(" G: "));
                 } else if (i == 1) {
                     GBS::ADC_ROFCTRL::write(GBS::ADC_ROFCTRL::read() + 1);
                     readout = GBS::ADC_ROFCTRL::read();
-                    Serial.print(" R: ");
+                    Serial.print(F(" R: "));
                 } else if (i == 2) {
                     GBS::ADC_BOFCTRL::write(GBS::ADC_BOFCTRL::read() + 1);
                     readout = GBS::ADC_BOFCTRL::read();
-                    Serial.print(" B: ");
+                    Serial.print(F(" B: "));
                 }
                 Serial.print(readout, HEX);
 
@@ -253,7 +253,7 @@ void calibrateAdcOffset()
         if (i == 2) {
             adco->b_off = GBS::ADC_BOFCTRL::read();
         }
-        Serial.println("");
+        Serial.println(F(""));
     }
 
     if (readout >= 0x52) {
@@ -314,7 +314,7 @@ void syncFinishSetup()
             }
             GBS::TEST_BUS_SEL::write(debugRegBackup);
             GBS::PAD_BOUT_EN::write(debugPinBackup);
-            SerialM.println(F("[3x4x-v111] auto gain: one pass while locking"));
+            SerialM.println(F("[3x4x-v122] auto gain: one pass while locking"));
         }
     }
 }
@@ -327,7 +327,7 @@ void syncAutoLockRearm()
     rto->clampPositionIsSet = false;
     rto->continousStableCounter = 0;
     autoLockGraceUntil = millis() + 1200;
-    SerialM.println(F("[3x4x-v111] auto-lock re-armed: coast, phase and clamp let go, counting again from zero"));
+    SerialM.println(F("[3x4x-v122] auto-lock re-armed: coast, phase and clamp let go, counting again from zero"));
 }
 
 // v66: hands-free attempts. While auto-retry is on, a locked state is let go again after a few seconds so the next
@@ -343,7 +343,7 @@ void syncAutoRetryTick()
     autoRetryAt = 0;
     rto->syncWatcherEnabled = true;
     syncAutoLockRearm();
-    SerialM.println(F("[3x4x-v111] auto-retry: next attempt"));
+    SerialM.println(F("[3x4x-v122] auto-retry: next attempt"));
 }
 
 void runSyncWatcher()
@@ -438,7 +438,7 @@ void runSyncWatcher()
                             // okay, source still active so count this one, break back to outer for loop
                             badHsActive++;
                             lastVsyncLock = millis(); // delay this
-                            //Serial.print(badHsActive); Serial.print(" ");
+                            //Serial.print(badHsActive); Serial.print(F(" "));
                             break;
                         }
                     }
@@ -521,11 +521,11 @@ void runSyncWatcher()
                 //rto->printInfos = 0;
                 if ((millis() - lastSyncDrop) > 1500) { // minimum space between runs
                     if (rto->printInfos == false) {
-                        SerialM.print("\n.");
+                        SerialM.print(F("\n."));
                     }
                 } else {
                     if (rto->printInfos == false) {
-                        SerialM.print(".");
+                        SerialM.print(F("."));
                     }
                 }
 
@@ -562,7 +562,7 @@ void runSyncWatcher()
 
         if (rto->noSyncCounter % 27 == 0) {
             // the * check needs to be first (go before auto sog level) to support SD > HDTV detection
-            SerialM.print("*");
+            SerialM.print(F("*"));
             updateSpDynamic(1);
         }
 
@@ -593,7 +593,7 @@ void runSyncWatcher()
 
         if (rto->noSyncCounter % 150 == 0) {
             if (rto->noSyncCounter == 150 || rto->noSyncCounter % 900 == 0) {
-                SerialM.print("\nno signal\n");
+                SerialM.print(F("\nno signal\n"));
                 // check whether discrete VSync is present. if so, need to go to input detect
                 uint8_t extSyncBackup = GBS::SP_EXT_SYNC_SEL::read();
                 GBS::SP_EXT_SYNC_SEL::write(0);
@@ -720,11 +720,11 @@ void runSyncWatcher()
             }
             if (newVideoModeCounter != 0) {
                 // apply new mode
-                SerialM.print(" ");
+                SerialM.print(F(" "));
                 SerialM.print(vidModeReadout);
                 SerialM.println(F(" <stable>"));
-                //Serial.print("Old: "); Serial.print(rto->videoStandardInput);
-                //Serial.print(" New: "); Serial.println(detectedVideoMode);
+                //Serial.print(F("Old: ")); Serial.print(rto->videoStandardInput);
+                //Serial.print(F(" New: ")); Serial.println(detectedVideoMode);
                 rto->videoIsFrozen = false;
 
                 if (GBS::SP_SOG_MODE::read() == 1) {
@@ -738,10 +738,10 @@ void runSyncWatcher()
                     rto->videoStandardInput == 0 ||
                     ((rto->videoStandardInput == 2 || rto->videoStandardInput == 4) && (detectedVideoMode == 1 || detectedVideoMode == 3))) {
                     rto->useHdmiSyncFix = 1;
-                    //SerialM.println("hdmi sync fix: yes");
+                    //SerialM.println(F("hdmi sync fix: yes"));
                 } else {
                     rto->useHdmiSyncFix = 0;
-                    //SerialM.println("hdmi sync fix: no");
+                    //SerialM.println(F("hdmi sync fix: no"));
                 }
 
                 if (!wantPassThroughMode) {
@@ -761,7 +761,7 @@ void runSyncWatcher()
                 preemptiveSogWindowStart = millis();
             } else {
                 unfreezeVideo(); // (whops)
-                SerialM.print(" ");
+                SerialM.print(F(" "));
                 SerialM.print(vidModeReadout);
                 SerialM.println(F(" <not stable>"));
                 printInfo();
@@ -875,7 +875,7 @@ void runSyncWatcher()
                 if (uopt->autoRetrySync) {
                     autoRetryAt = millis() + 3500; // v66: hands-free attempts, so he only has to watch and capture
                 }
-                SerialM.print(F("[3x4x-v111] auto-lock: sync watcher paused at "));
+                SerialM.print(F("[3x4x-v122] auto-lock: sync watcher paused at "));
                 SerialM.print(want);
                 SerialM.println(F(" stable reads (the watcher kept quiet while counting). Press SyncWatcher to try again from a clean state; nothing is detected while it is paused"));
             }
@@ -919,7 +919,7 @@ void runSyncWatcher()
                                 }
                                 enableMotionAdaptDeinterlace();
                                 // (after v107y) his request: say it when the firmware switches it by itself
-                                SerialM.print(F("[3x4x-v111] motion adaptive ON (vp "));
+                                SerialM.print(F("[3x4x-v122] motion adaptive ON (vp "));
                                 SerialM.print(VPERIOD_IF);
                                 SerialM.println(')');
                                 if (timingAdjustDelay == 0) {
@@ -941,7 +941,7 @@ void runSyncWatcher()
                             if (uopt->deintMode == 0 && rto->motionAdaptiveDeinterlaceActive) {
                                 disableMotionAdaptDeinterlace();
                                 // (after v107y) and when it switches it off by itself
-                                SerialM.print(F("[3x4x-v111] motion adaptive OFF (vp "));
+                                SerialM.print(F("[3x4x-v122] motion adaptive OFF (vp "));
                                 SerialM.print(VPERIOD_IF);
                                 SerialM.println(')');
                                 if (timingAdjustDelay == 0) {
@@ -976,7 +976,7 @@ void runSyncWatcher()
                     // timing adjust after a few stable cycles
                     // should arrive here with either odd or even VPERIOD_IF
                     /*if (timingAdjustDelay != 0) {
-            Serial.print(timingAdjustDelay); Serial.print(" ");
+            Serial.print(timingAdjustDelay); Serial.print(F(" "));
           }*/
                     if (timingAdjustDelay != 0) {
                         if ((VPERIOD_IF % 2) == oddEvenWhenArmed) {
@@ -992,7 +992,7 @@ void runSyncWatcher()
                             }
                         }
                         /*else {
-              Serial.println("!!!");
+              Serial.println(F("!!!"));
             }*/
                     }
                 }
@@ -1155,7 +1155,7 @@ void runSyncWatcher()
 
                         float sfr = getSourceFieldRate(0);
                         if (sfr >= 69.0) {
-                            SerialM.println("source >= 70Hz");
+                            SerialM.println(F("source >= 70Hz"));
                             // increase vscale; vscale -= 57 seems to hit magic factor often
                             // 512 + 57 = 569 + 57 = 626 + 57 = 683
                             GBS::VDS_VSCALE::write(GBS::VDS_VSCALE::read() - 57);
@@ -1282,7 +1282,7 @@ void runSyncWatcher()
 
                             float sfr = getSourceFieldRate(0);
                             if (sfr >= 69.0) {
-                                SerialM.println("source >= 70Hz");
+                                SerialM.println(F("source >= 70Hz"));
                                 // increase vscale; vscale -= 57 seems to hit magic factor often
                                 // 512 + 57 = 569 + 57 = 626 + 57 = 683
                                 GBS::VDS_VSCALE::write(GBS::VDS_VSCALE::read() - 57);
@@ -1343,7 +1343,7 @@ void runSyncWatcher()
                 // STATUS_INT_SOG_BAD = 0x0f bit 0, interrupt reg
                 resetModeDetect();
                 stable = 0;
-                SerialM.print("`");
+                SerialM.print(F("`"));
                 delay(10);
                 resetInterruptSogBadBit();
             } else {
@@ -1365,7 +1365,7 @@ void runSyncWatcher()
             RGBHVNoSyncCounter++;
             rto->continousStableCounter = 0;
             if (RGBHVNoSyncCounter % 20 == 0) {
-                SerialM.print("`");
+                SerialM.print(F("`"));
             }
         } else {
             RGBHVNoSyncCounter = 0;
@@ -1385,7 +1385,7 @@ void runSyncWatcher()
             resetSyncProcessor(); // todo: fix MD being stuck in last mode when sync disappears
             //resetModeDetect();
             rto->noSyncCounter = 0;
-            //Serial.println("RGBHV limit no sync");
+            //Serial.println(F("RGBHV limit no sync"));
         }
 
         static unsigned long lastTimeSogAndPllRateCheck = millis();
@@ -1401,7 +1401,7 @@ void runSyncWatcher()
             if (rto->syncTypeCsync == false) {
                 if (GBS::STATUS_INT_SOG_BAD::read()) { // SOG source unstable indicator
                     runsWithSogBadStatus++;
-                    //SerialM.print("test: "); SerialM.println(runsWithSogBadStatus);
+                    //SerialM.print(F("test: ")); SerialM.println(runsWithSogBadStatus);
                     if (runsWithSogBadStatus >= 4) {
                         SerialM.println(F("RGB/HV < > SOG"));
                         rto->syncTypeCsync = true;
@@ -1442,11 +1442,11 @@ void runSyncWatcher()
 
             //short activeChargePumpLevel = GBS::PLLAD_ICP::read();
             //short activeGainBoost = GBS::PLLAD_FS::read();
-            //SerialM.print(" rto->HPLLState: "); SerialM.println(rto->HPLLState);
-            //SerialM.print(" currentPllRate: "); SerialM.println(currentPllRate);
-            //SerialM.print(" CPL: "); SerialM.print(activeChargePumpLevel);
-            //SerialM.print(" Gain: "); SerialM.print(activeGainBoost);
-            //SerialM.print(" KS: "); SerialM.print(GBS::PLLAD_KS::read());
+            //SerialM.print(F(" rto->HPLLState: ")); SerialM.println(rto->HPLLState);
+            //SerialM.print(F(" currentPllRate: ")); SerialM.println(currentPllRate);
+            //SerialM.print(F(" CPL: ")); SerialM.print(activeChargePumpLevel);
+            //SerialM.print(F(" Gain: ")); SerialM.print(activeGainBoost);
+            //SerialM.print(F(" KS: ")); SerialM.print(GBS::PLLAD_KS::read());
 
             oldHPLLState = rto->HPLLState; // do this first, else it can miss events
             if (currentPllRate != 0) {
@@ -1555,7 +1555,7 @@ void runSyncWatcher()
             if (!siLocked) {
                 static uint32_t lastSiLockFailLog = 0;
                 if (millis() - lastSiLockFailLog > 1000) {
-                    SerialM.printf("Si5351 lock lost (st:0x%02X). Re-syncing...\n", st);
+                    SM_PRINTF("Si5351 lock lost (st:0x%02X). Re-syncing...\n", st);
                     lastSiLockFailLog = millis();
                 }
                 // Try to restore sync if we have a stable source

@@ -112,82 +112,82 @@ uint16_t getCsVsStop()
 void printVideoTimings()
 {
     if (rto->presetID < 0x20) {
-        SerialM.println("");
+        SerialM.println(F(""));
         SerialM.print(F("HT / scale   : "));
         SerialM.print(GBS::VDS_HSYNC_RST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_HSCALE::read());
         SerialM.print(F("HS ST/SP     : "));
         SerialM.print(GBS::VDS_HS_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_HS_SP::read());
         SerialM.print(F("HB ST/SP(d)  : "));
         SerialM.print(GBS::VDS_DIS_HB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_DIS_HB_SP::read());
         SerialM.print(F("HB ST/SP     : "));
         SerialM.print(GBS::VDS_HB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_HB_SP::read());
         SerialM.println(F("------"));
         // vertical
         SerialM.print(F("VT / scale   : "));
         SerialM.print(GBS::VDS_VSYNC_RST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_VSCALE::read());
         SerialM.print(F("VS ST/SP     : "));
         SerialM.print(GBS::VDS_VS_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_VS_SP::read());
         SerialM.print(F("VB ST/SP(d)  : "));
         SerialM.print(GBS::VDS_DIS_VB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_DIS_VB_SP::read());
         SerialM.print(F("VB ST/SP     : "));
         SerialM.print(GBS::VDS_VB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::VDS_VB_SP::read());
         // IF V offset
         SerialM.print(F("IF VB ST/SP  : "));
         SerialM.print(GBS::IF_VB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::IF_VB_SP::read());
         // [4x5x-v20] input side horizontal position (changed by the "move" buttons)
         SerialM.print(F("IF HBIN ST/SP: "));
         SerialM.print(GBS::IF_HBIN_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::IF_HBIN_SP::read());
         SerialM.print(F("IF HRST/LINE : "));
         SerialM.print(GBS::IF_HSYNC_RST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::IF_LINE_SP::read());
         SerialM.print(F("IF HB ST2/SP2: "));
         SerialM.print(GBS::IF_HB_ST2::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::IF_HB_SP2::read());
     } else {
-        SerialM.println("");
+        SerialM.println(F(""));
         SerialM.print(F("HD_HSYNC_RST : "));
         SerialM.println(GBS::HD_HSYNC_RST::read());
         SerialM.print(F("HD_INI_ST    : "));
         SerialM.println(GBS::HD_INI_ST::read());
         SerialM.print(F("HS ST/SP     : "));
         SerialM.print(GBS::SP_CS_HS_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::SP_CS_HS_SP::read());
         SerialM.print(F("HB ST/SP     : "));
         SerialM.print(GBS::HD_HB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::HD_HB_SP::read());
         SerialM.println(F("------"));
         // vertical
         SerialM.print(F("VS ST/SP     : "));
         SerialM.print(GBS::HD_VS_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::HD_VS_SP::read());
         SerialM.print(F("VB ST/SP     : "));
         SerialM.print(GBS::HD_VB_ST::read());
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(GBS::HD_VB_SP::read());
     }
 
@@ -290,26 +290,26 @@ void fastGetBestHtotal()
         if (inPeriod > 1) {
             inHz = (double)1000000 / (double)inPeriod;
         }
-        SerialM.print("inPeriod: ");
+        SerialM.print(F("inPeriod: "));
         SerialM.println(inPeriod);
-        SerialM.print("in hz: ");
+        SerialM.print(F("in hz: "));
         SerialM.println(inHz);
     } else {
-        SerialM.println("error");
+        SerialM.println(F("error"));
     }
 
     uint16_t newVtotal = GBS::VDS_VSYNC_RST::read();
     double bestHtotal = 108000000 / ((double)newVtotal * inHz); // 107840000
     double bestHtotal50 = 108000000 / ((double)newVtotal * 50);
     double bestHtotal60 = 108000000 / ((double)newVtotal * 60);
-    SerialM.print("newVtotal: ");
+    SerialM.print(F("newVtotal: "));
     SerialM.println(newVtotal);
     // display clock probably not exact 108mhz
-    SerialM.print("bestHtotal: ");
+    SerialM.print(F("bestHtotal: "));
     SerialM.println(bestHtotal);
-    SerialM.print("bestHtotal50: ");
+    SerialM.print(F("bestHtotal50: "));
     SerialM.println(bestHtotal50);
-    SerialM.print("bestHtotal60: ");
+    SerialM.print(F("bestHtotal60: "));
     SerialM.println(bestHtotal60);
     if (bestHtotal > 800 && bestHtotal < 3200) {
         //applyBestHTotal((uint16_t)bestHtotal);
@@ -321,7 +321,7 @@ boolean runAutoBestHTotal()
 {
     if (!FrameSync::ready() && rto->autoBestHtotalEnabled == true && rto->videoStandardInput > 0 && rto->videoStandardInput < 15) {
 
-        //Serial.println("running");
+        //Serial.println(F("running"));
         //unsigned long startTime = millis();
 
         boolean stableNow = 1;
@@ -329,14 +329,14 @@ boolean runAutoBestHTotal()
         for (uint8_t i = 0; i < 64; i++) {
             if (!getStatus16SpHsStable()) {
                 stableNow = 0;
-                //Serial.println("prevented: !getStatus16SpHsStable");
+                //Serial.println(F("prevented: !getStatus16SpHsStable"));
                 break;
             }
         }
 
         if (stableNow) {
             if (GBS::STATUS_INT_SOG_BAD::read()) {
-                //Serial.println("prevented_2!");
+                //Serial.println(F("prevented_2!"));
                 resetInterruptSogBadBit();
                 delay(40);
                 stableNow = false;
@@ -366,13 +366,13 @@ boolean runAutoBestHTotal()
                     GBS::IF_TEST_SEL::write(ifBusSelBackup);
 
                 if (GBS::STATUS_INT_SOG_BAD::read()) {
-                    //Serial.println("prevented_5 INT_SOG_BAD!");
+                    //Serial.println(F("prevented_5 INT_SOG_BAD!"));
                     stableNow = false;
                 }
                 for (uint8_t i = 0; i < 16; i++) {
                     if (!getStatus16SpHsStable()) {
                         stableNow = 0;
-                        //Serial.println("prevented_5: !getStatus16SpHsStable");
+                        //Serial.println(F("prevented_5: !getStatus16SpHsStable"));
                         break;
                     }
                 }
@@ -392,17 +392,26 @@ boolean runAutoBestHTotal()
                         delay(1);
                         if (!getStatus16SpHsStable()) {
                             stableNow = false;
-                            //Serial.println("prevented_3!");
+                            //Serial.println(F("prevented_3!"));
                             break;
                         }
                     }
                 }
 
                 if (bestHTotal > 0 && stableNow) {
+                    const uint16_t htotalBefore = GBS::VDS_HSYNC_RST::read(); // (after v111b)
                     boolean success = applyBestHTotal(bestHTotal);
                     if (success) {
+                        // (after v111b) his report of 2026-11-17 (240p suite -> 480i, 720p x3, FTL on): IN 59.8076, OUT stuck
+                        // at 59.73. The new best HTotal follows the input (262 -> 262.5 lines a field, 0.19 %), so every
+                        // output frame takes that many clocks more; the frame time lock's "clock per output frame" was
+                        // measured with the old HTotal and is now 0.19 % off, more than the 0.06 % it may correct, so it
+                        // slipped a frame every few seconds forever. A new HTotal now drops that figure, and the output
+                        // rate steering measures it again (externalClockGenRateModeTick).
+                        if (GBS::VDS_HSYNC_RST::read() != htotalBefore)
+                            FrameSync::clearFrequency();
                         rto->syncLockFailIgnore = 16;
-                        //Serial.print("ok, took: ");
+                        //Serial.print(F("ok, took: "));
                         //Serial.println(millis() - startTime);
                         return true; // success
                     }
@@ -426,7 +435,7 @@ boolean runAutoBestHTotal()
             }
             Serial.print(F("bestHtotal retry ("));
             Serial.print(rto->syncLockFailIgnore);
-            Serial.println(")");
+            Serial.println(F(")"));
         }
     } else if (FrameSync::ready()) {
         // FS ready but mode is 0 or 15 or autoBestHtotal is off
@@ -517,7 +526,7 @@ boolean applyBestHTotal(uint16_t bestHTotal)
 
     if (rto->forceRetime == false) {
         if (GBS::STATUS_INT_SOG_BAD::read() == 1) {
-            //Serial.println("prevented in apply");
+            //Serial.println(F("prevented in apply"));
             return false;
         }
     }
@@ -566,19 +575,19 @@ boolean applyBestHTotal(uint16_t bestHTotal)
     // fix over / underflows
     if (h_blank_display_start_position > (bestHTotal - 8) || isLargeDiff) {
         // typically happens when scaling Hz up (60 to 70)
-        //Serial.println("overflow h_blank_display_start_position");
+        //Serial.println(F("overflow h_blank_display_start_position"));
         h_blank_display_start_position = bestHTotal * 0.936f;
     }
     if (h_blank_display_stop_position > bestHTotal || isLargeDiff) {
-        //Serial.println("overflow h_blank_display_stop_position");
+        //Serial.println(F("overflow h_blank_display_stop_position"));
         h_blank_display_stop_position = bestHTotal * 0.178f;
     }
     if ((h_blank_memory_start_position > bestHTotal) || (h_blank_memory_start_position > h_blank_display_start_position) || isLargeDiff) {
-        //Serial.println("overflow h_blank_memory_start_position");
+        //Serial.println(F("overflow h_blank_memory_start_position"));
         h_blank_memory_start_position = h_blank_display_start_position * 0.971f;
     }
     if (h_blank_memory_stop_position > bestHTotal || isLargeDiff) {
-        //Serial.println("overflow h_blank_memory_stop_position");
+        //Serial.println(F("overflow h_blank_memory_stop_position"));
         h_blank_memory_stop_position = h_blank_display_stop_position * 0.64f;
     }
 
@@ -638,7 +647,7 @@ boolean applyBestHTotal(uint16_t bestHTotal)
     if (print) {
         SerialM.print(F("HTotal Adjust: "));
         if (diffHTotal >= 0) {
-            SerialM.print(" "); // formatting to align with negative value readouts
+            SerialM.print(F(" ")); // formatting to align with negative value readouts
         }
         SerialM.print(diffHTotal);
 

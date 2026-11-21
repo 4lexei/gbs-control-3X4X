@@ -114,6 +114,9 @@ void updateWebSocketData()
             if (uopt->outputRateMode == 2) {
                 toSend[6] |= (1 << 1);
             }
+            if (uopt->outputRateMode == 3) { // (after v111b) exact
+                toSend[6] |= (1 << 2);
+            }
 
             // send ping and stats
             if (ESP.getFreeHeap() > 6000) {

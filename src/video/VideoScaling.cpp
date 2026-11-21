@@ -28,7 +28,7 @@ void scaleHorizontal(uint16_t amountToScale, bool subtracting)
         hscale = 256;
         GBS::VDS_HSCALE::write(hscale);
         if (!scaleQuiet)
-            SerialM.println("limit");
+            SerialM.println(F("limit"));
         return;
     }
 
@@ -45,7 +45,7 @@ void scaleHorizontal(uint16_t amountToScale, bool subtracting)
         GBS::VDS_HSCALE::write(hscale);
         GBS::VDS_HSCALE_BYPS::write(1);
         if (!scaleQuiet)
-            SerialM.println("limit");
+            SerialM.println(F("limit"));
         return;
     }
 
@@ -123,7 +123,7 @@ void scaleHorizontal(uint16_t amountToScale, bool subtracting)
     }
 
     if (!scaleQuiet) {
-        SerialM.print("HScale: ");
+        SerialM.print(F("HScale: "));
         SerialM.println(hscale);
     }
     GBS::VDS_HSCALE::write(hscale);
@@ -181,7 +181,7 @@ void scaleVertical(uint16_t amountToScale, bool subtracting)
     }
 
     if (!scaleQuiet) {
-        SerialM.print("VScale: ");
+        SerialM.print(F("VScale: "));
         SerialM.println(vscale);
     }
     GBS::VDS_VSCALE::write(vscale);
