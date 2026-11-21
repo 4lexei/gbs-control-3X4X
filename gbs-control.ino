@@ -77,6 +77,7 @@
 
 // Project headers - src/clock
 #include "src/clock/Si5351Manager.h"
+#include "src/clock/ClockTools.h" // (after v111b)
 
 // Project headers - src/commands
 #include "src/commands/SerialCommandHandler.h"
@@ -158,8 +159,15 @@
 
 void setup()
 {
-    display.init();                 //inits OLED on I2C bus
-    display.flipScreenVertically(); //orientation fix for OLED
+    // (after v111e) his decision: the OLED screen and its menu only when a screen answers at 0x3c. Without one, its memory
+    // (~7 KB) stays free for the web. display.init() used to be what started the I2C bus, so it is started here first.
+    startWire();
+    Wire.beginTransmission(0x3c);
+    oledPresent = (Wire.endTransmission() == 0);
+    if (oledPresent) {
+        display.init();                 //inits OLED on I2C bus
+        display.flipScreenVertically(); //orientation fix for OLED
+    }
 
     pinMode(pin_clk, INPUT_PULLUP);
     pinMode(pin_data, INPUT_PULLUP);
@@ -168,7 +176,10 @@ void setup()
 #if USE_NEW_OLED_MENU
     attachInterrupt(digitalPinToInterrupt(pin_clk), isrRotaryEncoderRotateForNewMenu, FALLING);
     attachInterrupt(digitalPinToInterrupt(pin_switch), isrRotaryEncoderPushForNewMenu, FALLING);
-    initOLEDMenu();
+    if (oledPresent) { // (after v111e)
+        oledMenuPtr = new OLEDMenuManager(&display);
+        initOLEDMenu();
+    }
     initOSD();
 #else
     // ISR TO PIN
@@ -304,12 +315,15 @@ void setup()
     unsigned long initDelay = millis();
     // upped from < 500 to < 1500, allows more time for wifi and GBS startup
     while (millis() - initDelay < 1500) {
-        display.drawXbm(2, 2, gbsicon_width, gbsicon_height, gbsicon_bits);
-        display.display();
+        if (oledPresent) { // (after v111e) no screen: no buffer to draw into
+            display.drawXbm(2, 2, gbsicon_width, gbsicon_height, gbsicon_bits);
+            display.display();
+        }
         handleWiFi(0);
         delay(1);
     }
-    display.clear();
+    if (oledPresent)
+        display.clear();
     // if i2c established and chip running, issue software reset now
     GBS::RESET_CONTROL_0x46::write(0);
     GBS::RESET_CONTROL_0x47::write(0);
@@ -416,7 +430,7 @@ void setup()
 
             if (f.available()) {
                 uopt->outputRateMode = (uint8_t)(f.read() - '0'); // #21
-                if (uopt->outputRateMode > 2)
+                if (uopt->outputRateMode > 3) // (after v111b) 3 = exact
                     uopt->outputRateMode = 0;
             } else {
                 uopt->outputRateMode = 0;
@@ -556,6 +570,24 @@ void setup()
                     const uint8_t v = (uint8_t)(f.read() - '0');
                     uopt->integer1080Tv43 = (v == 1) ? 1 : 0;
                 }
+                // (after v111b) the exact output rate (#214..#219), six digits. Missing in older files: none.
+                {
+                    uint32_t v = 0;
+                    bool ok = true;
+                    for (uint8_t i = 0; i < 6; i++) {
+                        if (!f.available()) { ok = false; break; }
+                        const int c = f.read();
+                        if (c < '0' || c > '9') { ok = false; break; }
+                        v = v * 10 + (uint32_t)(c - '0');
+                    }
+                    uopt->outputRateExact = ok ? v : 0;
+                }
+                // (after v111f) #220. Missing in older files: 1 (that board was set up long ago; no notice for it)
+                uopt->outputChosen = 1;
+                if (f.available())
+                    uopt->outputChosen = (f.read() == '0') ? 0 : 1;
+                // (after v111h) #221 is gone: the console's gain lives in /autogainv1.txt now. A byte left by an older
+                // file is simply not read.
             } else {
                 // A file from before v107m: one value per mode. Where the mode has no measurements per step, that value meant
                 // the same on every step, so it goes to all four. In the three modes measured step by step (PAL 720p x4,
@@ -673,7 +705,7 @@ void setup()
         uint8_t revisionId = GBS::CHIP_ID_REVISION::read();
         SerialM.print(F("Chip ID: "));
         SerialM.print(productId, HEX);
-        SerialM.print(" ");
+        SerialM.print(F(" "));
         SerialM.println(revisionId, HEX);
 
         if (uopt->enableCalibrationADC) {
@@ -741,7 +773,8 @@ void loop()
     // make sure no rotary encoder isr happened while menu was updating.
     // skipping this check will make the rotary encoder not responsive randomly.
     // (oledNav change will be lost if isr happened during menu updating)
-    oledMenu.tick(oledNav);
+    if (oledMenuPtr) // (after v111e) no screen, no menu
+        oledMenuPtr->tick(oledNav);
     if (oldIsrID == rotaryIsrID) {
         oledNav = OLEDMenuNav::IDLE;
     }
@@ -807,15 +840,15 @@ void loop()
                 for (int segment = 0; segment <= 5; segment++) {
                     dumpRegisters(segment);
                 }
-                SerialM.println("};");
+                SerialM.println(F("};"));
             } break;
             case '+':
-                SerialM.println("hor. +");
+                SerialM.println(F("hor. +"));
                 shiftHorizontalRight();
                 //shiftHorizontalRightIF(4);
                 break;
             case '-':
-                SerialM.println("hor. -");
+                SerialM.println(F("hor. -"));
                 shiftHorizontalLeft();
                 //shiftHorizontalLeftIF(4);
                 break;
@@ -859,7 +892,7 @@ void loop()
                         GBS::HD_V_OFFSET::write(GBS::HD_V_OFFSET::read() + 0x24);
                     }
                     //GBS::IF_IN_DREG_BYPS::write(1); // enhances noise from not delaying IF processing properly
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                 } else {
                     //if (uopt->wantPeaking == 0) { GBS::VDS_PK_Y_H_BYPS::write(1); } // 3_4e 0
                     if (rto->presetID == 0x05) {
@@ -881,7 +914,7 @@ void loop()
                     GBS::ADC_UNUSED_60::write(0); // .. and clear
                     GBS::ADC_UNUSED_61::write(0);
                     GBS::ADC_UNUSED_62::write(0);
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 }
                 serialCommand = '@';
                 break;
@@ -912,9 +945,9 @@ void loop()
                 SerialM.print(F("auto deinterlace: "));
                 rto->deinterlaceAutoEnabled = !rto->deinterlaceAutoEnabled;
                 if (rto->deinterlaceAutoEnabled) {
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                 } else {
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 }
                 break;
             case 'p':
@@ -941,11 +974,11 @@ void loop()
                     uopt->enableAutoGain = 1;
                     setAdcGain(AUTO_GAIN_INIT);
                     GBS::DEC_TEST_ENABLE::write(1);
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                 } else {
                     uopt->enableAutoGain = 0;
                     GBS::DEC_TEST_ENABLE::write(0);
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 }
                 saveUserPrefs();
                 break;
@@ -1006,7 +1039,7 @@ void loop()
                 //Wire.endTransmission();
                 //delay(5);
 
-                Serial.println("done");
+                Serial.println(F("done"));
             } break;
             case 'j':
                 //resetPLL();
@@ -1018,7 +1051,7 @@ void loop()
             case 'v':
                 rto->phaseSP += 1;
                 rto->phaseSP &= 0x1f;
-                SerialM.print("SP: ");
+                SerialM.print(F("SP: "));
                 SerialM.println(rto->phaseSP);
                 setAndLatchPhaseSP();
                 //setAndLatchPhaseADC();
@@ -1026,7 +1059,7 @@ void loop()
             case 'b':
                 advancePhase();
                 latchPLLAD();
-                SerialM.print("ADC: ");
+                SerialM.print(F("ADC: "));
                 SerialM.println(rto->phaseADC);
                 break;
             case '#':
@@ -1044,7 +1077,7 @@ void loop()
                 GBS::IF_LINE_SP::write(((pll_divider / 2) + 1) + 0x40);
                 SerialM.print(F("PLL div: "));
                 SerialM.print(pll_divider, HEX);
-                SerialM.print(" ");
+                SerialM.print(F(" "));
                 SerialM.println(pll_divider);
                 // set IF before latching
                 //setIfHblankParameters();
@@ -1105,10 +1138,10 @@ void loop()
                     if (rto->videoIsFrozen) {
                         unfreezeVideo();
                     }
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 } else {
                     rto->syncWatcherEnabled = true;
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                     if (uopt->autoLockSync) {
                         // v65: letting the watcher go is the "try again" of the auto-lock, so it starts from a clean state
                         syncAutoLockRearm();
@@ -1129,10 +1162,10 @@ void loop()
             case 'G':
                 SerialM.print(F("Debug Pings "));
                 if (!rto->enableDebugPings) {
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                     rto->enableDebugPings = 1;
                 } else {
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                     rto->enableDebugPings = 0;
                 }
                 break;
@@ -1144,11 +1177,11 @@ void loop()
                 if (uopt->wantPeaking == 0) {
                     uopt->wantPeaking = 1;
                     GBS::VDS_PK_Y_H_BYPS::write(0);
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                 } else {
                     uopt->wantPeaking = 0;
                     GBS::VDS_PK_Y_H_BYPS::write(1);
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 }
                 saveUserPrefs();
                 break;
@@ -1156,10 +1189,10 @@ void loop()
                 SerialM.print(F("ADC filter "));
                 if (GBS::ADC_FLTR::read() > 0) {
                     GBS::ADC_FLTR::write(0);
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 } else {
                     GBS::ADC_FLTR::write(3);
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                 }
                 break;
             case 'L': {
@@ -1221,7 +1254,7 @@ void loop()
             case '4': {
                 // scale vertical +
                 if (GBS::VDS_VSCALE::read() <= 256) {
-                    SerialM.println("limit");
+                    SerialM.println(F("limit"));
                     break;
                 }
                 scaleVertical(scaleHorizontalFine ? 1 : 2, true);
@@ -1230,7 +1263,7 @@ void loop()
             case '5': {
                 // scale vertical -
                 if (GBS::VDS_VSCALE::read() == 1023) {
-                    SerialM.println("limit");
+                    SerialM.println(F("limit"));
                     break;
                 }
                 scaleVertical(scaleHorizontalFine ? 1 : 2, false);
@@ -1243,7 +1276,7 @@ void loop()
                 moveCanvasHorizontal(false);
                 break;
             case '8':
-                //SerialM.println("invert sync");
+                //SerialM.println(F("invert sync"));
                 invertHS();
                 invertVS();
                 //optimizePhaseSP();
@@ -1262,9 +1295,9 @@ void loop()
                 }
                 delay(4);
                 optimizePhaseSP();
-                SerialM.print("OSR ");
+                SerialM.print(F("OSR "));
                 SerialM.print(rto->osr);
-                SerialM.println("x");
+                SerialM.println(F("x"));
                 rto->phaseIsSet = 0; // do it again in modes applicable
             } break;
             case 'g':
@@ -1273,7 +1306,7 @@ void loop()
                 if (inputStage > 0) {
                     if (inputStage == 1) {
                         segmentCurrent = Serial.parseInt();
-                        SerialM.print("G");
+                        SerialM.print(F("G"));
                         SerialM.print(segmentCurrent);
                     } else if (inputStage == 2) {
                         char szNumbers[3];
@@ -1282,16 +1315,16 @@ void loop()
                         szNumbers[2] = '\0';
                         //char * pEnd;
                         registerCurrent = strtol(szNumbers, NULL, 16);
-                        SerialM.print("R");
+                        SerialM.print(F("R"));
                         SerialM.print(registerCurrent, HEX);
                         if (segmentCurrent <= 5) {
                             writeOneByte(0xF0, segmentCurrent);
                             readFromRegister(registerCurrent, 1, &readout);
-                            SerialM.print(" value: 0x");
+                            SerialM.print(F(" value: 0x"));
                             SerialM.println(readout, HEX);
                         } else {
                             discardSerialRxData();
-                            SerialM.println("abort");
+                            SerialM.println(F("abort"));
                         }
                         inputStage = 0;
                     }
@@ -1303,7 +1336,7 @@ void loop()
                 if (inputStage > 0) {
                     if (inputStage == 1) {
                         segmentCurrent = Serial.parseInt();
-                        SerialM.print("S");
+                        SerialM.print(F("S"));
                         SerialM.print(segmentCurrent);
                     } else if (inputStage == 2) {
                         char szNumbers[3];
@@ -1321,7 +1354,7 @@ void loop()
                         szNumbers[2] = '\0';
                         //char * pEnd;
                         registerCurrent = strtol(szNumbers, NULL, 16);
-                        SerialM.print("R");
+                        SerialM.print(F("R"));
                         SerialM.print(registerCurrent, HEX);
                     } else if (inputStage == 3) {
                         char szNumbers[3];
@@ -1341,16 +1374,16 @@ void loop()
                         if (segmentCurrent <= 5) {
                             writeOneByte(0xF0, segmentCurrent);
                             readFromRegister(registerCurrent, 1, &readout);
-                            SerialM.print(" (was 0x");
+                            SerialM.print(F(" (was 0x"));
                             SerialM.print(readout, HEX);
-                            SerialM.print(")");
+                            SerialM.print(F(")"));
                             writeOneByte(registerCurrent, inputToogleBit);
                             readFromRegister(registerCurrent, 1, &readout);
-                            SerialM.print(" is now: 0x");
+                            SerialM.print(F(" is now: 0x"));
                             SerialM.println(readout, HEX);
                         } else {
                             discardSerialRxData();
-                            SerialM.println("abort");
+                            SerialM.println(F("abort"));
                         }
                         inputStage = 0;
                     }
@@ -1362,7 +1395,7 @@ void loop()
                 if (inputStage > 0) {
                     if (inputStage == 1) {
                         segmentCurrent = Serial.parseInt();
-                        SerialM.print("T");
+                        SerialM.print(F("T"));
                         SerialM.print(segmentCurrent);
                     } else if (inputStage == 2) {
                         char szNumbers[3];
@@ -1380,7 +1413,7 @@ void loop()
                         szNumbers[2] = '\0';
                         //char * pEnd;
                         registerCurrent = strtol(szNumbers, NULL, 16);
-                        SerialM.print("R");
+                        SerialM.print(F("R"));
                         SerialM.print(registerCurrent, HEX);
                     } else if (inputStage == 3) {
                         if (Serial.peek() >= '0' && Serial.peek() <= '7') {
@@ -1388,23 +1421,23 @@ void loop()
                         } else {
                             inputToogleBit = 255; // will get discarded next step
                         }
-                        SerialM.print(" Bit: ");
+                        SerialM.print(F(" Bit: "));
                         SerialM.print(inputToogleBit);
                         inputStage = 0;
                         if ((segmentCurrent <= 5) && (inputToogleBit <= 7)) {
                             writeOneByte(0xF0, segmentCurrent);
                             readFromRegister(registerCurrent, 1, &readout);
-                            SerialM.print(" (was 0x");
+                            SerialM.print(F(" (was 0x"));
                             SerialM.print(readout, HEX);
-                            SerialM.print(")");
+                            SerialM.print(F(")"));
                             writeOneByte(registerCurrent, readout ^ (1 << inputToogleBit));
                             readFromRegister(registerCurrent, 1, &readout);
-                            SerialM.print(" is now: 0x");
+                            SerialM.print(F(" is now: 0x"));
                             SerialM.println(readout, HEX);
                         } else {
                             discardSerialRxData();
                             inputToogleBit = registerCurrent = 0;
-                            SerialM.println("abort");
+                            SerialM.println(F("abort"));
                         }
                     }
                 }
@@ -1414,12 +1447,12 @@ void loop()
                     writeOneByte(0xF0, segmentCurrent);
                     readFromRegister(registerCurrent, 1, &readout);
                     writeOneByte(registerCurrent, readout - 1); // also allow wrapping
-                    Serial.print("S");
+                    Serial.print(F("S"));
                     Serial.print(segmentCurrent);
-                    Serial.print("_");
+                    Serial.print(F("_"));
                     Serial.print(registerCurrent, HEX);
                     readFromRegister(registerCurrent, 1, &readout);
-                    Serial.print(" : ");
+                    Serial.print(F(" : "));
                     Serial.println(readout, HEX);
                 }
             } break;
@@ -1428,12 +1461,12 @@ void loop()
                     writeOneByte(0xF0, segmentCurrent);
                     readFromRegister(registerCurrent, 1, &readout);
                     writeOneByte(registerCurrent, readout + 1);
-                    Serial.print("S");
+                    Serial.print(F("S"));
                     Serial.print(segmentCurrent);
-                    Serial.print("_");
+                    Serial.print(F("_"));
                     Serial.print(registerCurrent, HEX);
                     readFromRegister(registerCurrent, 1, &readout);
-                    Serial.print(" : ");
+                    Serial.print(F(" : "));
                     Serial.println(readout, HEX);
                 }
             } break;
@@ -1473,9 +1506,9 @@ void loop()
 
                 value = Serial.parseInt();
                 if (value < 4096) {
-                    SerialM.print("set ");
+                    SerialM.print(F("set "));
                     SerialM.print(what);
-                    SerialM.print(" ");
+                    SerialM.print(F(" "));
                     SerialM.println(value);
                     if (what.equals("ht")) {
                         //set_htotal(value);
@@ -1528,19 +1561,19 @@ void loop()
                         setCsVsStop(value);
                     }
                 } else {
-                    SerialM.println("abort");
+                    SerialM.println(F("abort"));
                 }
             } break;
             case 'x': {
                 uint16_t if_hblank_scale_stop = GBS::IF_HBIN_SP::read();
                 GBS::IF_HBIN_SP::write(if_hblank_scale_stop + 1);
-                SerialM.print("1_26: ");
+                SerialM.print(F("1_26: "));
                 SerialM.println((if_hblank_scale_stop + 1), HEX);
             } break;
             case 'X': {
                 uint16_t if_hblank_scale_stop = GBS::IF_HBIN_SP::read();
                 GBS::IF_HBIN_SP::write(if_hblank_scale_stop - 1);
-                SerialM.print("1_26: ");
+                SerialM.print(F("1_26: "));
                 SerialM.println((if_hblank_scale_stop - 1), HEX);
             } break;
             case '(': {
@@ -1556,10 +1589,10 @@ void loop()
                 uopt->wantStepResponse = !uopt->wantStepResponse;
                 if (uopt->wantStepResponse) {
                     GBS::VDS_UV_STEP_BYPS::write(0);
-                    SerialM.println("on");
+                    SerialM.println(F("on"));
                 } else {
                     GBS::VDS_UV_STEP_BYPS::write(1);
-                    SerialM.println("off");
+                    SerialM.println(F("off"));
                 }
                 saveUserPrefs();
             } break;
@@ -1621,6 +1654,7 @@ void loop()
         handleWiFi(1);
     }
 
+    clockToolsTick(); // (after v111b) exact Hz and the clocks typed in the web
     if (imgCommandBuffer.length() > 0) { // v54
         const char c = imgCommandBuffer.charAt(0);
         imgCommandBuffer.remove(0, 1);
@@ -1858,7 +1892,7 @@ void loop()
                         
                         static uint32_t lastSyncLog = 0;
                         if (!siLocked && (millis() - lastSyncLog > 1000)) {
-                            SerialM.printf("Si5351 not locked (st:0x%02X), continuing with external clock.\n", st);
+                            SM_PRINTF("Si5351 not locked (st:0x%02X), continuing with external clock.\n", st);
                             lastSyncLog = millis();
                         }
 
@@ -1963,7 +1997,7 @@ void loop()
         if (rto->enableDebugPings && millis() - pingLastTime > 1000) {
             // regular interval pings
             if (pinger.Ping(WiFi.gatewayIP(), 1, 750) == false) {
-                Serial.println("Error during last ping command.");
+                Serial.println(F("Error during last ping command."));
             }
             pingLastTime = millis();
         }
@@ -1978,16 +2012,16 @@ void loop()
 //void webSocketEvent(uint8_t num, uint8_t type, uint8_t * payload, size_t length) {
 //  switch (type) {
 //  case WStype_DISCONNECTED:
-//    //Serial.print("WS: #"); Serial.print(num); Serial.print(" disconnected,");
-//    //Serial.print(" remaining: "); Serial.println(webSocket.connectedClients());
+//    //Serial.print(F("WS: #")); Serial.print(num); Serial.print(F(" disconnected,"));
+//    //Serial.print(F(" remaining: ")); Serial.println(webSocket.connectedClients());
 //  break;
 //  case WStype_CONNECTED:
-//    //Serial.print("WS: #"); Serial.print(num); Serial.print(" connected, ");
-//    //Serial.print(" total: "); Serial.println(webSocket.connectedClients());
+//    //Serial.print(F("WS: #")); Serial.print(num); Serial.print(F(" connected, "));
+//    //Serial.print(F(" total: ")); Serial.println(webSocket.connectedClients());
 //    updateWebSocketData();
 //  break;
 //  case WStype_PONG:
-//    //Serial.print("p");
+//    //Serial.print(F("p"));
 //    updateWebSocketData();
 //  break;
 //  }
