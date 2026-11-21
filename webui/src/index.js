@@ -151,6 +151,9 @@ const GBSControl = {
     wsTimeout: 0,
 };
 /** websocket services */
+// (after v111c) the last data line received (the firmware leaves it out while it does not change) and the free memory
+let lastDataLine = "";
+let lastFreeHeap = 0;
 const checkWebSocketServer = () => {
     if (!GBSControl.isWsActive) {
         if (GBSControl.ws) {
@@ -221,7 +224,16 @@ const createWebSocket = () => {
         if (messageDataAt0 === "\x1e") {
             const bar = document.getElementById("gbsStatusBar");
             if (bar) {
-                const raw = message.data.substring(1);
+                let raw = message.data.substring(1);
+                // (after v111c) the firmware sends the data line ("v ...") only when it changed: keep the last one
+                const dataLine = /^v .*$/m.exec(raw);
+                if (dataLine)
+                    lastDataLine = dataLine[0];
+                else if (lastDataLine)
+                    raw = `${raw.replace(/\n$/, "")}\n${lastDataLine}`;
+                const fh = /^mem .* fh (\d+)/m.exec(raw);
+                if (fh)
+                    lastFreeHeap = parseInt(fh[1], 10);
                 markActiveModes(raw); // v107e: the old buttons read the English text, before it is translated for the screen
                 updateWorkScreen(raw);
             }
@@ -336,7 +348,10 @@ const createWebSocket = () => {
                             toggleMethod(button, (optionByte2 & 0x10) == 0x10);
                             break;
                         case "outputRateFollow":
-                            toggleMethod(button, (optionByte3 & 0x03) == 0);
+                            toggleMethod(button, (optionByte3 & 0x07) == 0); // (after v111b) bit 2 = exact
+                            break;
+                        case "outputRateExact":
+                            toggleMethod(button, (optionByte3 & 0x04) == 0x04);
                             break;
                         case "outputRate5994":
                             toggleMethod(button, (optionByte3 & 0x01) == 0x01);
@@ -1122,7 +1137,9 @@ const paintLines = (raw, s) => {
 };
 const WORK_WIDTH_SNESCRT = "Proporción con la que jugábamos a SNES en tele de tubo. Píxel horizontal no entero.";
 const WORK_WIDTH_MD256 = "Píxel cuadrado en juegos de 256px, probablemente en MD te interese más el modo 320px.";
-const WORK_WIDTH_PCE256 = "Píxel perfecto en juegos 256px de PCE.";
+// (after v121) his decision of 2026-11-21: the 256 px button is pixel perfect, but that is not the shape anyone
+// played the PC Engine in, nor the one its art was drawn for. Shown in every mode, 4:3 and 16:9 alike.
+const WORK_WIDTH_PCE256 = "Píxel perfecto en juegos 256px de PCE. Ojo: píxel perfecto no significa proporción ideal. Nadie jugó así en la época y supongo que ni se tuvo en cuenta al diseñar el arte.";
 const WORK_WIDTH_PCECRT = "Proporción con la que jugábamos a PCE en tele de tubo. Píxel horizontal no entero.";
 const WORK_WIDTH_MD320 = "Píxel perfecto en juegos 320px de MD, mismas proporciones que en tele de tubo.";
 // the width, by size step: 0 square (256 px), 1 CRT (320 px), 2 wide, 3 fill
@@ -1189,6 +1206,55 @@ const CONSOLE_DESC = "Elige el sistema que vas a usar para que se muestre lo mej
 const CONSOLE_DESC_EMPTY = "Perfil sin mediciones, de momento sólo guarda el color, filtros, bordes y estados del último uso. Si sabes calcular el píxel perfecto para este sistema, ponte en contacto con Alexei. Facilitar tus mediciones y la huella de tu sistema, ayudará a incluirlo en el próximo firmware.";
 // (after v110b) his request: the bar no longer says "paso 1 de 3": it names the width the user chose, with the same
 // words as its button (the Mega Drive's second size is its 320 px, everybody else's is CRT)
+// (after v111b) the typed numbers: exact output rate (Avanzado) and the two clocks (Developer). Sent on /set; the
+// firmware applies them from its main loop and the data line shows the result.
+const clockNow = { adc: 0, si: 0 };
+const clockNumber = (id) => {
+    const el = document.getElementById(id);
+    if (!el)
+        return NaN;
+    return parseFloat(el.value.replace(",", ".").trim());
+};
+document.addEventListener("click", (ev) => {
+    const t = ev.target;
+    const b = t && t.closest ? t.closest("[data-clk]") : null;
+    if (!b)
+        return;
+    const k = b.getAttribute("data-clk");
+    let q = "";
+    if (k === "hz") {
+        const v = clockNumber("hzExactIn");
+        if (v >= 40 && v <= 90)
+            q = `hz=${Math.round(v * 10000)}`;
+    }
+    else if (k === "adc") {
+        const v = clockNumber("adcIn");
+        if (v >= 1000 && v <= 4095)
+            q = `adc=${Math.round(v)}`;
+    }
+    else if (k === "adc-" || k === "adc+") {
+        if (clockNow.adc)
+            q = `adc=${clockNow.adc + (k === "adc+" ? 1 : -1)}`;
+    }
+    else if (k === "si") {
+        const v = clockNumber("siIn");
+        if (v >= 20 && v <= 200)
+            q = `si=${Math.round(v * 1e6)}`;
+    }
+    else if (k === "si-" || k === "si+") {
+        if (clockNow.si)
+            q = `si=${clockNow.si + (k === "si+" ? 1000 : -1000)}`;
+    }
+    if (q)
+        fetch(`/set?${q}&${+new Date()}`);
+});
+// (after v111) the registers of the Developer tests, in the firmware's order (src/video/RegTest.cpp)
+const REGTEST_NAMES = [
+    "MADPT_STILL_NOISE_EST_EN", "MADPT_MI_1BIT_BYPS", "MADPT_MI_1BIT_FRAME2_EN", "MADPT_MI_1BIT_DLY",
+    "MADPT_VT_FILTER_CNTRL", "MADPT_HTAP_BYPS", "MADPT_BIT_STILL_EN", "MADPT_VTAP2_BYPS", "MADPT_VTAP2_ROUND_SEL",
+    "MADPT_EN_NOUT_FOR_STILL", "MADPT_EN_NOUT_FOR_LESS_STILL", "MADPT_DD0_SEL", "MADPT_NRD_VIIR_PD_BYPS",
+    "MADPT_UVDLY_PD_BYPS", "MADPT_CMP_EN", "MADPT_EN_STILL_FOR_NRD", "VDS_HALF_EN",
+];
 const STEP_LABEL = { square: "256 px", wide: "ancho", fill: "llenar" };
 const translateStatus = (text) => text
     .replace(/^detected not yet/m, "consola sin detectar")
@@ -1203,7 +1269,7 @@ const translateStatus = (text) => text
     .replace(/losses (\d+) retries (\d+)/g, "pérdidas $1, reintentos $2")
     .replace(/step \d\/\d (square|CRT|wide|fill)/g, (all, name) => name === "CRT" ? (/profile (auto )?MD\b/.test(text) ? "320 px" : "CRT") : STEP_LABEL[name] || name)
     .replace(/\| wide$/m, "| ancho")
-    .replace(/\| fine$/m, "| ajuste fino")
+    .replace(/ \| fine$/m, "") // (after v111f) his rule: the fine-step switch is not shown in the bar (the web still reads it)
     // (after v108e) the Dreamcast in 480i / 576i / VGA: no multiplier on its modes (2 and 1.5 lines), as on its buttons
     .replace(/^(720p) x3( \| [^\n]*\| dc (?:480i|576i|vga))/m, "$1$2")
     .replace(/^(1080p) x4( \| [^\n]*\| dc (?:480i|576i|vga))/m, "$1$2");
@@ -1346,9 +1412,20 @@ const updateWorkScreen = (raw) => {
         paintLines("", s);
         title.textContent = "Presets disponibles";
         aspect.setAttribute("hidden", "");
-        desc.textContent = "Elige un modo de salida";
+        // (after v111) his text and his colour: a red notice while no 3X4X mode is on (after a reset the board starts on
+        // Rama's 1280x960, and the grey line went unnoticed)
+        // (after v111f) his rule: once an output was picked by hand (Rama's presets too), no red notice
+        if (/\boc=1\b/.test(raw)) {
+            desc.textContent = "Elige un modo de salida abajo.";
+            desc.classList.remove("gbs-card__desc--warn");
+        }
+        else {
+            desc.textContent = "Elige un modo de salida, estás viendo un preset genérico.";
+            desc.classList.add("gbs-card__desc--warn");
+        }
     }
     else {
+        desc.classList.remove("gbs-card__desc--warn");
         title.textContent =
             dcNow >= 3 && dcNow <= 5 && s.mode === "1080p x4" ? "1080p" : dcNow >= 3 && dcNow <= 5 && s.mode === "720p x3" ? "720p" : s.mode;
         // (after v107z) the Dreamcast in 480i: its 1080p has the two shapes too
@@ -1420,7 +1497,7 @@ const updateWorkScreen = (raw) => {
         .map((n) => `<div class="gbs-note"><span class="gbs-note__ico">&#9650;</span><span>${n}</span></div>`)
         .join("");
     // v107j: the memory buttons say what the memory is set to, read from the fourth line of the status bar
-    const mem = /^mem (\d+) (\d+)(?: sl (\d+))?$/m.exec(raw);
+    const mem = /^mem (\d+) (\d+)(?: sl (\d+))?(?: fh \d+)?$/m.exec(raw); // (after v111c) "fh" = free memory
     const memClock = document.getElementById("memClock");
     const memPhase = document.getElementById("memPhase");
     if (memClock)
@@ -1429,6 +1506,44 @@ const updateWorkScreen = (raw) => {
         memPhase.textContent = mem ? `${mem[2]} de 15` : "—";
     // v107j: every other picture control, from the fifth line ("v pk=1 st=1 ...")
     paintPictureValues(raw);
+    // (after v111b) exact output rate and the two clocks: " hzx=… orm=… adc=… si=…" of the data line
+    const hzx = /\bhzx=(\d+)/.exec(raw);
+    const adcM = /\badc=(\d+)/.exec(raw);
+    const siM = /\bsi=(\d+)/.exec(raw);
+    const hzNow = document.getElementById("hzExactNow");
+    if (hzNow && hzx)
+        hzNow.textContent = hzx[1] === "0" ? "sin cifra" : `${(parseInt(hzx[1], 10) / 10000).toFixed(4).replace(".", ",")} Hz`;
+    const adcNow = document.getElementById("adcNow");
+    if (adcNow && adcM)
+        adcNow.textContent = adcM[1];
+    const siNow = document.getElementById("siNow");
+    if (siNow && siM)
+        siNow.textContent = siM[1] === "0" ? "sin Si5351" : `${(parseInt(siM[1], 10) / 1e6).toFixed(6).replace(".", ",")} MHz`;
+    // (after v111h) the gain saved for this console: 0 = none, anything else is the locked value
+    const agp = /\bagp=(\d+)/.exec(raw);
+    if (agp) {
+        const v = parseInt(agp[1], 10);
+        const agNow = document.getElementById("agSavedNow");
+        if (agNow)
+            agNow.textContent = v === 0 ? "sin guardar" : `0x${v.toString(16)} · bloqueada`;
+        const agForget = document.getElementById("agForgetBtn");
+        if (agForget)
+            v === 0 ? agForget.setAttribute("disabled", "") : agForget.removeAttribute("disabled");
+    }
+    const ftlp = /\bftlp=(-?\d+)/.exec(raw);
+    const ftlNow = document.getElementById("ftlPhaseNow");
+    if (ftlNow && ftlp)
+        ftlNow.textContent = `${ftlp[1]}°`;
+    clockNow.adc = adcM ? parseInt(adcM[1], 10) : 0;
+    clockNow.si = siM ? parseInt(siM[1], 10) : 0;
+    // (after v111) Developer, register tests: " rt=index:value:before:touched" of the data line
+    const rtEl = document.getElementById("regTestState");
+    const rt = /\brt=(\d+):(\d+):(\d+):(\d+)/.exec(raw);
+    if (rtEl && rt) {
+        const name = REGTEST_NAMES[parseInt(rt[1], 10)] || "?";
+        const changed = rt[2] !== rt[3] ? ` (antes ${rt[3]})` : "";
+        rtEl.textContent = `${parseInt(rt[1], 10) + 1}/${REGTEST_NAMES.length} ${name} = ${rt[2]}${changed} · tocados: ${rt[4]}`;
+    }
     // v107j: the scanline intensity, on the same data line
     const slVal = document.getElementById("slVal");
     if (slVal)
@@ -1515,7 +1630,11 @@ const updateWorkScreen = (raw) => {
         // v107q: three sizes (the Mega Drive in PAL 1080p x4, "step n/3"): no llenar
         // (after v108h) his decision of 2026-11-17: the Mega Drive in NTSC 720p x5 (no size steps, so the old llenar button
         // stood) already fills the screen at 1280 columns: no llenar there either
-        const x5NoFill = n === 3 && oldFill && (s.mode === "720p x5" || s.key === "1080p x4 4:3"); // (after v108h) nor in its 1080p x4 «4:3»
+        // (after v111f) his decision: the Mega Drive's 1080p x4 has no «ancho» / «llenar» in 16:9 either (the 4:3 button gives it)
+        // (after v120c) his decision of 2026-11-21: the PC Engine's 1080p x4 the same, now that it has its own 4:3
+        // (after v121) his report: 720p x4 still showed «llenar». The firmware already cycled two states there, the button
+        // was just still being drawn. So it is listed once and for all: NO «llenar» on the PC Engine, in any mode.
+        const x5NoFill = n === 3 && oldFill && (s.pce || s.mode === "720p x5" || s.key === "1080p x4 4:3" || (s.mode === "1080p x4" && s.md && !!s.aspect));
         const hide = (n >= 2 && twoSizes) || (n === 2 && oldFill) || (n === 3 && s.steps === 3) || x5NoFill;
         hide ? c.setAttribute("hidden", "") : c.removeAttribute("hidden");
         const st = twoSizes ? Math.min(s.step, 1) : s.steps === 3 ? Math.min(s.step, 2) : s.step;
@@ -1992,9 +2111,10 @@ const buildDiagnosticsText = () => {
     const log = GBSControl.ui.terminal.value;
     const tail = log.length > 6000 ? log.substring(log.length - 6000) : log;
     return [
-        "GBS-Control diagnostics (web UI 3x4x-v111)",
+        "GBS-Control diagnostics (web UI 3x4x-v122)",
         new Date().toISOString(),
         "Status: " + (statusBar ? statusBar.textContent : "n/a"),
+        "Free heap: " + (lastFreeHeap ? `${lastFreeHeap} bytes` : "n/a"), // (after v111c)
         "----- log (video timings first requested) -----",
         tail,
     ].join("\n");
@@ -2132,7 +2252,7 @@ const exportProfile = () => {
         .then((files) => {
         const profile = {
             gbsProfile: 1,
-            firmware: "3x4x-v111",
+            firmware: "3x4x-v122",
             name: meta.name,
             meta: {
                 presetID: meta.presetID,
@@ -2519,7 +2639,7 @@ const activeProfileName = () => {
 // (after v108f) «valores de fábrica»: everything the user did goes (colours and filters of each console, sync states,
 // edges, last modes, preferences). Then a second question for the personal presets, with its own buttons.
 const factoryReset = () => {
-    gbsConfirm("¿Volver a los valores de fábrica? Se borra todo lo que has ajustado: colores y filtros de cada consola, bordes, estados de sync, último modo de cada consola y preferencias del aparato. El wifi se conserva. La placa se reiniciará.").then(() => {
+    gbsConfirm("¿Volver a los valores de fábrica? Se borra todo lo que has ajustado: colores y filtros de cada consola, bordes, estados de sync, último modo de cada consola y preferencias del GBS. El wifi se conserva. El GBS se reiniciará.").then(() => {
         const cancel = document.querySelector("[gbs-confirm-cancel]");
         const before = cancel ? cancel.textContent : "";
         if (cancel)
@@ -2603,7 +2723,7 @@ const colorExport = () => {
                 gbsAlert(`El perfil de ${name} no tiene nada guardado. Pulsa GUARDAR antes de exportar.`);
                 return;
             }
-            const payload = { gbsColor: 1, firmware: "3x4x-v111", consola: name, perfil: slot, datos: data };
+            const payload = { gbsColor: 1, firmware: "3x4x-v122", consola: name, perfil: slot, datos: data };
             downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), `color-${COLOR_FILE_SLUGS[slot] || "consola"}.gbsc`);
         })
             .catch(() => gbsAlert("No se ha podido exportar. Inténtalo otra vez."));
@@ -2744,7 +2864,7 @@ const initFirmwareUpdate = () => {
             status.textContent = "El archivo tiene que ser un firmware .bin.";
             return;
         }
-        if (!confirm(`¿Actualizar el firmware con ${f.name}? El aparato se reiniciará.`)) {
+        if (!confirm(`¿Actualizar el firmware con ${f.name}? El GBS se reiniciará.`)) {
             return;
         }
         const data = new FormData();
@@ -2764,12 +2884,12 @@ const initFirmwareUpdate = () => {
             btn.disabled = false;
             const ok = xhr.status === 200 && xhr.responseText.indexOf("Update OK") >= 0;
             status.textContent = ok
-                ? "Actualizado. El aparato se está reiniciando: recarga esta página en unos 20 segundos."
+                ? "Actualizado. El GBS se está reiniciando: recarga esta página en unos 20 segundos."
                 : "La actualización falló o el archivo no era válido. No se ha cambiado nada.";
         };
         xhr.onerror = () => {
             btn.disabled = false;
-            status.textContent = "Se ha perdido la conexión. Si la subida había terminado, el aparato puede estar reiniciándose.";
+            status.textContent = "Se ha perdido la conexión. Si la subida había terminado, el GBS puede estar reiniciándose.";
         };
         status.textContent = "Subiendo... 0%";
         xhr.send(data);

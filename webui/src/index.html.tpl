@@ -329,7 +329,7 @@
         <section name="color" hidden>
           <div class="gbs-work gbs-col">
             <div class="gbs-card">
-              <div class="gbs-card__label">Luz</div>
+              <div class="gbs-card__label">Brillo y contraste</div>
                 <div class="gbs-step" data-val="br">
                   <div class="gbs-step__lab"><span>Brillo</span><b class="gbs-step__val">—</b></div>
                   <button gbs-message="T" gbs-message-type="user" gbs-click="repeat" class="gbs-step__b">&#8722;</button>
@@ -352,6 +352,14 @@
                 </div>
                 <button gbs-message="T" gbs-message-type="action" gbs-click="normal" gbs-toggle="adcAutoGain" class="gbs-chip gbs-chip--flat gbs-col__wide">
                   <span>ganancia automática</span><small>calibra unos segundos sobre una pantalla blanca</small>
+                </button>
+                <!-- (after v111h) his decision of 2026-11-21: the gain his own board finds is kept per console. Simple
+                     enough for anyone, so it lives with the picture controls, not in Avanzado. -->
+                <button gbs-message="85" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat gbs-col__wide">
+                  <span>guardar ganancia <b class="gbs-chip__val" id="agSavedNow">—</b></span><small>Cuando la ganancia automática se asiente y la imagen te convenza, guárdala para esta consola. Esto bloquea la ganancia automática hasta que la reinicies.</small>
+                </button>
+                <button gbs-message="86" gbs-message-type="img" gbs-click="normal" id="agForgetBtn" class="gbs-chip gbs-chip--flat gbs-col__wide" disabled>
+                  <span>reiniciar ganancia</span><small>Olvida la ganancia guardada actual. Recomendable al cambiar de cableado o modificar la consola.</small>
                 </button>
             </div>
             <div class="gbs-card">
@@ -693,6 +701,7 @@
                     <li>Necesita el generador de reloj externo (Si5351). Sin él, estas opciones no hacen nada.</li>
                     <li>Seguir a la fuente: la salida va exactamente a la frecuencia de la consola (por ejemplo, 59,82 Hz con la PC Engine).</li>
                     <li>59,94 Hz / 60,00 Hz: la salida se queda en una frecuencia estándar (las fuentes de 50 Hz siguen a 50 Hz). Útil con capturadoras que no aceptan frecuencias raras. En estos modos FrameTime Lock no puede seguir a la fuente, así que una línea de corte puede ir desplazándose despacio por la imagen.</li>
+                    <li>Exacta: la salida va a la cifra que escribas (por ejemplo 59,8245). Si la consola está a más de 1,5 Hz de esa cifra, la salida la sigue a ella. Como en 59,94 y 60, FrameTime Lock no actúa.</li>
                   </ul>
                 </td>
               </tr>
@@ -730,6 +739,29 @@
                   gbs-toggle-switch="outputRate6000"
                 >
                   toggle_off
+                </td>
+              </tr>
+              <!-- (after v111b) his request: an exact output rate typed in the web -->
+              <tr>
+                <td class="gbs-padding__left-16">Exacta</td>
+                <td
+                  class="gbs-icon"
+                  gbs-message="81"
+                  gbs-message-type="img"
+                  gbs-click="normal"
+                  gbs-toggle-switch="outputRateExact"
+                >
+                  toggle_off
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" class="gbs-padding__left-16">
+                  <div class="gbs-clk">
+                    <input class="gbs-clk__in" id="hzExactIn" type="text" inputmode="decimal" placeholder="59,8245" />
+                    <span class="gbs-clk__unit">Hz</span>
+                    <button class="gbs-button gbs-clk__btn" data-clk="hz">aplicar</button>
+                    <span class="gbs-clk__now" id="hzExactNow">—</span>
+                  </div>
                 </td>
               </tr>
               <tr>
@@ -1151,6 +1183,56 @@
                 <div>Reset Chip</div>
               </button>
             </div>
+            <!-- (after v111b) his request: the clocks, typed or nudged live -->
+            <div class="gbs-regtest">
+              <div class="gbs-regtest__title">Relojes</div>
+              <ul class="gbs-help">
+                <li>Reloj del ADC (PLLAD_MD): cuántas muestras toma el chip por línea de la consola. Es el «PLL divider++» de arriba, pero con la cifra exacta. Cambia en vivo; al cargar un preset vuelve a su valor. Ojo: ciertos valores cortan el wifi (me pasó con 1784 en la Mega Drive PAL).</li>
+                <li>Reloj de salida (Si5351): el que marca los Hz de salida. Útil para mirar y probar; el ajuste de frecuencia de salida y FrameTime Lock lo pueden volver a mover.</li>
+                <li>Línea de corte: «fase FTL» mueve el punto en el que FrameTime Lock coloca la salida respecto a la entrada (de fábrica, 90°), y con él la línea de corte. «Reiniciar memoria» vuelve a arrancar la memoria de imagen sin recargar el preset. Ninguno se guarda.</li>
+              </ul>
+              <div class="gbs-clk">
+                <span class="gbs-clk__lab">ADC</span>
+                <span class="gbs-clk__now" id="adcNow">—</span>
+                <button class="gbs-button gbs-clk__btn" data-clk="adc-">−</button>
+                <button class="gbs-button gbs-clk__btn" data-clk="adc+">+</button>
+                <input class="gbs-clk__in" id="adcIn" type="text" inputmode="numeric" placeholder="1759" />
+                <button class="gbs-button gbs-clk__btn" data-clk="adc">aplicar</button>
+              </div>
+              <div class="gbs-clk">
+                <span class="gbs-clk__lab">Salida</span>
+                <span class="gbs-clk__now" id="siNow">—</span>
+                <button class="gbs-button gbs-clk__btn" data-clk="si-">−1 kHz</button>
+                <button class="gbs-button gbs-clk__btn" data-clk="si+">+1 kHz</button>
+                <input class="gbs-clk__in" id="siIn" type="text" inputmode="decimal" placeholder="81,000" />
+                <span class="gbs-clk__unit">MHz</span>
+                <button class="gbs-button gbs-clk__btn" data-clk="si">aplicar</button>
+              </div>
+              <div class="gbs-clk">
+                <span class="gbs-clk__lab">Fase FTL</span>
+                <span class="gbs-clk__now" id="ftlPhaseNow">—</span>
+                <button gbs-message="83" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">−15°</button>
+                <button gbs-message="84" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">+15°</button>
+                <button gbs-message="82" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">Reiniciar memoria</button>
+                <!-- (after v120c) his request of 2026-11-21: a way back to the values the firmware carries -->
+                <button gbs-message="87" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">Memoria de fábrica</button>
+              </div>
+            </div>
+            <!-- (after v111) his request: try the chip registers nobody used yet (deinterlacer and output fields) -->
+            <div class="gbs-regtest">
+              <div class="gbs-regtest__title">Registros por probar</div>
+              <ul class="gbs-help">
+                <li>Registros del chip que el firmware no usaba: los del desentrelazador (MADPT) y uno de los campos de salida (VDS_HALF_EN). Prueba con una fuente entrelazada (480i / 576i).</li>
+                <li>«Siguiente» elige el registro; «−» y «+» cambian su valor. Nada se guarda: al cargar un preset vuelven a su valor.</li>
+              </ul>
+              <div class="gbs-regtest__state" id="regTestState">—</div>
+              <div class="gbs-flex">
+                <button gbs-message="77" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">skip_next</div><div>Siguiente</div></button>
+                <button gbs-message="79" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">remove</div><div>−</div></button>
+                <button gbs-message="78" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">add</div><div>+</div></button>
+                <button gbs-message="80" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-button__secondary"><div class="gbs-icon">undo</div><div>Deshacer todo</div></button>
+              </div>
+            </div>
           </fieldset>
                   </div>
         </section>
@@ -1266,8 +1348,8 @@
 
             <div class="gbs-card">
               <div class="gbs-card__label">Actualizar firmware</div>
-              <div class="gbs-card__desc gbs-col__desc">Elige el archivo firmware.bin del proyecto compilado (.pio/build/gbsc/firmware.bin) y pulsa subir. No apagues el aparato hasta que termine.</div>
-              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v111</b></div>
+              <div class="gbs-card__desc gbs-col__desc">Elige el archivo firmware.bin del proyecto compilado (.pio/build/gbsc/firmware.bin) y pulsa subir. No apagues el GBS hasta que termine.</div>
+              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v122</b></div>
               <label class="gbs-chip gbs-chip--flat gbs-sys__file"><span>elegir archivo</span><small gbs-update-filename>ninguno elegido</small><input type="file" accept=".bin" gbs-update-file /></label>
               <div class="gbs-sys__status" gbs-update-status></div>
               <div class="gbs-sys__bar" gbs-update-bar-wrap hidden><div gbs-update-bar></div></div>
@@ -1276,7 +1358,7 @@
 
             <div class="gbs-card">
               <div class="gbs-card__label">Copia de seguridad</div>
-              <div class="gbs-card__desc gbs-col__desc">Guarda en un único archivo todos los ajustes y presets del GBS-C, o recupéralos desde un archivo previo de respaldo.<br><br>La copia sólo sirve para este mismo aparato.<br><br>Si sólo quieres exportar/importar/compartir presets de uno en uno, hazlo desde la pestaña MODO.</div>
+              <div class="gbs-card__desc gbs-col__desc">Guarda en un único archivo todos los ajustes y presets del GBS-C, o recupéralos desde un archivo previo de respaldo.<br><br>La copia sólo sirve para este mismo GBS.<br><br>Si sólo quieres exportar/importar/compartir presets de uno en uno, hazlo desde la pestaña MODO.</div>
               <div class="gbs-grid3 gbs-grid3--2">
                 <button class="gbs-chip gbs-chip--flat gbs-backup-button"><span>guardar copia</span><small gbs-progress gbs-progress-backup></small></button>
                 <button class="gbs-chip gbs-chip--flat gbs-sys__restore gbs-danger"><span>restaurar</span><small gbs-progress gbs-progress-restore></small><input type="file" class="gbs-backup-input" accept=".bin" /></button>
@@ -1284,9 +1366,9 @@
             </div>
 
             <div class="gbs-card">
-              <div class="gbs-card__label">Opciones del aparato</div>
+              <div class="gbs-card__label">Opciones del GBS</div>
                 <button gbs-message="R" gbs-message-type="user" gbs-click="normal" gbs-toggle-switch="reverseRotaryEncoderForOledMenu" class="gbs-sw">
-                  <span class="gbs-sw__lab"><span>Invertir el control del menú OLED</span><small>algunos aparatos (como el ODV-GBS-C) lo necesitan para que girar a la derecha baje en el menú</small></span><span class="gbs-sw__knob"></span>
+                  <span class="gbs-sw__lab"><span>Invertir el control del menú OLED</span><small>algunos GBS (como el ODV-GBS-C) lo necesitan para que girar a la derecha baje en el menú</small></span><span class="gbs-sw__knob"></span>
                 </button>
                 <button gbs-message="L" gbs-message-type="action" gbs-click="normal" gbs-toggle-switch="wantOutputComponent" class="gbs-sw">
                   <span class="gbs-sw__lab"><span>Salida por componente (YPbPr)</span><small>apagado: RGBHV, para cables VGA o conversores a HDMI. Encendido: componente, experimental y poco compatible. Afecta a todos los modos</small></span><span class="gbs-sw__knob"></span>
