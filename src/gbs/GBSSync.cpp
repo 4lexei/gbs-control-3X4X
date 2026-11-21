@@ -58,7 +58,7 @@ void resetInterruptNoHsyncBadBit()
 void setResetParameters()
 {
     typedef TV5725<GBS_ADDR> GBS;
-    SerialM.println("<reset>");
+    SerialM.println(F("<reset>"));
     rto->videoStandardInput = 0;
     rto->videoIsFrozen = false;
     rto->applyPresetDoneStage = 0;
@@ -195,7 +195,7 @@ void updateHVSyncEdge()
 
     if ((syncStatus & 0x02) != 0x02) // if !hs active
     {
-        //SerialM.println("(SP) can't detect sync edge");
+        //SerialM.println(F("(SP) can't detect sync edge"));
     } else {
         if ((syncStatus & 0x01) == 0x00) {
             if (printHS != 1) {

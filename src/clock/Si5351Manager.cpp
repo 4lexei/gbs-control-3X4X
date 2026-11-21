@@ -2,6 +2,7 @@
 #include "../core/Globals.h"
 #include "../web/SerialMirror.h"
 #include "../gbs/GBSController.h"
+#include "../gbs/GBSVideoProcessing.h" // (after v111f)
 #include "../utils/DebugHelpers.h"
 #include "../gbs/tv5725.h"
 #include "../video/framesync.h"
@@ -184,7 +185,7 @@ static const char *consoleGuess(float sfr)
 // "720p x3", "720p x4", "720p x5", "1080p x4", "1080p x5", "16:9" and "step n/4" must survive any rewording here.
 static void sendStatusBar(float sfr, float ofr)
 {
-    static char line[700]; // v107j / v107l: 260 -> 600 for the data lines; static so it stays off the stack (not re-entered)
+    static char line[800]; // (after v111b) 700 -> 800 // v107j / v107l: 260 -> 600 for the data lines; static so it stays off the stack (not re-entered)
     const bool anyMode = rto->integer1080Active || rto->integer720Active || rto->integerLowActive;
 
     // ---- line 1: rates and sync state
@@ -260,7 +261,7 @@ static void sendStatusBar(float sfr, float ofr)
         // v107f: 720p x3 4:3 and x5 PAL have two sizes only (256 and CRT), so they count to 2
         // v107q: and the Mega Drive in 720p x4 (256 and 320 only, his decision)
         const bool two = (rto->presetID == 0x13 && rto->integer720Active && (uopt->integer720 == 1 || uopt->integer720 == 2)) ||
-                         sizeStepsTwoMd() || tv43Active(); // (after v108h) the Mega Drive's 1080p x4 «4:3»: 256 and 320
+                         sizeStepsTwoMd() || md43Able(); // (after v108h) the Mega Drive's 1080p x4 «4:3»: 256 and 320; (after v111f) its 16:9 too (no «ancho»)
         // v107q: and the Mega Drive in PAL 1080p x4 has three (no fill step: its line does not fit stretched to 1920)
         const bool three = !two && sizeStepsThree();
         uint8_t st = two ? ((uopt->sizeStep & 3) ? 1 : 0) : (uopt->sizeStep & 3);
@@ -282,20 +283,14 @@ static void sendStatusBar(float sfr, float ofr)
         snprintf(width, sizeof(width), " | %s", wide ? "wide" : (rto->integer1080Centered == 2 ? "256 px" : "320 px"));
     }
 
-    // v107j: line 5, the picture values for the web (Color and Filtros tabs)
-    static char vals[400]; // v107l: 220 -> 300 for the window registers; (after v107w) 400 for the field registers
-    imageTuningReport(vals, sizeof(vals));
-    // (after v107z) for the web: what the Dreamcast is sending (dcSignal), so the Modo tab shows only its measured modes
-    if (dcs) {
-        const size_t used = strlen(vals);
-        if (used + 8 < sizeof(vals))
-            snprintf(vals + used, sizeof(vals) - used, " dc=%u", (unsigned)dcs);
-    }
-    snprintf(line, sizeof(line),
+    // (after v111d) built straight after the 0x1e marker and sent from here: SerialMirror::sendStatus copied it into a
+    // second buffer of 820 bytes just to put the marker in front
+    line[0] = '\x1e';
+    int len = snprintf(line + 1, sizeof(line) - 1,
         "IN %.4fHz | OUT %.4fHz | dev %+.4f%s%s%s\n"
         "detected %s%s%s\n"
         "%s%s%s%s\n"
-        "mem %u %u sl %u\n%s",
+        "mem %u %u sl %u fh %u\n",
         sfr, ofr, ofr - sfr, tol, wat, stats,
         guess[0] ? guess : "not yet", prof[0] ? " | " : "", prof,
         mode[0] ? mode : "stock preset", aspect, width,
@@ -307,8 +302,43 @@ static void sendStatusBar(float sfr, float ofr)
                    (GBS::MEM_FBK_CLK_DLYCELL_SEL::read() << 2) | (GBS::MEM_PAD_CLK_INVERT::read() << 3)),
         // v107j: and the scanline intensity, 0..10, worked out exactly as the log line of stepScanlineStrength() does
         (unsigned)((0x50 - ((uopt->scanlineStrength / 8) * 8)) / 8),
-        vals);
-    SerialM.sendStatus(line);
+        (unsigned)ESP.getFreeHeap()); // (after v111c) free memory, for the diagnostics
+    if (len < 0)
+        return;
+    if ((size_t)len > sizeof(line) - 2)
+        len = (int)sizeof(line) - 2;
+    // v107j: line 5, the picture values for the web (Color and Filtros tabs). (after v111e) written straight into the line,
+    // after the four lines above (it had a buffer of its own, 480 bytes of RAM)
+    char *vals = line + 1 + len;
+    const size_t valsRoom = sizeof(line) - 1 - (size_t)len;
+    imageTuningReport(vals, valsRoom);
+    // (after v107z) for the web: what the Dreamcast is sending (dcSignal), so the Modo tab shows only its measured modes
+    if (dcs) {
+        const size_t used = strlen(vals);
+        if (used + 8 < valsRoom)
+            snprintf(vals + used, valsRoom - used, " dc=%u", (unsigned)dcs);
+    }
+    // (after v111c) his report: the web stopped answering («Handler did not handle the request» = under 10 KB free).
+    // The data line is the long part of the bar (300-500 bytes) and almost always the same, so it goes only when it
+    // changed, when the number of open pages changed, or every 15 s; the web keeps the last one it got.
+    // (after v111d) compared by a checksum, not a copy
+    uint32_t valsHash = 2166136261u;
+    for (const char *c = vals; *c; c++)
+        valsHash = (valsHash ^ (uint8_t)*c) * 16777619u;
+    static uint32_t lastValsHash = 0;
+    static unsigned long lastValsSent = 0;
+    static uint8_t lastClients = 0;
+    const uint8_t clients = (uint8_t)webSocket.connectedClients();
+    const bool sendVals = valsHash != lastValsHash || clients != lastClients || millis() - lastValsSent > 15000;
+    if (sendVals) {
+        lastValsHash = valsHash;
+        lastValsSent = millis();
+        lastClients = clients;
+    } else {
+        vals[0] = 0; // the four lines only
+    }
+    if (ESP.getFreeHeap() >= 10500) // (after v111e) the bar's margin, see SerialMirror.cpp
+        webSocket.broadcastTXT((uint8_t *)line, strlen(line));
 }
 
 static bool externalClockGenSyncImpl()
@@ -358,7 +388,9 @@ static bool externalClockGenSyncImpl()
     // Re-seed when sfr jumps >2Hz (mode change, not jitter).
     static float smoothedSfr = 0.0f;
     constexpr float EMA_ALPHA = 0.3f;
-    if (smoothedSfr < 47.0f || fabsf(sfr - smoothedSfr) > 2.0f) {
+    // (after v111f) 2 Hz -> 0.05 Hz: progressive <-> interlaced moves the rate by ~0.11 Hz (59.92 <-> 59.81), and the
+    // blend made the steering walk there in 25 kHz steps from a rate that was already gone (his log of 2026-11-18)
+    if (smoothedSfr < 47.0f || fabsf(sfr - smoothedSfr) > 0.05f) {
         smoothedSfr = sfr; // initialize or re-seed after mode change
     }
     smoothedSfr = EMA_ALPHA * sfr + (1.0f - EMA_ALPHA) * smoothedSfr;
@@ -366,7 +398,15 @@ static bool externalClockGenSyncImpl()
     // [patch output-rate] pick the rate the output should run at
     float targetRate = smoothedSfr; // 0: follow the source
     bool fixedRate = false;
-    if (uopt->outputRateMode != 0) {
+    if (uopt->outputRateMode == 3) {
+        // (after v111b) his exact rate, when the source is near it (within 1.5 Hz); otherwise the source is followed, so
+        // a 50 Hz console never gets a 60 Hz rate meant for another one
+        const float exact = uopt->outputRateExact / 10000.0f;
+        if (uopt->outputRateExact && fabsf(smoothedSfr - exact) < 1.5f) {
+            targetRate = exact;
+            fixedRate = true;
+        }
+    } else if (uopt->outputRateMode != 0) {
         if (fabsf(smoothedSfr - 60.0f) < 1.0f) {
             targetRate = (uopt->outputRateMode == 1) ? 59.94f : 60.0f;
             fixedRate = true;
@@ -398,14 +438,16 @@ static bool externalClockGenSyncImpl()
     if (delta < -MAX_DELTA) delta = -MAX_DELTA;
     newClockFreq = old + delta;
 
-    SerialM.printf("sync: sfr=%.2fHz(%.2f) ofr=%.2fHz target=%.2fHz delta=%.1fkHz\n",
+    SM_PRINTF("sync: sfr=%.2fHz(%.2f) ofr=%.2fHz target=%.2fHz delta=%.1fkHz\n",
         sfr, smoothedSfr, ofr, targetRate, delta / 1000.0f);
 
     Si.setFreq(0, newClockFreq);
     rto->freqExtClockGen = newClockFreq;
-    FrameSync::initFrequency(ofr, newClockFreq);
+    // (after v111b) the clock per output frame is the clock the output rate was MEASURED with, over that rate (stock
+    // code paired the old rate with the new clock: up to 0.03 % off, half of what the frame time lock may correct)
+    FrameSync::initFrequency(ofr, old);
 
-    SerialM.printf("sync done: clock=%.2fMHz (%+.1fkHz)\n",
+    SM_PRINTF("sync done: clock=%.2fMHz (%+.1fkHz)\n",
         rto->freqExtClockGen / 1000000.0f, delta / 1000.0f);
     // Allow Si5351 output to settle before next sync cycle.
     delay(1);
@@ -585,6 +627,7 @@ void statusBarTick()
             // v79: the colour preset was applied at preset load time, when the detection still held the console that was
             // connected before (the user saw his PC Engine colours land on a SNES). Now it waits for this moment.
             colorPresetApply();
+            autoGainApplySaved(); // (after v111h) the console is known now: the gain he saved for it, if there is one
         }
     }
     } // measureIn
@@ -604,11 +647,22 @@ void externalClockGenSyncInOutRate()
 // [patch output-rate] Called from the main loop. After the output rate mode is changed (or after a
 // preset load), keeps nudging the Si5351 until the output sits on the chosen rate. Once settled it only
 // re-checks every few seconds. Does nothing in "follow source" mode unless the mode was just changed.
+static bool rateKick = false; // (after v111b) a new exact rate: steer at once
+
+void externalClockGenRateKick()
+{
+    rateKick = true;
+}
+
 void externalClockGenRateModeTick()
 {
     static uint32_t lastRun = 0;
     static uint8_t lastMode = 0;
     static bool settled = true;
+    if (rateKick) {
+        rateKick = false;
+        settled = false;
+    }
 
     if (!rto->extClockGenDetected) {
         return;
@@ -621,7 +675,9 @@ void externalClockGenRateModeTick()
     // preset load or a change of output mode, so when the source changed rate on its own (the 240p suite switched to 480i:
     // IN 59.8075, OUT 59.8312) nobody corrected it. Now «follow» re-checks every 5 s like the fixed rates, and changes the
     // clock only when the output is more than 0.005 Hz off. With the frame time lock on, it is the lock that follows.
-    if (uopt->outputRateMode == 0 && settled && uopt->enableFrameTimeLock) {
+    // (after v111b) ...unless the lock has no "clock per output frame" figure (dropped when the HTotal changes, see
+    // VideoTiming.cpp): then the steering runs, measures the output and gives the lock a new one.
+    if (uopt->outputRateMode == 0 && settled && uopt->enableFrameTimeLock && FrameSync::frequencyReady()) {
         return;
     }
     // v68 / v69: with the watcher stopped the stable count sits where it stopped, which used to switch the output rate

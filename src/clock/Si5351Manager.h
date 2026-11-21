@@ -10,6 +10,7 @@ void externalClockGenDetectAndInitialize();
 void externalClockGenResetClock();
 void externalClockGenSyncInOutRate();
 void externalClockGenRateModeTick();
+void externalClockGenRateKick(); // (after v111b) steer again now (a new exact output rate)
 void statusBarTick(); // v39: web UI status bar, once per second from the main loop
 uint32_t getPllRate();
 

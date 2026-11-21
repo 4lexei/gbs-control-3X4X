@@ -75,7 +75,7 @@ namespace tw
             }
 
 #if 0
-  Serial.print("READ "); Serial.print(addr, HEX); Serial.print("@"); Serial.print(reg, HEX); Serial.print(": ");
+  Serial.print(F("READ ")); Serial.print(addr, HEX); Serial.print(F("@")); Serial.print(reg, HEX); Serial.print(F(": "));
   for (uint8_t i = 0; i < size; ++i) {
     Serial.print(output[i] >> 4, HEX); Serial.print(output[i] & 0xF, HEX);
   }
@@ -86,7 +86,7 @@ namespace tw
         inline void rawWrite(uint8_t addr, uint8_t reg, uint8_t const *input, uint8_t size)
         {
 #if 0
-  Serial.print("WRITE "); Serial.print(addr, HEX); Serial.print("@"); Serial.print(reg, HEX); Serial.print(": ");
+  Serial.print(F("WRITE ")); Serial.print(addr, HEX); Serial.print(F("@")); Serial.print(reg, HEX); Serial.print(F(": "));
   for (uint8_t i = 0; i < size; ++i) {
     Serial.print(input[i] >> 4, HEX); Serial.print(input[i] & 0xF, HEX);
   }

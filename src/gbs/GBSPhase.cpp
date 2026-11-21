@@ -3,6 +3,7 @@
 #include "../gbs/GBSController.h"
 #include "../gbs/GBSPresets.h"
 #include "tv5725.h"
+uint8_t activeConsoleProfile(); // (after v111g) Integer1080.cpp
 
 void setAndUpdateSogLevel(uint8_t level)
 {
@@ -45,6 +46,12 @@ void setAndLatchPhaseADC()
     typedef TV5725<GBS_ADDR> GBS;
     if (manualPhaseADC >= 0) {
         rto->phaseADC = (uint8_t)manualPhaseADC & 0x1f;
+    } else if (activeConsoleProfile() == 3 && rto->integer1080Active && uopt->integer1080 == 3) {
+        // (after v111g) his finding of 2026-11-18: the PC Engine through the ODV shook ~1 px sideways in 1080p x4 (not
+        // visible in 720p, where a game pixel is fewer columns), in both widths; at ADC phase 16 it stood still. Its
+        // saved sync state brings phase 15 (good in 720p). So in 1080p x4 this console samples at 16, unless a phase was
+        // set by hand.
+        rto->phaseADC = 16;
     }
     GBS::PA_ADC_LAT::write(0);
     GBS::PA_ADC_S::write(rto->phaseADC);

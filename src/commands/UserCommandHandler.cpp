@@ -20,6 +20,7 @@
 #include "../video/VideoShifting.h"
 #include "../video/Deinterlacing.h"
 #include "../video/VideoInput.h"
+#include "../video/RegTest.h" // (after v111)
 #include "../video/framesync.h"
 #include "../core/slot.h"
 #include "../gbs/tv5725.h"
@@ -59,6 +60,9 @@ static void setOutputRateMode(uint8_t mode)
         SerialM.println(F("Output rate: follow source"));
     } else if (mode == 1) {
         SerialM.println(F("Output rate: 59.94 Hz (50 Hz for PAL sources)"));
+    } else if (mode == 3) { // (after v111b)
+        SM_PRINTF("Output rate: exact, %lu.%04lu Hz (the source is followed when it is more than 1.5 Hz away)\n",
+                       (unsigned long)(uopt->outputRateExact / 10000), (unsigned long)(uopt->outputRateExact % 10000));
     } else {
         SerialM.println(F("Output rate: 60.00 Hz (50 Hz for PAL sources)"));
     }
@@ -270,7 +274,9 @@ static void setPerfectHScale(uint16_t nativeWidth)
         // Going back to 320 px reloads it again with the normal clock.
         // (after v108h) only the SNES and the PC Engine still reload here (they load at 80 % and their placements were
         // measured that way). Everybody else changes the ADC clock in place inside integer1080Apply(): no black screen.
-        if (uopt->integer1080 == 3 && integerIsSnesProfile() && (nativeWidth == 256 || uopt->integer1080Narrow)) {
+        // (after v111g) the PC Engine no longer reloads either: its clock changes in place (narrowWanted, Integer1080.cpp)
+        if (uopt->integer1080 == 3 && integerIsSnesProfile() && activeConsoleProfile() != 3 &&
+            (nativeWidth == 256 || uopt->integer1080Narrow)) {
             uopt->integer1080Narrow = (nativeWidth == 256) ? 1 : 0;
             integerRequest = true;
             handleType2Command('s');
@@ -279,7 +285,7 @@ static void setPerfectHScale(uint16_t nativeWidth)
         scaleHorizontalFine = false;
         integer1080Apply(nativeWidth);
         rto->integer1080Centered = wanted;
-        SerialM.print(F("[3x4x-v111] 1080p x"));
+        SerialM.print(F("[3x4x-v122] 1080p x"));
         SerialM.print(uopt->integer1080 == 4 ? 5 : 4);
         SerialM.print(F(" for "));
         SerialM.print(nativeWidth);
@@ -291,7 +297,7 @@ static void setPerfectHScale(uint16_t nativeWidth)
         // [patch 960p] NTSC 1280x960: HScale 480 = 4.0 columns per 320 px pixel (5.0 for 256 px), vertical is already x4
         scaleHorizontalFine = false;
         bool ok960 = scaleHorizontalTo(480);
-        SerialM.print(F("[3x4x-v111] Perfect scale 960p for "));
+        SerialM.print(F("[3x4x-v122] Perfect scale 960p for "));
         SerialM.print(nativeWidth);
         SerialM.print(F(" px: HScale "));
         SerialM.println(GBS::VDS_HSCALE::read());
@@ -320,7 +326,7 @@ static void setPerfectHScale(uint16_t nativeWidth)
         moveCanvasHorizontal(true); // final 1-unit nudge right
         scaleHorizontalFine = false;
     }
-    SerialM.print(F("[3x4x-v111] Perfect scale for "));
+    SerialM.print(F("[3x4x-v122] Perfect scale for "));
     SerialM.print(nativeWidth);
     SerialM.print(F(" px: HScale "));
     SerialM.print(GBS::VDS_HSCALE::read());
@@ -367,11 +373,11 @@ static void setLinesMode(uint8_t m)
     const uint8_t avail = linesAvailability();
     const uint8_t slot = memSettingIndex();
     if (avail == 0 || slot >= 16) {
-        SerialM.println(F("[3x4x-v111] lines: not available in this mode"));
+        SerialM.println(F("[3x4x-v122] lines: not available in this mode"));
         return;
     }
     if (m == 2 && !(avail & 2)) {
-        SerialM.println(F("[3x4x-v111] lines: DOLOR is not measured for this mode / console"));
+        SerialM.println(F("[3x4x-v122] lines: DOLOR is not measured for this mode / console"));
         return;
     }
     const bool wasDolor = linesDolorActive();
@@ -466,7 +472,7 @@ static void fingerprintReport()
     snprintf(std, sizeof(std), "%s%s%s%s",
              GBS::STATUS_IF_INP_NTSC_INT::read() ? "Ni" : "", GBS::STATUS_IF_INP_NTSC_PRG::read() ? "Np" : "",
              GBS::STATUS_IF_INP_PAL_INT::read() ? "Pi" : "", GBS::STATUS_IF_INP_PAL_PRG::read() ? "Pp" : "");
-    SerialM.printf("[3x4x-v111] huella: fr=%.4f vt=%u ht=%u hs=%u hsr=%.1f odd=%u/%u/%u "
+    SM_PRINTF("[3x4x-v122] huella: fr=%.4f vt=%u ht=%u hs=%u hsr=%.1f odd=%u/%u/%u "
                    "hp=%u vp=%u std=%s pol=%u%u csync=%u sog=%u/%u coast=%u/%u\n",
                    fr, vtM, htM, hsM, hsr, vtO, htO, hsO,
                    (unsigned)GBS::HPERIOD_IF::read(), (unsigned)GBS::VPERIOD_IF::read(), std[0] ? std : "-",
@@ -487,12 +493,12 @@ static void nudgeMemVertical(int8_t d)
     int16_t st = (int16_t)GBS::VDS_VB_ST::read() + d;
     int16_t sp = (int16_t)GBS::VDS_VB_SP::read() + d;
     if (st < 1 || sp < 1 || st > vt - 2 || sp > vt - 2) {
-        SerialM.println(F("[3x4x-v111] memory window: at the limit"));
+        SerialM.println(F("[3x4x-v122] memory window: at the limit"));
         return;
     }
     GBS::VDS_VB_ST::write((uint16_t)st);
     GBS::VDS_VB_SP::write((uint16_t)sp);
-    SerialM.print(F("[3x4x-v111] memory window (vertical) "));
+    SerialM.print(F("[3x4x-v122] memory window (vertical) "));
     SerialM.print(st);
     SerialM.print('/');
     SerialM.println(sp);
@@ -529,7 +535,7 @@ static void setSizeStepDirect(uint8_t step)
 {
     if (rto->presetID == 0x13 || rto->presetID == 0x15) {
         if (rto->presetID == 0x13 && (uopt->integer720 == 1 || uopt->integer720 == 2)) {
-            SerialM.println(F("[3x4x-v111] this mode has two sizes only"));
+            SerialM.println(F("[3x4x-v122] this mode has two sizes only"));
             return;
         }
         uopt->sizeStep = step & 3;
@@ -537,8 +543,8 @@ static void setSizeStepDirect(uint8_t step)
             uopt->sizeStep = 1; // v107q: the Mega Drive in PAL 720p x4 has 256 and 320 only
         if (uopt->sizeStep == 3 && sizeStepsThree())
             uopt->sizeStep = 2; // v107q: no fill step for the Mega Drive in PAL 1080p x4
-        if (uopt->sizeStep > 1 && tv43Active())
-            uopt->sizeStep = 1; // (after v108h) its «4:3» has two sizes: 256 px and 320 px
+        if (uopt->sizeStep > 1 && md43Able())
+            uopt->sizeStep = 1; // (after v108h) its «4:3» has two sizes: 256 px and 320 px; (after v111f) its 16:9 too, his decision: «ancho» removed (the 4:3 button gives that picture)
         saveUserPrefs();
         if (rto->presetID == 0x13)
             integer720Apply(256);
@@ -558,7 +564,7 @@ static void cycleFill()
     if (rto->presetID == 0x13 || rto->presetID == 0x15) {
         // v107f: 720p x3 4:3 has only two real sizes, because the CRT step already fills the 4:3 frame and steps 3 and 4
         // load it again. Walking through them made the button look dead, so there the cycle just alternates 256 <-> CRT.
-        if ((rto->presetID == 0x13 && (uopt->integer720 == 1 || uopt->integer720 == 2)) || sizeStepsTwoMd() || tv43Active()) // x3 4:3 and x5: two sizes (and the MD in x4, and its 1080p x4 «4:3»)
+        if ((rto->presetID == 0x13 && (uopt->integer720 == 1 || uopt->integer720 == 2)) || sizeStepsTwoMd() || md43Able()) // x3 4:3 and x5: two sizes (and the MD in x4, and its 1080p x4 in both shapes: no «ancho», after v111f)
             uopt->sizeStep = (uopt->sizeStep == 0) ? 1 : 0;
         else if (sizeStepsThree()) // v107q: Mega Drive in PAL 1080p x4: square -> CRT -> wide
             uopt->sizeStep = (uopt->sizeStep >= 2) ? 0 : (uint8_t)(uopt->sizeStep + 1);
@@ -583,7 +589,8 @@ static void cycleFill()
             level = uopt->integer720Fill ? 2 : (rto->integer1080Centered == 1 ? 1 : 0);
         else
             level = (rto->integer1080Centered == 1 || uopt->integer720Fill) ? 1 : 0;
-        const int next = w169 ? (level + 1) % 3 : (level + 1) % 2;
+        // (after v111g) the PC Engine in 720p x3 16:9: 256 and 320 only, no «llenar» (his decision)
+        const int next = (w169 && activeConsoleProfile() != 3) ? (level + 1) % 3 : (level + 1) % 2;
         if (next == 0) {
             uopt->integer720Fill = 0;
             rto->integer1080Centered = 2;
@@ -595,23 +602,23 @@ static void cycleFill()
             rto->integer1080Centered = 1;
         }
         integer720Apply(rto->integer1080Centered == 2 ? 256 : 320);
-        SerialM.print(F("[3x4x-v111] fill: "));
+        SerialM.print(F("[3x4x-v122] fill: "));
         SerialM.println(next == 0 ? F("256 px picture") : (next == 1 ? F("320 px picture") : F("wide (1280 px, whole screen width of the 720p)")));
         return;
     }
     if (rto->integer1080Active && (rto->presetID == 0x05 || rto->presetID == 0x15)) {
         const bool pal = (rto->presetID == 0x15);
         int level = uopt->integer1080Wide ? 2 : (rto->integer1080Centered == 2 ? 0 : 1);
-        int next = (level + 1) % (pal ? 2 : 3);
+        int next = (level + 1) % ((pal || md43NoWide()) ? 2 : 3); // (after v111f) no «ancho» where there is a 4:3 (his decision; after v120c the PC Engine too)
         if (next == 2) {
             uopt->integer1080Wide = 1;
             scaleHorizontalFine = false;
             integer1080Apply(320);
             rto->integer1080Centered = 1;
-            SerialM.println(F("[3x4x-v111] fill: wide (1920 px, ESTIMATE: adjust with move / edge buttons)"));
+            SerialM.println(F("[3x4x-v122] fill: wide (1920 px, ESTIMATE: adjust with move / edge buttons)"));
         } else {
             setPerfectHScale(next == 0 ? 256 : 320); // also clears the wide state
-            SerialM.println(next == 0 ? F("[3x4x-v111] fill: 256 px picture") : F("[3x4x-v111] fill: 320 px picture"));
+            SerialM.println(next == 0 ? F("[3x4x-v122] fill: 256 px picture") : F("[3x4x-v122] fill: 320 px picture"));
         }
         return;
     }
@@ -709,6 +716,7 @@ void handleType2Command(char argument)
         case '3': // load custom preset
         {
             uopt->presetPreference = OutputCustomized; // custom
+            uopt->outputChosen = 1; // (after v111f)
             if (rto->videoStandardInput == 14) {
                 // vga upscale path: let synwatcher handle it
                 rto->videoStandardInput = 15;
@@ -749,7 +757,7 @@ void handleType2Command(char argument)
                 SerialM.println(F("on (Line Filter recommended)"));
             } else {
                 disableScanlines();
-                SerialM.println("off");
+                SerialM.println(F("off"));
             }
             saveUserPrefs();
             break;
@@ -775,7 +783,7 @@ void handleType2Command(char argument)
             Dir dir = LittleFS.openDir("/");
             while (dir.next()) {
                 SerialM.print(dir.fileName());
-                SerialM.print(" ");
+                SerialM.print(F(" "));
                 SerialM.println(dir.fileSize());
                 delay(1); // wifi stack
             }
@@ -784,7 +792,7 @@ void handleType2Command(char argument)
             File file = root.openNextFile();
             while(file){
                 SerialM.print(file.name());
-                SerialM.print(" ");
+                SerialM.print(F(" "));
                 SerialM.println(file.size());
                 file = root.openNextFile();
                 delay(1);
@@ -838,6 +846,7 @@ void handleType2Command(char argument)
         case 's':
         case 'L': {
             // load preset via webui
+            uopt->outputChosen = 1; // (after v111f) any resolution picked by hand, Rama's or ours: no red notice
             uint8_t videoMode = getVideoMode();
             if (videoMode == 0 && GBS::STATUS_SYNC_PROC_HSACT::read())
                 videoMode = rto->videoStandardInput; // last known good as fallback
@@ -977,8 +986,9 @@ void handleType2Command(char argument)
                     uint8_t *own = memClockOwn();
                     if (own) {
                         *own = PLL_MS;
+                        memSettingsSave(); // (after v120c) per console
                         saveUserPrefs();
-                        SerialM.print(F("[3x4x-v111] SDRAM clock saved: "));
+                        SerialM.print(F("[3x4x-v122] SDRAM clock saved: "));
                         SerialM.print(memClockMhzFor(PLL_MS));
                         SerialM.println(F(" MHz"));
                     }
@@ -986,7 +996,7 @@ void handleType2Command(char argument)
                 if (memClock != 10) {
                     SerialM.print(F("SDRAM clock: "));
                     SerialM.print(memClock);
-                    SerialM.println("Mhz");
+                    SerialM.println(F("Mhz"));
                 } else {
                     SerialM.print(F("SDRAM clock: "));
                     SerialM.println(F("Feedback clock"));
@@ -998,11 +1008,11 @@ void handleType2Command(char argument)
             if (uopt->wantVdsLineFilter) {
                 uopt->wantVdsLineFilter = 0;
                 GBS::VDS_D_RAM_BYPS::write(1);
-                SerialM.println("off");
+                SerialM.println(F("off"));
             } else {
                 uopt->wantVdsLineFilter = 1;
                 GBS::VDS_D_RAM_BYPS::write(0);
-                SerialM.println("on");
+                SerialM.println(F("on"));
             }
             saveUserPrefs();
             break;
@@ -1031,7 +1041,7 @@ void handleType2Command(char argument)
                 keepHbStWithDisplayEdge();
                 SerialM.println(F("Left and right borders: reduce the picture window"));
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
             }
         } break;
         case 'B': {
@@ -1047,7 +1057,7 @@ void handleType2Command(char argument)
                 keepHbStWithDisplayEdge();
                 SerialM.println(F("Left and right borders: enlarge the picture window"));
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
             }
         } break;
         case 'C': {
@@ -1063,7 +1073,7 @@ void handleType2Command(char argument)
                 edgesNote(2, (int16_t)vs);
                 SerialM.println(F("Top and bottom borders: reduce the picture window"));
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
             }
         } break;
         // [patch edges] independent edges of the output window (the A / B / C / D borders move both sides at once).
@@ -1081,7 +1091,7 @@ void handleType2Command(char argument)
                 GBS::VDS_DIS_HB_SP::write(sp - hs);
                 edgesNote(0, -(int16_t)hs);
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
                 break;
             }
             SerialM.print(argument == '_' ? F("Left edge: enlarge (window starts at ") : F("Left edge: reduce (window starts at "));
@@ -1101,7 +1111,7 @@ void handleType2Command(char argument)
                 GBS::VDS_DIS_HB_ST::write(st + hs);
                 edgesNote(1, (int16_t)hs);
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
                 break;
             }
             keepHbStWithDisplayEdge();
@@ -1121,7 +1131,7 @@ void handleType2Command(char argument)
                 GBS::VDS_DIS_VB_SP::write(sp - vs);
                 edgesNote(2, -(int16_t)vs);
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
                 break;
             }
             SerialM.print(argument == ',' ? F("Top edge: enlarge (window starts at line ") : F("Top edge: reduce (window starts at line "));
@@ -1141,7 +1151,7 @@ void handleType2Command(char argument)
                 GBS::VDS_DIS_VB_ST::write(st + vs);
                 edgesNote(3, (int16_t)vs);
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
                 break;
             }
             SerialM.print(argument == '$' ? F("Bottom edge: enlarge (window ends at line ") : F("Bottom edge: reduce (window ends at line "));
@@ -1161,7 +1171,7 @@ void handleType2Command(char argument)
                 edgesNote(2, -(int16_t)vs);
                 SerialM.println(F("Top and bottom borders: enlarge the picture window"));
             } else {
-                SerialM.println("limit");
+                SerialM.println(F("limit"));
             }
         } break;
         case 'q':
@@ -1190,12 +1200,12 @@ void handleType2Command(char argument)
                 uopt->wantTap6 = 1;
                 GBS::VDS_TAP6_BYPS::write(0);
                 GBS::MADPT_Y_DELAY_UV_DELAY::write(GBS::MADPT_Y_DELAY_UV_DELAY::read() - 1);
-                SerialM.println("on");
+                SerialM.println(F("on"));
             } else {
                 uopt->wantTap6 = 0;
                 GBS::VDS_TAP6_BYPS::write(1);
                 GBS::MADPT_Y_DELAY_UV_DELAY::write(GBS::MADPT_Y_DELAY_UV_DELAY::read() + 1);
-                SerialM.println("off");
+                SerialM.println(F("off"));
             }
             saveUserPrefs();
             break;
@@ -1233,9 +1243,9 @@ void handleType2Command(char argument)
             uopt->preferScalingRgbhv = !uopt->preferScalingRgbhv;
             SerialM.print(F("preferScalingRgbhv: "));
             if (uopt->preferScalingRgbhv) {
-                SerialM.println("on");
+                SerialM.println(F("on"));
             } else {
-                SerialM.println("off");
+                SerialM.println(F("off"));
             }
             saveUserPrefs();
             break;
@@ -1243,10 +1253,10 @@ void handleType2Command(char argument)
             SerialM.print(F("ExternalClockGenerator "));
             if (uopt->disableExternalClockGenerator == 0) {
                 uopt->disableExternalClockGenerator = 1;
-                SerialM.println("disabled");
+                SerialM.println(F("disabled"));
             } else {
                 uopt->disableExternalClockGenerator = 0;
-                SerialM.println("enabled");
+                SerialM.println(F("enabled"));
             }
             saveUserPrefs();
             break;
@@ -1259,9 +1269,9 @@ void handleType2Command(char argument)
             }
             setAndUpdateSogLevel(rto->currentLevelSOG);
             optimizePhaseSP();
-            SerialM.print("Phase: ");
+            SerialM.print(F("Phase: "));
             SerialM.print(rto->phaseSP);
-            SerialM.print(" SOG: ");
+            SerialM.print(F(" SOG: "));
             SerialM.print(rto->currentLevelSOG);
             SerialM.println();
             break;
@@ -1270,9 +1280,9 @@ void handleType2Command(char argument)
             SerialM.print(F("IF Auto Offset: "));
             toggleIfAutoOffset();
             if (GBS::IF_AUTO_OFST_EN::read()) {
-                SerialM.println("on");
+                SerialM.println(F("on"));
             } else {
-                SerialM.println("off");
+                SerialM.println(F("off"));
             }
             break;
         case 'F':
@@ -1322,14 +1332,14 @@ void handleType2Command(char argument)
             }
             setAndUpdateSogLevel(rto->currentLevelSOG);
             optimizePhaseSP();
-            SerialM.print(F("[3x4x-v111] SOG level "));
+            SerialM.print(F("[3x4x-v122] SOG level "));
             SerialM.print(rto->currentLevelSOG);
             SerialM.print(F(" (phase "));
             SerialM.print(rto->phaseSP);
             SerialM.println(F(")"));
         } break;
         case '\x09': // v63: sync state in one line, to compare settings on a source that will not lock
-            SerialM.print(F("[3x4x-v111] sync: SOG level "));
+            SerialM.print(F("[3x4x-v122] sync: SOG level "));
             SerialM.print(rto->currentLevelSOG);
             SerialM.print(F(", SOG mode "));
             SerialM.print(GBS::SP_SOG_MODE::read());
@@ -1374,7 +1384,7 @@ void handleType2Command(char argument)
             uopt->autoRetrySync = 0; // keep this one: stop the hands-free attempts
             if (rto->syncWatcherEnabled) {
                 rto->syncWatcherEnabled = false; // v67: and keep the picture that was just captured
-                SerialM.println(F("[3x4x-v111] sync watcher paused: the captured picture stays"));
+                SerialM.println(F("[3x4x-v122] sync watcher paused: the captured picture stays"));
             }
             break;
         case '\x0e': // v66: write the saved sync state again
@@ -1391,11 +1401,11 @@ void handleType2Command(char argument)
             if (uopt->autoRetrySync && uopt->autoLockSync == 0) {
                 uopt->autoLockSync = 1; // pointless without the auto-lock, so arm it at the first point
                 saveUserPrefs();
-                SerialM.println(F("[3x4x-v111] auto-retry ON (the auto-lock was off, set to 2 stable reads)"));
+                SerialM.println(F("[3x4x-v122] auto-retry ON (the auto-lock was off, set to 2 stable reads)"));
             } else {
                 SerialM.println(uopt->autoRetrySync
-                    ? F("[3x4x-v111] auto-retry ON: a locked state is let go after ~3.5 s and the next attempt starts by itself. Watch, and press capture when the picture looks right")
-                    : F("[3x4x-v111] auto-retry OFF"));
+                    ? F("[3x4x-v122] auto-retry ON: a locked state is let go after ~3.5 s and the next attempt starts by itself. Watch, and press capture when the picture looks right")
+                    : F("[3x4x-v122] auto-retry OFF"));
             }
             break;
         case '\x0b': { // v64: auto-lock point: off -> 2 -> 10 -> 30 -> 62 stable reads
@@ -1403,9 +1413,9 @@ void handleType2Command(char argument)
             saveUserPrefs();
             static const uint8_t lockPoints[4] = {2, 10, 30, 62};
             if (uopt->autoLockSync == 0) {
-                SerialM.println(F("[3x4x-v111] auto-lock OFF"));
+                SerialM.println(F("[3x4x-v122] auto-lock OFF"));
             } else {
-                SerialM.print(F("[3x4x-v111] auto-lock at "));
+                SerialM.print(F("[3x4x-v122] auto-lock at "));
                 SerialM.print(lockPoints[uopt->autoLockSync - 1]);
                 SerialM.println(F(" stable reads (the later the point, the more of the normal setup has run; the earlier, the easier to reach on a source that barely holds)"));
             }
@@ -1414,8 +1424,8 @@ void handleType2Command(char argument)
             uopt->tolerantSync = uopt->tolerantSync ? 0 : 1;
             saveUserPrefs();
             SerialM.println(uopt->tolerantSync
-                ? F("[3x4x-v111] tolerant sync ON: short dropouts (under ~0.9 s) only freeze the picture, the preset is kept and the recovery steps (SOG bump, coast, freeze / unfreeze) are held back")
-                : F("[3x4x-v111] tolerant sync OFF (stock behaviour)"));
+                ? F("[3x4x-v122] tolerant sync ON: short dropouts (under ~0.9 s) only freeze the picture, the preset is kept and the recovery steps (SOG bump, coast, freeze / unfreeze) are held back")
+                : F("[3x4x-v122] tolerant sync OFF (stock behaviour)"));
             break;
         case '\x02':
             requestIntegerLow(1); // v62: 960p x4
@@ -1457,6 +1467,35 @@ void handleType2Command(char argument)
         case '\x9e': case '\x9f': case '\xa0': case '\xa1':
             setConsoleProfileDirect((uint8_t)(CONSOLE_PROFILE_FIRST_EMPTY + (uint8_t)(argument - '\x94')));
             break;
+        // (after v111) Developer, register tests (web codes 77..80): next register, value + / -, undo all
+        case '\xa5': regTestNext(); break;
+        case '\xa6': regTestStep(+1); break;
+        case '\xa7': regTestStep(-1); break;
+        case '\xa8': regTestUndo(); break;
+        case '\xa9': setOutputRateMode(3); break; // (after v111b) web code 81: output rate «exacta»
+        // (after v111c) his report: back from 480i to 240p the FTL settles (deviation 0) with a still tearing line in the
+        // middle. Two things to try live, from Developer: a reset of the picture memory, and moving the FTL's target phase.
+        case '\xaa': // web code 82
+            ResetSDRAM();
+            SerialM.println(F("[3x4x-v122] picture memory reset (ResetSDRAM)"));
+            break;
+        // (after v111h) his decision of 2026-11-21: the gain his board found is what gets kept, per console
+        case '\xad': // web code 85: guardar esta ganancia (and lock it)
+            autoGainSaveCurrent();
+            break;
+        case '\xae': // web code 86: olvidar la ganancia guardada
+            autoGainForget();
+            break;
+        case '\xaf': // (after v120c) web code 87: memoria de fábrica, his request of 2026-11-21
+            memSettingsResetMode();
+            break;
+        case '\xab': // web code 83
+        case '\xac': // web code 84
+            g_ftlTargetPhase = (int16_t)(g_ftlTargetPhase + (argument == '\xac' ? 15 : -15));
+            if (g_ftlTargetPhase < 0) g_ftlTargetPhase += 360;
+            if (g_ftlTargetPhase >= 360) g_ftlTargetPhase -= 360;
+            SM_PRINTF("[3x4x-v122] FTL target phase: %d degrees (stock 90; not saved)\n", (int)g_ftlTargetPhase);
+            break;
         case '\xa3': // (after v108e) «Otras» (web code 75)
             setConsoleProfileDirect(CONSOLE_PROFILE_OTHERS);
             break;
@@ -1494,10 +1533,10 @@ void handleType2Command(char argument)
                 rto->integer1080Centered = (w == 256) ? 2 : 1;
                 rto->integer720ReapplyAt = millis() + 700; // the second pass, as after a width change
                 saveUserPrefs();
-                SerialM.println(uopt->integer1080Tv43 ? F("[3x4x-v111] 1080p x4 Mega Drive: 4:3 (switch the TV to 4:3 with its remote)")
-                                                      : F("[3x4x-v111] 1080p x4 Mega Drive: 16:9"));
+                SerialM.println(uopt->integer1080Tv43 ? F("[3x4x-v122] 1080p x4 Mega Drive: 4:3 (switch the TV to 4:3 with its remote)")
+                                                      : F("[3x4x-v122] 1080p x4 Mega Drive: 16:9"));
             } else {
-                SerialM.println(F("[3x4x-v111] 4:3 / 16:9 in 1080p: only for the Dreamcast in 480i / 576i and the Mega Drive in 1080p x4"));
+                SerialM.println(F("[3x4x-v122] 4:3 / 16:9 in 1080p: only for the Dreamcast in 480i / 576i and the Mega Drive in 1080p x4"));
             }
             break;
         case '\x92': // (after v107v) colour and filters of the active console to /colorexp.txt (web code 58)
@@ -1547,11 +1586,11 @@ void handleType2Command(char argument)
             break;
         case '\x1f': { // v107c: undo the manual nudges, by placing the mode again from its stored values
             if (rto->isCustomPreset || rto->outModeHdBypass) {
-                SerialM.println(F("[3x4x-v111] undo: not in a custom preset or bypass"));
+                SerialM.println(F("[3x4x-v122] undo: not in a custom preset or bypass"));
                 break;
             }
             if (!rto->integer720Active && !rto->integer1080Active) {
-                SerialM.println(F("[3x4x-v111] undo: only in the whole-pixel modes"));
+                SerialM.println(F("[3x4x-v122] undo: only in the whole-pixel modes"));
                 break;
             }
             // (after v107q) his decision of 2026-11-13: deshacer is literally going back to the firmware's values, the edge
@@ -1559,13 +1598,13 @@ void handleType2Command(char argument)
             // original" button: this is it.
             edgesResetMode();
             integerProfileRefresh();
-            SerialM.println(F("[3x4x-v111] back to the saved placement of this mode"));
+            SerialM.println(F("[3x4x-v122] back to the saved placement of this mode"));
             break;
         }
         case '\x1e': { // v103: the PAL 720p x5 oversampling experiment. v107h: removed (it corrupted the picture); the
                         // code is kept unreachable so it can be brought back, and a stored "on" is cleared at boot
             uopt->x5Oversample = 0;
-            SerialM.println(F("[3x4x-v111] the x5 oversampling experiment has been removed"));
+            SerialM.println(F("[3x4x-v122] the x5 oversampling experiment has been removed"));
             break;
         }
         case '\x1d': { // v84: cycle the SDRAM clock phase, 0..15. v88: stored in the slot of the mode on screen
@@ -1588,8 +1627,9 @@ void handleType2Command(char argument)
             GBS::MEM_PAD_CLK_INVERT::write((next >> 3) & 1);
             ResetSDRAM();
             scanlinesAfterSdramReset(); // v92
+            memSettingsSave(); // (after v120c) per console, so the other consoles are left alone
             saveUserPrefs();
-            SerialM.print(F("[3x4x-v111] SDRAM clock phase "));
+            SerialM.print(F("[3x4x-v122] SDRAM clock phase "));
             SerialM.print(next);
             SerialM.print(F("/15 for "));
             SerialM.print(memModeName());
@@ -1704,7 +1744,7 @@ void handleType2Command(char argument)
             // info
             if (GBS::ADC_INPUT_SEL::read() == 1)
             {
-                SerialM.println("RGB reg");
+                SerialM.println(F("RGB reg"));
                 SerialM.println(F("------------ "));
                 SerialM.print(F("Y_OFFSET: "));
                 SerialM.println(GBS::VDS_Y_OFST::read(), DEC);
@@ -1721,7 +1761,7 @@ void handleType2Command(char argument)
             }
             else
             {
-                SerialM.println("YPbPr reg");
+                SerialM.println(F("YPbPr reg"));
                 SerialM.println(F("------------ "));
                 SerialM.print(F("Y_OFFSET: "));
                 SerialM.println(GBS::VDS_Y_OFST::read(), DEC);
@@ -1751,7 +1791,7 @@ void handleType2Command(char argument)
                 GBS::ADC_GOFCTRL::write(adco->g_off);
                 GBS::ADC_BOFCTRL::write(adco->b_off);
                 resetImageFine(); // v52: also peaking and black level
-                SerialM.println("RGB:defauit");
+                SerialM.println(F("RGB:defauit"));
             }
             else
             {
@@ -1765,7 +1805,7 @@ void handleType2Command(char argument)
                 GBS::ADC_GOFCTRL::write(adco->g_off);
                 GBS::ADC_BOFCTRL::write(adco->b_off);
                 resetImageFine(); // v52
-                SerialM.println("YPbPr:defauit");
+                SerialM.println(F("YPbPr:defauit"));
             }
             break;
         default:

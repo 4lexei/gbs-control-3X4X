@@ -1,4 +1,5 @@
 #include "GBSController.h"
+#include "../video/RegTest.h" // (after v111)
 #include "../core/Globals.h"
 #include "../web/SerialMirror.h"
 #include "../gbs/GBSPresets.h"
@@ -294,7 +295,7 @@ void setOverSampleRatio(uint8_t newRatio, boolean prepareOnly)
             }
 
             rto->osr = 1;
-            //if (!prepareOnly) SerialM.println("OSR 1x");
+            //if (!prepareOnly) SerialM.println(F("OSR 1x"));
 
             break;
         case 2:
@@ -321,7 +322,7 @@ void setOverSampleRatio(uint8_t newRatio, boolean prepareOnly)
             }
 
             rto->osr = 2;
-            //if (!prepareOnly) SerialM.println("OSR 2x");
+            //if (!prepareOnly) SerialM.println(F("OSR 2x"));
 
             break;
         case 4:
@@ -343,7 +344,7 @@ void setOverSampleRatio(uint8_t newRatio, boolean prepareOnly)
             GBS::DEC2_BYPS::write(0);
 
             rto->osr = 4;
-            //if (!prepareOnly) SerialM.println("OSR 4x");
+            //if (!prepareOnly) SerialM.println(F("OSR 4x"));
 
             break;
         default:
@@ -403,7 +404,7 @@ static void writeProgramArray720Pal()
     const uint16_t md = X5_OVERSAMPLE_MD;
     table[338] = md & 0xff;
     table[339] = (table[339] & 0xf0) | ((md >> 8) & 0x0f);
-    SerialM.print(F("[3x4x-v111] 720p x5 PAL EXPERIMENT: PLLAD_MD raised "));
+    SerialM.print(F("[3x4x-v122] 720p x5 PAL EXPERIMENT: PLLAD_MD raised "));
     SerialM.print(X5_STOCK_MD);
     SerialM.print(F(" -> "));
     SerialM.print(md);
@@ -458,6 +459,7 @@ void applyPresets(uint8_t result)
     rto->integer720Active = false;
     rto->syncPresetActive = false;     // v70: normal behaviour during the load; set again at the end if a state is saved
     rto->consoleDetectIsFresh = false; // v79: the auto profile still holds the previous console until the detection runs again
+    regTestForget(); // (after v111) the preset writes the registers under test again
     rto->integerLowActive = false;
     rto->integer720ReapplyAt = 0;
     rto->integer1080Active = false;
@@ -591,7 +593,7 @@ void applyPresets(uint8_t result)
     if (result == 1 || result == 3 || result == 8 || result == 9 || result == 14) {
         // NTSC input
         if (!ours && (uopt->integer1080 || uopt->integer720 || uopt->integerLow))
-            SerialM.println(F("[3x4x-v111] not a 15 kHz source: Rama's preset for this resolution, not ours"));
+            SerialM.println(F("[3x4x-v122] not a 15 kHz source: Rama's preset for this resolution, not ours"));
         if (uopt->presetPreference == 0) {
             writeProgramArrayNew(ntsc_240p, false);
             if (uopt->integerLow == 1 && ours) // v62: 960p x4 (the stock table, only the scaling and the windows change)
@@ -1294,11 +1296,11 @@ void doPostPresetLoadSteps()
     // auto ADC gain
     if (uopt->enableAutoGain == 1) {
         if (adco->r_gain == 0) {
-            // SerialM.printf("ADC gain: reset %x := %x\n", GBS::ADC_RGCTRL::read(), AUTO_GAIN_INIT);
+            // SM_PRINTF("ADC gain: reset %x := %x\n", GBS::ADC_RGCTRL::read(), AUTO_GAIN_INIT);
             setAdcGain(AUTO_GAIN_INIT);
             GBS::DEC_TEST_ENABLE::write(1);
         } else {
-            // SerialM.printf("ADC gain: transferred %x := %x\n", GBS::ADC_RGCTRL::read(), adco->r_gain);
+            // SM_PRINTF("ADC gain: transferred %x := %x\n", GBS::ADC_RGCTRL::read(), adco->r_gain);
             GBS::ADC_RGCTRL::write(adco->r_gain);
             GBS::ADC_GGCTRL::write(adco->g_gain);
             GBS::ADC_BGCTRL::write(adco->b_gain);
@@ -1307,6 +1309,9 @@ void doPostPresetLoadSteps()
     } else {
         GBS::DEC_TEST_ENABLE::write(0); // no need for decimation test to be enabled
     }
+    // (after v111h) a gain he saved for this console goes back, with Auto Gain on or off: it is a gain he chose, not a
+    // starting point. Outside the branch above on purpose.
+    autoGainApplySaved();
 
     // ADC offset if measured. v73: a custom preset carries its own ADC offsets in the dump, so they are not overwritten here.
     if (!rto->isCustomPreset && adco->r_off != 0 && adco->g_off != 0 && adco->b_off != 0) {
@@ -1317,9 +1322,9 @@ void doPostPresetLoadSteps()
 
     SerialM.print(F("ADC offset: R:"));
     SerialM.print(GBS::ADC_ROFCTRL::read(), HEX);
-    SerialM.print(" G:");
+    SerialM.print(F(" G:"));
     SerialM.print(GBS::ADC_GOFCTRL::read(), HEX);
-    SerialM.print(" B:");
+    SerialM.print(F(" B:"));
     SerialM.println(GBS::ADC_BOFCTRL::read(), HEX);
 
     GBS::IF_AUTO_OFST_U_RANGE::write(0); // 0 seems to be full range, else 1 to 15
@@ -1385,7 +1390,7 @@ void doPostPresetLoadSteps()
     // peaking, white balance and, since v72, the ADC black level). Writing the console profile's colour preset over it threw
     // that away, so a slot tuned for one game came back wearing the console's colours. His own slot wins.
     if (rto->isCustomPreset) {
-        SerialM.println(F("[3x4x-v111] custom preset: its own colours kept, the console colour preset is not applied"));
+        SerialM.println(F("[3x4x-v122] custom preset: its own colours kept, the console colour preset is not applied"));
     } else if (uopt->consoleProfile == 0 && !rto->consoleDetectIsFresh) {
         // v79: auto profile and the detection has not run yet on this source, so it still names whatever was connected
         // before. Applying a colour preset now would write the previous console's picture; the detection routine applies it
@@ -1460,7 +1465,7 @@ void doPostPresetLoadSteps()
         updateClampPosition();
     }
 
-    //SerialM.print("pp time: "); SerialM.println(millis() - postLoadTimer);
+    //SerialM.print(F("pp time: ")); SerialM.println(millis() - postLoadTimer);
 
     // make sure
     if (rto->useHdmiSyncFix && !uopt->wantOutputComponent) {
@@ -1554,7 +1559,7 @@ void doPostPresetLoadSteps()
             w256 = false; // (after v107z) the Dreamcast's states are all measured from the 320 px placement
         integer1080Apply(w256 ? 256 : 320);
         rto->integer1080Centered = w256 ? 2 : 1;
-        SerialM.print(F("[3x4x-v111] 1080p x"));
+        SerialM.print(F("[3x4x-v122] 1080p x"));
         SerialM.print(uopt->integer1080 == 4 ? 5 : 4);
         // v88: in PAL the placement comes from uopt->sizeStep, not from this nativeWidth argument, so saying "256 px sources"
         // here described a variable that has nothing to do with what was written. Name the step instead.
@@ -1838,7 +1843,7 @@ void doPostPresetLoadSteps()
         SerialM.print(F("\nNote: scaling RGB is still in development"));
     }
     // presetPreference = OutputCustomized may fail to load (missing) preset file and arrive here with defaults
-    SerialM.println("\n");
+    SerialM.println(F("\n"));
 }
 
 void setOutModeHdBypass(bool regsInitialized)

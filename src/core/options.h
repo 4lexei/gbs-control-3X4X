@@ -98,6 +98,8 @@ struct userOptions
     // 0 = output follows the source refresh rate (stock behaviour)
     // 1 = hold 59.94 Hz (50.00 Hz for 50 Hz sources), 2 = hold 60.00 Hz (50.00 Hz for 50 Hz sources)
     uint8_t outputRateMode;
+    uint32_t outputRateExact;
+    uint8_t outputChosen; // (after v111f) 1 once he has picked any output (Rama's, ours or a personal preset): the red notice goes
     // [patch image-tuning] 0 = softer, 1 = stock, 2 = sharper, 3 = sharpest
     uint8_t peakLevel;
     // [patch image-tuning] 0 = off, 1 = stock, 2 = stronger, 3 = strongest (colour edge sharpness)

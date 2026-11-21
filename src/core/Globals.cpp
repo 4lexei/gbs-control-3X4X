@@ -6,7 +6,10 @@
 SSD1306Wire display(0x3c, SDA_PIN, SCL_PIN); //inits I2C address & pins for OLED
 
 #if USE_NEW_OLED_MENU
-OLEDMenuManager oledMenu(&display);
+// (after v111e) his decision: the OLED menu only exists when a screen answers on the I2C bus at start-up. Its 64 menu
+// items (~6 KB) and the screen buffer (1 KB) were taken from every board, with or without a screen.
+OLEDMenuManager *oledMenuPtr = nullptr;
+bool oledPresent = false;
 OSDManager osdManager;
 volatile OLEDMenuNav oledNav = OLEDMenuNav::IDLE;
 volatile uint8_t rotaryIsrID = 0;
@@ -33,6 +36,7 @@ unsigned long lastVsyncLock = millis();
 
 // Si5351mcu instance
 Si5351mcu Si;
+int16_t g_ftlTargetPhase = 90; // (after v111c) FrameSyncAttrs::syncTargetPhase, now changeable (Developer)
 
 // WiFi configuration is in WiFiConfig.h
 

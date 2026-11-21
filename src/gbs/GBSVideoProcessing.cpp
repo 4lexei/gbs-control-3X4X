@@ -1,10 +1,123 @@
 #include "GBSVideoProcessing.h"
+#include <LittleFS.h>              // (after v111h) the gain he saved per console
+#include "../video/ColorPresets.h" // (after v111h) COLOR_PRESET_SLOTS: one slot per console, same as his colour profiles
+#include "../video/Integer1080.h" // (after v111f) settingsProfile()
 #include "../core/Globals.h"
 #include "../web/SerialMirror.h"
 #include "../wifi/WiFiManager.h"
 #include "../gbs/GBSController.h"
 #include "../utils/DebugHelpers.h"
 #include "tv5725.h"
+
+// (after v111h) his decision of 2026-11-21: no table of my measurements and no option to switch it on. The gain that HIS
+// board found on HIS cable is what gets kept. He presses "guardar esta ganancia": the value is written for that console
+// and locked, so Auto Gain stops touching it until he presses "olvidar". One byte per console profile slot, in
+// /autogainv1.txt, two hex digits each; 0 = nothing saved for that console.
+static uint8_t agSaved[COLOR_PRESET_SLOTS];
+static bool agLoaded = false;
+
+static uint8_t agSlot()
+{
+    const uint8_t prof = settingsProfile();
+    return (prof < COLOR_PRESET_SLOTS) ? prof : 0;
+}
+
+static uint8_t agNibble(int c)
+{
+    if (c >= '0' && c <= '9') return (uint8_t)(c - '0');
+    if (c >= 'a' && c <= 'f') return (uint8_t)(c - 'a' + 10);
+    if (c >= 'A' && c <= 'F') return (uint8_t)(c - 'A' + 10);
+    return 0xff;
+}
+
+void autoGainStoreLoad()
+{
+    agLoaded = true;
+    memset(agSaved, 0, sizeof(agSaved));
+    File f = LittleFS.open("/autogainv1.txt", "r");
+    if (!f)
+        return;
+    for (uint8_t s = 0; s < COLOR_PRESET_SLOTS; s++) {
+        if (!f.available())
+            break;
+        const uint8_t hi = agNibble(f.read());
+        if (!f.available())
+            break;
+        const uint8_t lo = agNibble(f.read());
+        if (hi == 0xff || lo == 0xff)
+            break;
+        agSaved[s] = (uint8_t)((hi << 4) | lo);
+    }
+    f.close();
+}
+
+static void autoGainStoreSave()
+{
+    File f = LittleFS.open("/autogainv1.txt", "w");
+    if (!f) {
+        SerialM.println(F("[3x4x-v122] saved gain: could not open the file"));
+        return;
+    }
+    for (uint8_t s = 0; s < COLOR_PRESET_SLOTS; s++) {
+        char d[2];
+        const char *hex = "0123456789abcdef";
+        d[0] = hex[(agSaved[s] >> 4) & 0x0f];
+        d[1] = hex[agSaved[s] & 0x0f];
+        f.write((const uint8_t *)d, 2);
+    }
+    f.close();
+}
+
+// the gain saved for the console in front of us, 0 = none. While it is not 0 the gain is locked.
+uint8_t autoGainSavedValue()
+{
+    if (!agLoaded)
+        autoGainStoreLoad();
+    return agSaved[agSlot()];
+}
+
+bool autoGainLocked()
+{
+    return autoGainSavedValue() != 0;
+}
+
+// "guardar esta ganancia": whatever is in the register right now, for this console, and locked from here on
+void autoGainSaveCurrent()
+{
+    typedef TV5725<GBS_ADDR> GBS;
+    if (!agLoaded)
+        autoGainStoreLoad();
+    const uint8_t g = GBS::ADC_GGCTRL::read();
+    if (g == 0) {
+        SerialM.println(F("[3x4x-v122] saved gain: nothing to save yet"));
+        return;
+    }
+    agSaved[agSlot()] = g;
+    autoGainStoreSave();
+    SM_PRINTF("[3x4x-v122] gain saved for this console: 0x%02x (locked; Auto Gain will not move it)\n", (unsigned)g);
+}
+
+// "olvidar la ganancia": the console goes back to learning it on its own
+void autoGainForget()
+{
+    if (!agLoaded)
+        autoGainStoreLoad();
+    agSaved[agSlot()] = 0;
+    autoGainStoreSave();
+    SerialM.println(F("[3x4x-v122] saved gain forgotten: Auto Gain works it out again from 0x48"));
+}
+
+// puts the saved gain back. Called after a preset load and once the console is known, whether Auto Gain is on or off:
+// a saved gain is a gain he chose, not a starting point.
+void autoGainApplySaved()
+{
+    typedef TV5725<GBS_ADDR> GBS;
+    const uint8_t g = autoGainSavedValue();
+    if (!g || GBS::ADC_GGCTRL::read() == g)
+        return;
+    setAdcGain(g);
+    SM_PRINTF("[3x4x-v122] saved gain for this console: 0x%02x\n", (unsigned)g);
+}
 
 void setAdcGain(uint8_t gain) {
     typedef TV5725<GBS_ADDR> GBS;
@@ -154,6 +267,8 @@ void runAutoGain()
     static unsigned long lastTimeAutoGain = millis();
     uint8_t limit_found = 0, greenValue = 0;
     uint8_t loopCeiling = 0;
+    if (autoGainLocked()) // (after v111h) he saved a gain for this console: hands off until he forgets it
+        return;
     uint8_t status00reg = GBS::STATUS_00::read(); // confirm no mode changes happened
 
     if ((millis() - lastTimeAutoGain) < 30000) {

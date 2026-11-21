@@ -31,11 +31,11 @@ void printReg(uint8_t seg, uint8_t reg)
     uint8_t readout;
     readFromRegister(reg, 1, &readout);
     // didn't think this HEX trick would work, but it does! (?)
-    SerialM.print("0x");
+    SerialM.print(F("0x"));
     SerialM.print(readout, HEX);
-    SerialM.print(", // s");
+    SerialM.print(F(", // s"));
     SerialM.print(seg);
-    SerialM.print("_");
+    SerialM.print(F("_"));
     SerialM.println(reg, HEX);
 }
 

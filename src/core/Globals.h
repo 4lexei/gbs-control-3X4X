@@ -55,7 +55,8 @@ extern SerialMirror SerialM;
 
 // OLED Menu (new system)
 #if USE_NEW_OLED_MENU
-extern OLEDMenuManager oledMenu;
+extern OLEDMenuManager *oledMenuPtr; // (after v111e) null without a screen
+extern bool oledPresent;            // (after v111e)
 extern OSDManager osdManager;
 extern volatile OLEDMenuNav oledNav;
 extern volatile uint8_t rotaryIsrID;
