@@ -51,8 +51,8 @@
   "movimiento": "move",
   "borde": "border",
   "escala": "scale",
-  "El borde quedará guardado automáticamente para el modo y perfil de esta consola.": "The border is saved automatically for this console's mode and profile.",
-  "Si mueves o escalas la imagen, te corresponde guardar a ti los cambios en un preset personal (menú MODO).": "If you move or scale the picture, it is up to you to save the changes in a personal preset (MODE menu).",
+  "El borde y la posición quedarán guardados automáticamente para el modo y perfil de esta consola.": "The border and the position are saved automatically for this console's mode and profile.",
+  "Si escalas la imagen, te corresponde guardar a ti los cambios en un preset personal (menú MODO).": "If you scale the picture, it is up to you to save the changes in a personal preset (MODE menu).",
   "Los cambios anteriores pueden ocasionar conflictos y glitches. No es fácil obtener una buena imagen, reajustar la RAM podría ayudar.": "The changes above can cause conflicts and glitches. Getting a good picture is not easy; readjusting the RAM may help.",
   "Ajuste fino: mover y escalar avanzan con el paso más pequeño posible. Más toques, pero colocación exacta.": "Fine tune: move and scale advance by the smallest possible step. More taps, but exact placement.",
   "Memoria": "Memory",
@@ -216,8 +216,8 @@
   "Aviso": "Notice",
   "Copiar huella": "Copy fingerprint",
   "¿Volver al borde del firmware? Se borrará el borde actual para este modo": "Go back to the firmware's border? The current border for this mode will be deleted",
+  "¿Volver a la posición del firmware? Se borrará la posición actual para este modo": "Go back to the firmware's position? The current position for this mode will be deleted",
   "¿Sobrescribir lo guardado de {profile}?": "Overwrite what is saved for {profile}?",
-  "¿Reiniciar el perfil de {profile}? Se borrará todo lo que tiene guardado (colores y filtros) y volverá a los valores de fábrica. No se puede deshacer.": "Reset the {profile} profile? Everything saved in it (colors and filters) will be deleted and it will go back to the factory values. This cannot be undone.",
   "¿Sobrescribir el sync guardado de {profile} con el que tiene ahora el chip?": "Overwrite the saved sync of {profile} with the one the chip has now?",
   "¿Escribir la receta ODV sobre el sync que tiene ahora el chip? El perfil activo es {profile}.": "Write the ODV recipe over the sync the chip has now? The active profile is {profile}.",
   "¿Borrar el sync guardado de {profile}?": "Delete the saved sync of {profile}?",
@@ -419,6 +419,7 @@
   "sin Si5351": "no Si5351",
   "Elige un modo de salida abajo.": "Choose an output mode below.",
   " · bloqueada": " · locked",
-  "Píxel perfecto en juegos 256px de PCE. Ojo: píxel perfecto no significa proporción ideal. Nadie jugó así en la época y supongo que ni se tuvo en cuenta al diseñar el arte.": "Pixel perfect in 256px PCE games. Mind you: pixel perfect does not mean the right proportions. Nobody played this way back then, and I don't suppose the artwork was drawn with it in mind."
+  "Píxel perfecto en juegos 256px de PCE. Ojo: píxel perfecto no significa proporción ideal. Nadie jugó así en la época y supongo que ni se tuvo en cuenta al diseñar el arte.": "Pixel perfect in 256px PCE games. Mind you: pixel perfect does not mean the right proportions. Nobody played this way back then, and I don't suppose the artwork was drawn with it in mind.",
+  "Se ven 216 de las 224 líneas. En CRT desborda un poco por los lados.": "216 of the 224 lines are shown. In CRT it overflows the sides a little."
  }
 }

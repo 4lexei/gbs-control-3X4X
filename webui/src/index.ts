@@ -1304,6 +1304,8 @@ const WORK_DESC: Record<string, [string, string]> = {
     "Para una pantalla 16:9 a 1080p."],
   // (after v108h) the Mega Drive's 1080p x4 «4:3»: the picture 4/3 wider, for a 16:9 set switched to 4:3 by its remote
   "1080p x4 4:3": ["", "Para una tele 16:9 puesta en modo 4:3."],
+  // (after v123e) the PC Engine's 1080p x5 «4:3»
+  "1080p x5 4:3": ["Se ven 216 de las 224 líneas. En CRT desborda un poco por los lados.", "Para una tele 16:9 puesta en modo 4:3."],
   "1080p x5":     ["Se ven 216 de las 224 líneas: faltan 4 arriba y 4 abajo, que en muchos juegos apenas se notan.", "Para una pantalla 16:9 a 1080p."],
 };
 // v107n: with any console other than the SNES the Super Game Boy means nothing, so x4 and x5 have their own sentence
@@ -1404,7 +1406,7 @@ const DC_DESC: Record<string, string> = {
   "5 720p x3 4:3": "Para el modo panorámico de juegos como Rayman 2, F355, MSR... La imagen llenará el ancho de tu pantalla 16:9.",
 };
 // modes that crop the picture vertically, and so need the hint about moving it
-const WORK_CROPS: Record<string, boolean> = { "720p x4 16:9": true, "720p x5 16:9": true, "1080p x5": true };
+const WORK_CROPS: Record<string, boolean> = { "720p x4 16:9": true, "720p x5 16:9": true, "1080p x5": true, "1080p x5 16:9": true, "1080p x5 4:3": true }; // (after v123e) the PC Engine's x5 carries its shape in the key
 
 // the status bar is written for the log, in English; on the screen it is shown in Spanish
 // (after v107v) his list of 2026-11-14: console profiles without measurements (firmware profiles 4..17, in this order,
@@ -1512,7 +1514,7 @@ const parseWork = (text: string): WorkState => {
   const snes = /profile (auto )?SNES\b/.test(lines[1] || "");
   const pce = /profile (auto )?PC-Engine\b/.test(lines[1] || "");
   // (after v108h) 1080p x4 has shapes too with the Mega Drive (and the Dreamcast): its key carries the shape
-  return { mode, aspect, step, steps, key: mode.indexOf("720p") === 0 || (mode === "1080p x4" && aspect) ? `${mode} ${aspect}` : mode, md, snes, pce, fine: last.indexOf("fine") >= 0 };
+  return { mode, aspect, step, steps, key: mode.indexOf("720p") === 0 || ((mode === "1080p x4" || mode === "1080p x5") && aspect) ? `${mode} ${aspect}` : mode, md, snes, pce, fine: last.indexOf("fine") >= 0 };
 };
 
 // what the pad has done since the mode was last placed
@@ -1632,7 +1634,7 @@ const updateWorkScreen = (raw: string) => {
     // (after v107z) the Dreamcast in 480i: its 1080p has the two shapes too
     const dc43 = dcNow >= 3 && dcNow <= 5 && s.mode === "1080p x4";
     // (after v108h) the Mega Drive's 1080p x4: the firmware names its shape in the bar only where it has the two
-    const md43 = !dcNow && s.mode === "1080p x4" && !!s.aspect;
+    const md43 = !dcNow && (s.mode === "1080p x4" || s.mode === "1080p x5") && !!s.aspect; // (after v123e) the PC Engine's x5 too
     dcAspect1080 = dc43 || md43 || (dcNow === 5 && s.mode === "720p x3"); // (after v108f) the VGA's 720p switches live too
     // v107f: both shapes always in view, the one in use marked. Only 720p x3 can switch; every other mode is 16:9
     // only, so there 4:3 is shown switched off, so it reads as "not available here" rather than missing.
@@ -2000,8 +2002,7 @@ const initWorkScreen = () => {
   });
 
   // (after v107r) the three undo buttons; the edge one asks first and clears its counter in the "gbs-click" handler
-  const undoMove = document.getElementById("workUndoMove");
-  if (undoMove) undoMove.addEventListener("click", () => resetWorkPart("move"));
+  // (after v123j) the move one asks too now (it erases the kept position): its counter is cleared in the gbs-click handler
   const undoScale = document.getElementById("workUndoScale");
   if (undoScale) undoScale.addEventListener("click", () => resetWorkPart("scale"));
 
@@ -2292,9 +2293,9 @@ const initGBSButtons = () => {
       button.addEventListener("click", () => {
         // (after v107r) with a personal profile loaded "deshacer borde" goes back to the profile's edge and erases
         // nothing, so it does not ask
-        if (button.id === "workUndoEdge" && customPresetOn) {
+        if ((button.id === "workUndoEdge" || button.id === "workUndoMove") && customPresetOn) {
           action(message);
-          resetWorkPart("edge");
+          resetWorkPart(button.id === "workUndoEdge" ? "edge" : "move");
           return;
         }
         if (confirmText) {
@@ -2302,6 +2303,7 @@ const initGBSButtons = () => {
             () => {
               action(message);
               if (button.id === "workUndoEdge") resetWorkPart("edge"); // (after v107r) only once accepted
+              if (button.id === "workUndoMove") resetWorkPart("move"); // (after v123j)
             },
             () => {}
           );
@@ -2351,7 +2353,7 @@ const buildDiagnosticsText = (): string => {
   const log = GBSControl.ui.terminal.value;
   const tail = log.length > 6000 ? log.substring(log.length - 6000) : log;
   return [
-    "GBS-Control diagnostics (web UI 3x4x-v122)",
+    "GBS-Control diagnostics (web UI 3x4x-v123l)",
     new Date().toISOString(),
     "Status: " + (statusBar ? statusBar.textContent : "n/a"),
     "Free heap: " + (lastFreeHeap ? `${lastFreeHeap} bytes` : "n/a"), // (after v111c)
@@ -2496,7 +2498,7 @@ const exportProfile = () => {
         .then((files) => {
         const profile = {
             gbsProfile: 1,
-            firmware: "3x4x-v122",
+            firmware: "3x4x-v123l",
             name: meta.name,
             meta: {
                 presetID: meta.presetID,
@@ -3017,7 +3019,7 @@ const colorExport = () => {
           gbsAlert(`El perfil de ${name} no tiene nada guardado. Pulsa GUARDAR antes de exportar.`);
           return;
         }
-        const payload = { gbsColor: 1, firmware: "3x4x-v122", consola: name, perfil: slot, datos: data };
+        const payload = { gbsColor: 1, firmware: "3x4x-v123l", consola: name, perfil: slot, datos: data };
         downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }),
           `color-${COLOR_FILE_SLUGS[slot] || "consola"}.gbsc`);
       })

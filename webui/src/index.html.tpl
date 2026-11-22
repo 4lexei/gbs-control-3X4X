@@ -267,13 +267,13 @@
             <!-- (after v107r) three undo buttons, his choice: each one puts back only what it names. The edge one asks first,
                  because it erases the edge kept for this mode. -->
             <div class="gbs-adj__acts gbs-adj__undo">
-              <button gbs-message="55" gbs-message-type="img" gbs-click="normal" class="gbs-bar__ghost" id="workUndoMove"><small>deshacer</small><span>movimiento</span></button>
+              <button gbs-message="55" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Volver a la posición del firmware? Se borrará la posición actual para este modo" class="gbs-bar__ghost" id="workUndoMove"><small>deshacer</small><span>movimiento</span></button>
               <button gbs-message="56" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Volver al borde del firmware? Se borrará el borde actual para este modo" class="gbs-bar__ghost" id="workUndoEdge"><small>deshacer</small><span>borde</span></button>
               <button gbs-message="57" gbs-message-type="img" gbs-click="normal" class="gbs-bar__ghost" id="workUndoScale"><small>deshacer</small><span>escala</span></button>
             </div>
             <!-- (after v107q) his request: always visible, right under the pad (first moved to the top, then here: whoever plays with the pad sees it) -->
-            <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>El borde quedará guardado automáticamente para el modo y perfil de esta consola.</span></div>
-            <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>Si mueves o escalas la imagen, te corresponde guardar a ti los cambios en un preset personal (menú MODO).</span></div>
+            <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>El borde y la posición quedarán guardados automáticamente para el modo y perfil de esta consola.</span></div>
+            <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>Si escalas la imagen, te corresponde guardar a ti los cambios en un preset personal (menú MODO).</span></div>
             <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>Los cambios anteriores pueden ocasionar conflictos y glitches. No es fácil obtener una buena imagen, reajustar la RAM podría ayudar.</span></div>
             <div class="gbs-adj__remind gbs-adj__info">Ajuste fino: mover y escalar avanzan con el paso más pequeño posible. Más toques, pero colocación exacta.</div>
             <div class="gbs-card gbs-adj__mem">
@@ -466,11 +466,11 @@
               <div class="gbs-card__label gbs-colprof-label" id="colProfLabel">Perfil de color y filtro</div>
               <div class="gbs-card__desc gbs-col__desc" id="colProfDesc">Este firmware recuerda los ajustes de color y filtros para cada consola por separado (sólo si existe su perfil específico, estoy trabajando en ello). Tocando el botón GUARDAR, quedarán almacenados para la próxima vez que la uses, convirtiéndose en su ajuste global.<br><br>Si un juego concreto necesita otros ajustes (ejemplo: típico juego de miedo demasiado oscuro en el que no se ve nada), ¡no guardes aquí! Guarda un preset personal para dicho juego en la pestaña MODO; ese preset llevará sus propios colores y filtros, y no alterará el ajuste global de la consola.</div>
               <!-- v107p: guardar now keeps the filters too (scanlines, line filter, peaking, edge, deinterlacer) and brightness /
-                   contrast. "reiniciar" forgets what this console has saved and puts the factory values back. -->
+                   contrast. "reiniciar" puts the factory values on screen; (after v123d) what this console has saved is kept. -->
               <div class="gbs-grid3">
                 <button gbs-message="17" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Sobrescribir lo guardado de {profile}?" class="gbs-chip gbs-chip--save">guardar</button>
                 <button gbs-message="18" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat">cargar</button>
-                <button gbs-message="19" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Reiniciar el perfil de {profile}? Se borrará todo lo que tiene guardado (colores y filtros) y volverá a los valores de fábrica. No se puede deshacer." class="gbs-chip gbs-chip--flat gbs-danger">reiniciar</button>
+                <button gbs-message="19" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat">reiniciar</button>
               </div>
               <!-- (after v107v) one console's colour and filters to a file and back, to keep a copy or share it -->
               <div class="gbs-grid3 gbs-grid3--2">
@@ -1309,11 +1309,11 @@
               <!-- (after v107q) a replica of the colour profile card of Color, his request: the same buttons, the same messages, so the
                    changes made in Filtros can be saved without going back to the other tab.
                    v107p: guardar now keeps the filters too (scanlines, line filter, peaking, edge, deinterlacer) and brightness /
-                   contrast. "reiniciar" forgets what this console has saved and puts the factory values back. -->
+                   contrast. "reiniciar" puts the factory values on screen; (after v123d) what this console has saved is kept. -->
               <div class="gbs-grid3">
                 <button gbs-message="17" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Sobrescribir lo guardado de {profile}?" class="gbs-chip gbs-chip--save">guardar</button>
                 <button gbs-message="18" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat">cargar</button>
-                <button gbs-message="19" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Reiniciar el perfil de {profile}? Se borrará todo lo que tiene guardado (colores y filtros) y volverá a los valores de fábrica. No se puede deshacer." class="gbs-chip gbs-chip--flat gbs-danger">reiniciar</button>
+                <button gbs-message="19" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat">reiniciar</button>
               </div>
               <!-- (after v107v) one console's colour and filters to a file and back, to keep a copy or share it -->
               <div class="gbs-grid3 gbs-grid3--2">
@@ -1349,7 +1349,7 @@
             <div class="gbs-card">
               <div class="gbs-card__label">Actualizar firmware</div>
               <div class="gbs-card__desc gbs-col__desc">Elige el archivo firmware.bin del proyecto compilado (.pio/build/gbsc/firmware.bin) y pulsa subir. No apagues el GBS hasta que termine.</div>
-              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v122</b></div>
+              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v123l</b></div>
               <label class="gbs-chip gbs-chip--flat gbs-sys__file"><span>elegir archivo</span><small gbs-update-filename>ninguno elegido</small><input type="file" accept=".bin" gbs-update-file /></label>
               <div class="gbs-sys__status" gbs-update-status></div>
               <div class="gbs-sys__bar" gbs-update-bar-wrap hidden><div gbs-update-bar></div></div>
