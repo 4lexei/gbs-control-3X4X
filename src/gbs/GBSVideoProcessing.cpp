@@ -55,7 +55,7 @@ static void autoGainStoreSave()
 {
     File f = LittleFS.open("/autogainv1.txt", "w");
     if (!f) {
-        SerialM.println(F("[3x4x-v122] saved gain: could not open the file"));
+        SerialM.println(F("[3x4x-v123l] saved gain: could not open the file"));
         return;
     }
     for (uint8_t s = 0; s < COLOR_PRESET_SLOTS; s++) {
@@ -89,12 +89,12 @@ void autoGainSaveCurrent()
         autoGainStoreLoad();
     const uint8_t g = GBS::ADC_GGCTRL::read();
     if (g == 0) {
-        SerialM.println(F("[3x4x-v122] saved gain: nothing to save yet"));
+        SerialM.println(F("[3x4x-v123l] saved gain: nothing to save yet"));
         return;
     }
     agSaved[agSlot()] = g;
     autoGainStoreSave();
-    SM_PRINTF("[3x4x-v122] gain saved for this console: 0x%02x (locked; Auto Gain will not move it)\n", (unsigned)g);
+    SM_PRINTF("[3x4x-v123l] gain saved for this console: 0x%02x (locked; Auto Gain will not move it)\n", (unsigned)g);
 }
 
 // "olvidar la ganancia": the console goes back to learning it on its own
@@ -104,7 +104,7 @@ void autoGainForget()
         autoGainStoreLoad();
     agSaved[agSlot()] = 0;
     autoGainStoreSave();
-    SerialM.println(F("[3x4x-v122] saved gain forgotten: Auto Gain works it out again from 0x48"));
+    SerialM.println(F("[3x4x-v123l] saved gain forgotten: Auto Gain works it out again from 0x48"));
 }
 
 // puts the saved gain back. Called after a preset load and once the console is known, whether Auto Gain is on or off:
@@ -116,7 +116,7 @@ void autoGainApplySaved()
     if (!g || GBS::ADC_GGCTRL::read() == g)
         return;
     setAdcGain(g);
-    SM_PRINTF("[3x4x-v122] saved gain for this console: 0x%02x\n", (unsigned)g);
+    SM_PRINTF("[3x4x-v123l] saved gain for this console: 0x%02x\n", (unsigned)g);
 }
 
 void setAdcGain(uint8_t gain) {

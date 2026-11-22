@@ -166,6 +166,9 @@ static const char *consoleGuess(float sfr)
 {
     if (sfr > 59.905f && sfr < 59.930f) return "Mega Drive NTSC";
     if (sfr > 59.80f && sfr < 59.84f) return "PC Engine";
+    // (after v123d) his report of 2026-11-22: Bonk runs 262-line frames instead of 263, 59.8249 * 263 / 262 = 60.0532
+    // Hz, and came out undetected. A second PC Engine window; the SNES / NES one starts at 60.08.
+    if (sfr > 60.045f && sfr < 60.065f) return "PC Engine";
     if (sfr > 49.60f && sfr < 49.80f) return "Mega Drive PAL";
     if (sfr > 50.12f && sfr < 50.22f) return "Mega Drive NTSC @50Hz";
     if (sfr > 59.35f && sfr < 59.45f) return "Mega Drive PAL @60Hz";
@@ -520,7 +523,8 @@ void statusBarTick()
     {
         // v62: 1 = SNES / NES, 2 = PC Engine (59.80 - 59.84 Hz, measured by the user), 0 = anything else (Mega Drive values)
         uint8_t detected = ((smoothed > 60.08f && smoothed < 60.12f) || (smoothed > 59.50f && smoothed < 59.60f) || (smoothed > 49.995f && smoothed < 50.02f)) ? 1 : 0;
-        if (!detected && smoothed > 59.80f && smoothed < 59.84f)
+        if (!detected && ((smoothed > 59.80f && smoothed < 59.84f) ||
+                          (smoothed > 60.045f && smoothed < 60.065f))) // (after v123d) 262-line games (Bonk)
             detected = 2;
         const bool wasStale = !rto->consoleDetectIsFresh;
         // v107p: the Mega Drive is now told apart from "anything else", for the picture memory of each console: an unknown
@@ -621,9 +625,14 @@ void statusBarTick()
         // (after v107v) a console (or a norm) other than the one last seen: if it has a mode of its own, that is loaded
         // instead, and the load brings its placement and colours with it
         const bool modeRestore = consoleModeCheck();
-        if (!modeRestore && uopt->consoleProfile == 0 && (changed || wasStale)) {
-            if (changed || (!rto->dcVgaActive && dcVgaWanted())) // (after v108e) the Dreamcast through VGA, also when the
-                integerProfileRefresh();                         // detection only turned fresh (it may have held DC already)
+        if (!modeRestore && (changed || wasStale)) {
+            // (after v122) his decision of 2026-11-22: "los ajustes de color deben cargarse sea perfil automatico o
+            // elegido a mano". Only the mode refresh is still for the automatic profile: with a profile pinned by hand
+            // the detection must not go changing modes underneath him. The picture is another matter, and his colours
+            // and his saved gain now come back either way.
+            if (uopt->consoleProfile == 0 && (changed || (!rto->dcVgaActive && dcVgaWanted())))
+                integerProfileRefresh(); // (after v108e) the Dreamcast through VGA, also when the detection only turned
+                                         // fresh (it may have held DC already)
             // v79: the colour preset was applied at preset load time, when the detection still held the console that was
             // connected before (the user saw his PC Engine colours land on a SNES). Now it waits for this moment.
             colorPresetApply();

@@ -19,12 +19,12 @@ volatile uint32_t clockToolsPendingSi = 0;
 static void applyExactHz(uint32_t v)
 {
     if (v < 400000 || v > 900000) {
-        SerialM.println(F("[3x4x-v122] exact output rate: out of range (40..90 Hz)"));
+        SerialM.println(F("[3x4x-v123l] exact output rate: out of range (40..90 Hz)"));
         return;
     }
     uopt->outputRateExact = v;
     saveUserPrefs();
-    SM_PRINTF("[3x4x-v122] exact output rate: %lu.%04lu Hz%s\n", (unsigned long)(v / 10000), (unsigned long)(v % 10000),
+    SM_PRINTF("[3x4x-v123l] exact output rate: %lu.%04lu Hz%s\n", (unsigned long)(v / 10000), (unsigned long)(v % 10000),
                    uopt->outputRateMode == 3 ? "" : " (saved; choose \"exacta\" to use it)");
     if (uopt->outputRateMode == 3)
         externalClockGenRateKick();
@@ -34,7 +34,7 @@ static void applyExactHz(uint32_t v)
 static void applyAdc(uint16_t md)
 {
     if (md < 1000 || md > 4095) {
-        SerialM.println(F("[3x4x-v122] ADC clock: out of range (1000..4095)"));
+        SerialM.println(F("[3x4x-v123l] ADC clock: out of range (1000..4095)"));
         return;
     }
     const uint16_t before = GBS::PLLAD_MD::read();
@@ -54,7 +54,7 @@ static void applyAdc(uint16_t md)
     delay(1);
     updateClampPosition();
     updateCoastPosition(0);
-    SM_PRINTF("[3x4x-v122] ADC clock (PLLAD_MD): %u -> %u, IF HRST/LINE %u/%u, HB ST2 %u (not saved; a preset load puts it back)\n",
+    SM_PRINTF("[3x4x-v123l] ADC clock (PLLAD_MD): %u -> %u, IF HRST/LINE %u/%u, HB ST2 %u (not saved; a preset load puts it back)\n",
                    (unsigned)before, (unsigned)md, (unsigned)GBS::IF_HSYNC_RST::read(), (unsigned)GBS::IF_LINE_SP::read(),
                    (unsigned)GBS::IF_HB_ST2::read());
 }
@@ -63,17 +63,17 @@ static void applyAdc(uint16_t md)
 static void applySi(uint32_t f)
 {
     if (!rto->extClockGenDetected) {
-        SerialM.println(F("[3x4x-v122] output clock: no Si5351"));
+        SerialM.println(F("[3x4x-v123l] output clock: no Si5351"));
         return;
     }
     if (f < 20000000UL || f > 200000000UL) {
-        SerialM.println(F("[3x4x-v122] output clock: out of range (20..200 MHz)"));
+        SerialM.println(F("[3x4x-v123l] output clock: out of range (20..200 MHz)"));
         return;
     }
     const uint32_t before = rto->freqExtClockGen;
     Si.setFreq(0, f);
     rto->freqExtClockGen = f;
-    SM_PRINTF("[3x4x-v122] output clock: %lu -> %lu Hz (not saved; the output rate steering and the frame time lock "
+    SM_PRINTF("[3x4x-v123l] output clock: %lu -> %lu Hz (not saved; the output rate steering and the frame time lock "
                    "may move it again)\n", (unsigned long)before, (unsigned long)f);
 }
 
