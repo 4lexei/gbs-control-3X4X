@@ -354,7 +354,10 @@ static void dcVgaClock(uint16_t md, uint16_t hrst, uint16_t line, uint16_t st2, 
 // Only the Mega Drive (its own profile, Auto or chosen), only 1080p x4: measured by him on the 240p Test Suite grids.
 bool md43Able()
 {
-    if (!rto->integer1080Active || uopt->integer1080 != 3 || rto->isCustomPreset || rto->outModeHdBypass)
+    // (after v123e) his request of 2026-11-22: the PC Engine's 1080p x5 gets a «4:3» too ("lo más parecido a casi llenar la
+    // pantalla, muy poco desborde"). Only there: the x5 of the other consoles keeps its 16:9 alone.
+    const bool pceX5 = (uopt->integer1080 == 4) && pceProfile();
+    if (!rto->integer1080Active || (uopt->integer1080 != 3 && !pceX5) || rto->isCustomPreset || rto->outModeHdBypass)
         return false;
     if (rto->presetID != 0x05 && rto->presetID != 0x15)
         return false;
@@ -441,7 +444,7 @@ bool integer1080ClockLive(bool narrow)
     updateClampPosition();
     updateCoastPosition(0);
     uopt->integer1080Narrow = narrow ? 1 : 0;
-    SerialM.print(F("[3x4x-v122] 1080p x4: ADC clock "));
+    SerialM.print(F("[3x4x-v123l] 1080p x4: ADC clock "));
     SerialM.print(md);
     SerialM.println(narrow ? F(" (80 %, 256 px) changed in place, no reload") : F(" (normal) changed in place, no reload"));
     return true;
@@ -470,6 +473,34 @@ static void md43Measured(uint16_t nativeWidth)
     // set squeezes it), window 1601 px centred on 960.0; the only thing he had to move was IF HBIN, 212 -> 264, because
     // the wider window uncovered a strip of garbage on the left that his 16:9 edges used to hide.
     // Both widths measured by him on 2026-11-21 and fixed here.
+    // (after v123e) the PC Engine's 1080p x5 «4:3». Its 16:9 measured on 2026-11-22: CRT HScale 818 = 6.257 columns
+    // (constant 5118), 256 px HScale 1023 = 5.000. A set in 4:3 squeezes to 0.75, so: CRT 6.25 / 0.75 = 8.333 columns =
+    // HScale 614 (overflows the 4:3 screen a little, as he wants), 256 px 5 / 0.75 = 6.667 columns = HScale 768 (5 square
+    // ones once squeezed). Windows, vertical and input start are the 16:9 ones for now: CALCULATED SCALE, he opens the
+    // windows with his captures. Grid cells expected in the capture: 100 px CRT, 80 px 256 (75 / 60 in his 4:3 canvas).
+    if (pceProfile() && uopt->integer1080 == 4) {
+        if (w256) { hs = 768; hbst = 1493; hbsp = 78; dst = 1493; dsp = 196; hbin = 210; } // 256 measured by Alexei (80 px square cells in 4:3 canvas)
+        else      { hs = 614; hbst = 1545; hbsp = 1564; dst = 1545; dsp = 146; hbin = 286; } // (after v123f) his 09:54 move, HBIN 276 before // CRT measured by Alexei (75 px cells in 4:3 canvas)
+        if (!tr.md43)
+            md43Snap();
+        GBS::VDS_HSCALE::write(hs);
+        GBS::VDS_HSCALE_BYPS::write(0);
+        GBS::VDS_VSCALE::write(409);
+        GBS::VDS_VSCALE_BYPS::write(0);
+        GBS::VDS_HB_ST::write(hbst);
+        GBS::VDS_HB_SP::write(hbsp);
+        GBS::VDS_DIS_HB_ST::write(dst);
+        GBS::VDS_DIS_HB_SP::write(dsp);
+        GBS::IF_HBIN_ST::write(0);
+        GBS::IF_HBIN_SP::write(hbin);
+        GBS::VDS_DIS_VB_ST::write(1120);
+        GBS::VDS_DIS_VB_SP::write(40);
+        GBS::IF_VB_ST::write(52);
+        GBS::IF_VB_SP::write(54);
+        SerialM.print(F("[3x4x-v123l] 1080p x5 | 4:3 | PC Engine | "));
+        SerialM.println(w256 ? F("256 px") : F("320 px"));
+        return;
+    }
     if (pceProfile()) {
         // 256 px on the same normal clock as the 320 px (see narrowWanted). MEASURED by him on 2026-11-21 10:16 from
         // the 320 button at HScale 959: cells of 64.0 px exactly = 5.333 columns (4.000 whole ones once the set squeezes
@@ -492,9 +523,8 @@ static void md43Measured(uint16_t nativeWidth)
         GBS::VDS_DIS_VB_SP::write(109);
         GBS::IF_VB_ST::write(27);
         GBS::IF_VB_SP::write(29);
-        SerialM.print(F("[3x4x-v122] 1080p x4 | 4:3 | PC Engine | "));
-        SerialM.println(w256 ? F("256 px | STARTING POINT, not measured yet")
-                             : F("320 px | STARTING POINT, not measured yet"));
+        SerialM.print(F("[3x4x-v123l] 1080p x4 | 4:3 | PC Engine | "));
+        SerialM.println(w256 ? F("256 px") : F("320 px"));
         return;
     }
     if (pal) {
@@ -523,7 +553,7 @@ static void md43Measured(uint16_t nativeWidth)
     GBS::VDS_VB_SP::write(pal ? 82 : 96);
     GBS::IF_VB_ST::write(pal ? 59 : 12);
     GBS::IF_VB_SP::write(pal ? 61 : 14);
-    SerialM.print(F("[3x4x-v122] 1080p x4 | 4:3 | Mega Drive "));
+    SerialM.print(F("[3x4x-v123l] 1080p x4 | 4:3 | Mega Drive "));
     SerialM.print(pal ? F("PAL | ") : F("NTSC | "));
     SerialM.println(w256 ? F("256 px, whole pixels once the set is in 4:3 | measured placement")
                          : F("320 px (a 256 px game at its CRT size) | measured placement"));
@@ -563,7 +593,7 @@ static void dcVga2x2()
     GBS::VDS_VB_SP::write(65);
     GBS::IF_VB_ST::write(12);
     GBS::IF_VB_SP::write(14);
-    SerialM.print(F("[3x4x-v122] 1080p | 16:9 | Dreamcast VGA | 2 x 2 | ADC clock "));
+    SerialM.print(F("[3x4x-v123l] 1080p | 16:9 | Dreamcast VGA | 2 x 2 | ADC clock "));
     SerialM.print(dcVgaStockMd);
     SerialM.print(F(" -> "));
     SerialM.print(md);
@@ -599,8 +629,8 @@ static void dcVga720()
     GBS::IF_VB_SP::write(29);
     GBS::IF_HB_ST2::write(w43 ? 51 : 72); // 16:9: his centring with Sonic, 14:49 (was 78 / 174)
     GBS::IF_HB_SP2::write(w43 ? 147 : 168);
-    SerialM.println(w43 ? F("[3x4x-v122] 720p x3 | 4:3 | Dreamcast VGA | 2 columns x 1.5 lines, the whole width | measured placement")
-                        : F("[3x4x-v122] 720p x3 | 16:9 | Dreamcast VGA | 1.5 columns x 1.5 lines | measured placement"));
+    SerialM.println(w43 ? F("[3x4x-v123l] 720p x3 | 4:3 | Dreamcast VGA | 2 columns x 1.5 lines, the whole width | measured placement")
+                        : F("[3x4x-v123l] 720p x3 | 16:9 | Dreamcast VGA | 1.5 columns x 1.5 lines | measured placement"));
 }
 
 void dcVga1080Apply()
@@ -633,7 +663,7 @@ void dcVga1080Apply()
     GBS::IF_HB_SP2::write(185);
     GBS::IF_HSYNC_RST::write(1279); // Rama's own, in case a 2 x 2 was on before
     GBS::IF_LINE_SP::write(1344);
-    SerialM.println(F("[3x4x-v122] 1080p | 4:3 | Dreamcast VGA | 2.67 columns x 2 lines, the 16:9 picture 4/3 wider | measured placement"));
+    SerialM.println(F("[3x4x-v123l] 1080p | 4:3 | Dreamcast VGA | 2.67 columns x 2 lines, the 16:9 picture 4/3 wider | measured placement"));
 }
 
 // His measured states, written absolute on top of whatever the mode's own path placed (the Dreamcast places as the
@@ -712,7 +742,7 @@ static bool dc1080Measured()
     }
     if (!what)
         return false;
-    SerialM.print(F("[3x4x-v122] 1080p | Dreamcast "));
+    SerialM.print(F("[3x4x-v123l] 1080p | Dreamcast "));
     SerialM.print(what);
     SerialM.println(F(" | measured placement"));
     return true;
@@ -923,7 +953,7 @@ static void integer1080ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see i
         // preset load: switching steps does not reload the preset, so the CRT step used to arrive with the square step's
         // clock still in the chip. v93 moved that write to the TOP of this block, before the windows, for the reason given
         // there. Nothing may touch the memory from here on.
-        SerialM.print(F("[3x4x-v122] 1080p x"));
+        SerialM.print(F("[3x4x-v123l] 1080p x"));
         SerialM.print(x5 ? 5 : 4);
         SerialM.print(F(" PAL | step "));
         SerialM.print(step + 1);
@@ -1082,7 +1112,7 @@ static void integer1080ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see i
         GBS::VDS_DIS_VB_SP::write(40);
         GBS::IF_VB_ST::write(39);
         GBS::IF_VB_SP::write(41);
-        SerialM.print(F("[3x4x-v122] 1080p x5 SNES: his border ("));
+        SerialM.print(F("[3x4x-v123l] 1080p x5 SNES: his border ("));
         SerialM.print(narrow ? F("256 px button") : F("320 px button"));
         SerialM.println(')');
     }
@@ -1101,12 +1131,22 @@ static void integer1080ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see i
         }
         GBS::IF_VB_ST::write(12);
         GBS::IF_VB_SP::write(14);
-        SerialM.print(F("[3x4x-v122] 1080p x4 SNES: his border ("));
+        SerialM.print(F("[3x4x-v123l] 1080p x4 SNES: his border ("));
         SerialM.print(narrow ? F("256 px button") : F("320 px button"));
         SerialM.println(')');
     }
     if (pceProfile() && rto->presetID != 0x15) {
-        const bool w320 = !narrow;
+        // (after v123) his report of 2026-11-22: in 1080p x5 the 256 px button loaded the 320 px placement (the log said
+        // "his measured placement (320 px button)" right under "loaded for 256 px sources"). "narrow" only tracks the
+        // width in the x4, where the 256 px button lowers the ADC clock; the x5 keeps one clock for both widths, so there
+        // the width has to come from the width itself.
+        const bool w320 = x5 ? (nativeWidth == 320) : !narrow;
+        // (after v123) his captures of 2026-11-22 01:39: loaded, the x5 drew 5.04 columns per pixel instead of 6.25, and
+        // one step of the scale (818 -> 819) put it right. The scale written here was being ignored: this block never
+        // cleared VDS_HSCALE_BYPS, so arriving from a mode at 1023 (which IS the bypass value) left the bypass on and the
+        // picture came out at the preset's own scale inside our window: cut, with garbage on the right. The 720p modes
+        // clear it in write720(); the x4 never showed it because its scale is 1023 anyway. Same rule as elsewhere here.
+        GBS::VDS_HSCALE_BYPS::write(0); // set again below for whichever entry writes 1023
         if (x5) {
             if (w320) {
                 // (after v121) his dump of 2026-11-21 11:07 placed this button (HB 1406/174, DIS 1406/286, HBIN 252
@@ -1118,62 +1158,80 @@ static void integer1080ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see i
                 // His dump of 2026-11-21 11:12 with that shape on screen, entered as he left it: 818 instead of the
                 // calculated 819 (6.257 columns, cells of 75.1 px) and the window one unit further right.
                 GBS::VDS_HSCALE::write(818);
-                GBS::VDS_HB_ST::write(1393);
+                // (after v122) his dumps of 2026-11-22 01:22 / 01:23: loaded, the mode came up cut on the right with
+                // garbage showing, and one touch of the scale (817 and back to 818) fixed it. The only two registers that
+                // moved are these: the window end was seven units short. 1393 / 1393 before, which is what he had measured
+                // while the equal-ends rule still held.
+                // (after v123e) his dump of 2026-11-22 09:35: borders opened. 1395/148, DIS 1400/299 before.
+                // (after v123f) his dump of 2026-11-22 09:50: 1406/148, DIS 1406/280, HBIN 244 before.
+                GBS::VDS_HB_ST::write(1454);
                 GBS::VDS_HB_SP::write(148);
-                GBS::VDS_DIS_HB_ST::write(1393);
-                GBS::VDS_DIS_HB_SP::write(299);
+                GBS::VDS_DIS_HB_ST::write(1454);
+                GBS::VDS_DIS_HB_SP::write(248);
                 GBS::VDS_DIS_VB_ST::write(1120);
                 GBS::VDS_DIS_VB_SP::write(40);
                 // (after v121) his dump of 2026-11-21 11:16: three fine steps up, which move the input window. 49/51 before.
                 GBS::IF_VB_ST::write(52);
                 GBS::IF_VB_SP::write(54);
-                GBS::IF_HBIN_SP::write(244);
+                GBS::IF_HBIN_SP::write(254);
             } else {
-                // (after v121) his dump of 2026-11-21 11:06, entered exactly as he gave it: the 256 px button of the
-                // 1080p x5 was badly placed and showing garbage (HScale 1023, HB 1313/264, DIS 1313/380, HBIN 222).
-                GBS::VDS_HSCALE::write(853);
-                GBS::VDS_HB_ST::write(1283);
-                GBS::VDS_HB_SP::write(278);
-                GBS::VDS_DIS_HB_ST::write(1283);
-                GBS::VDS_DIS_HB_SP::write(409);
+                // (after v122) his dump of 2026-11-22 01:26, entered exactly as he left it on screen. HScale 853 is the
+                // pixel perfect of this mode, 6.000 columns over 5.000 lines, his own choice; what was wrong was the
+                // placement (HB 1283/278, DIS 1283/409, HBIN 242 before), cut on the right like the CRT button was.
+                // (after v123b) his captures of 2026-11-22 03:05 settle what "256 pixel perfect" means here: SQUARE
+                // pixels, as many columns as lines. His 1080p x4 gives 4.000 columns over 4 lines; the x5 has 5 lines, so
+                // it is 5 columns, which is HScale 1023 (and the bypass, 1023 being that value). 853 = 6.000 columns,
+                // which I accepted on 01:47 for being a whole number without checking the shape was square: my mistake,
+                // and the reason the two buttons of this mode were only 4 % apart instead of 25 %.
+                GBS::VDS_HSCALE::write(1023);
+                GBS::VDS_HSCALE_BYPS::write(1);
+                // his dump of 2026-11-22 02:13, measured on his capture: 60.00 px per 12 px cell = 5.000 columns
+                // exactly, square pixels, picture 1208 px centred on 960.5. My calculated window was 1283/257 and
+                // 1283/408. His vertical moves of that session are left out on purpose: the PC Engine's sync had drifted
+                // the picture up and he pushed it further; reloading the sync put it back. The height stays the CRT's.
+                // (after v123f) his dump of 2026-11-22 09:51, new framing: 1292/262, DIS 1292/402, HBIN 214 before.
+                GBS::VDS_HB_ST::write(1340);
+                GBS::VDS_HB_SP::write(262);
+                GBS::VDS_DIS_HB_ST::write(1340);
+                GBS::VDS_DIS_HB_SP::write(354);
                 // (after v121) his request: the same height as the CRT button. Window 1125 -> 1120 and the input window
                 // 49/51 -> 52/54, his three fine steps up.
                 GBS::VDS_DIS_VB_ST::write(1120);
                 GBS::VDS_DIS_VB_SP::write(40);
                 GBS::IF_VB_ST::write(52);
                 GBS::IF_VB_SP::write(54);
-                GBS::IF_HBIN_SP::write(242);
+                GBS::IF_HBIN_SP::write(220); // (after v123f) his 09:51 framing; 214 before, 260 before v123b
             }
         } else {
             GBS::VDS_HSCALE::write(1023);
+            GBS::VDS_HSCALE_BYPS::write(1); // 1023 is the bypass value
             if (w320) {
                 // (after v120) his dump of 2026-11-21: the edges he retouched become the value here (1298/264, 1312/380,
                 // HBIN 222 before). Measured on that capture: 5.000 columns exactly, window 1201 px centred on 959.5.
-                GBS::VDS_HB_ST::write(1283);
+                // (after v123f) his dump of 2026-11-22 10:01: HB 1283/264, DIS 1283/409, DIS_VB_SP 109, HBIN 212 before.
+                GBS::VDS_HB_ST::write(1335);
                 GBS::VDS_HB_SP::write(264);
-                GBS::VDS_DIS_HB_ST::write(1283);
-                GBS::VDS_DIS_HB_SP::write(409);
-                // v77: matched to the 256 px button. (after v111g) his border of 2026-11-18 08:15: 1060/101 -> 1066/105.
-                // (after v120) his new 256 px border of 2026-11-21 is 1066/109 and he wants both widths at the same
-                // height, top and bottom, so this one follows it.
+                GBS::VDS_DIS_HB_ST::write(1335);
+                GBS::VDS_DIS_HB_SP::write(355);
                 GBS::VDS_DIS_VB_ST::write(1066);
-                GBS::VDS_DIS_VB_SP::write(109);
-                GBS::IF_HBIN_SP::write(212);
+                GBS::VDS_DIS_VB_SP::write(107);
+                GBS::IF_HBIN_SP::write(222);
             } else {
                 // (after v120) his dump of 2026-11-21: his retouched edges become the value here (DIS_HB 1221/475 and
                 // DIS_VB_SP 105 before). Window 698 units = 959 px, centred on 844.
                 GBS::VDS_HB_ST::write(1290);
                 GBS::VDS_HB_SP::write(310);
-                GBS::VDS_DIS_HB_ST::write(1193);
-                GBS::VDS_DIS_HB_SP::write(495);
+                // (after v123f) his dump of 2026-11-22 09:57: it was badly cut; DIS 1193/495 before.
+                GBS::VDS_DIS_HB_ST::write(1232);
+                GBS::VDS_DIS_HB_SP::write(462);
                 GBS::VDS_DIS_VB_ST::write(1066);
-                GBS::VDS_DIS_VB_SP::write(109); // (after v120) the same height as the 320 px, his rule
+                GBS::VDS_DIS_VB_SP::write(110); // (after v123f) his 09:57 dump, 109 before
                 GBS::IF_HBIN_SP::write(71);
             }
             GBS::IF_VB_ST::write(27);
             GBS::IF_VB_SP::write(29);
         }
-        SerialM.print(F("[3x4x-v122] 1080p x"));
+        SerialM.print(F("[3x4x-v123l] 1080p x"));
         SerialM.print(x5 ? 5 : 4);
         SerialM.print(F(" PC Engine: his measured placement ("));
         SerialM.print(w320 ? F("320 px button") : F("256 px button"));
@@ -1225,7 +1283,7 @@ static bool dc720Measured()
         // capture = 63.9 output px), the 320 px frame across the whole 1280; 3 lines exact, 240 of the 264 lines shown.
         // The memory window wraps round the line (2120 / 2136), as he left it.
         write720(Mode720{530, 683, 2120, 2136, 2136, 344, 748, 26, 72, 74, 16});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 4:3 | Dreamcast 288p | 4 x 3, the whole width, 240 of the 264 lines | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 4:3 | Dreamcast 288p | 4 x 3, the whole width, 240 of the 264 lines | measured placement"));
         return true;
     }
     if (dcSignal() == 4 && uopt->integer720 == 1) {
@@ -1234,7 +1292,7 @@ static bool dc720Measured()
         // whole), the 480 lines in the 720. His idea of the 720p x3 «4:3», for the interlaced signal.
         // IF VB 64 / 66: his correction of 03:11, the picture one input line up (62 / 64 in the measured capture)
         write720(Mode720{530, 683, 2117, 2133, 2131, 344, 745, 26, 64, 66, 22});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 4:3 | Dreamcast 576i | 2 columns x 1.5 lines, the whole width | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 4:3 | Dreamcast 576i | 2 columns x 1.5 lines, the whole width | measured placement"));
         return true;
     }
     if (dcSignal() == 3 && uopt->integer720 == 1) {
@@ -1242,40 +1300,40 @@ static bool dc720Measured()
         // = 2.003 columns (64.1 output px per 32 px, within the reading error; the same 480 gave 4.000 exact in 240p),
         // the whole width; 1.5 lines per line, the 480 lines in the 720. The window and capture start are his.
         write720(Mode720{480, 683, 2284, 132, 2320, 338, 745, 25, 12, 14, 138});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 4:3 | Dreamcast 480i | 2 columns x 1.5 lines, the whole width | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 4:3 | Dreamcast 480i | 2 columns x 1.5 lines, the whole width | measured placement"));
         return true;
     }
     if (dcSignal() == 3 && uopt->integer720 == 4) {
         // 480i, 720p 16:9, his dump of 2026-11-17 14:00: HScale 640 = 1.501 columns (36.03 per 16 px cell in his 1080 capture
         // of the 720p = 24.0 output px), frame 960 px centred; 1.5 lines, the same height as the 4:3
         write720(Mode720{640, 683, 2018, 402, 2018, 610, 745, 25, 12, 14, 122});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 16:9 | Dreamcast 480i | 1.5 columns x 1.5 lines | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 16:9 | Dreamcast 480i | 1.5 columns x 1.5 lines | measured placement"));
         return true;
     }
     if (dcSignal() == 4 && uopt->integer720 == 4) {
         // 576i, 720p 16:9, his dump of 2026-11-17 14:09 (no capture): HScale 707 = 530 (2.000 columns, measured) x 4/3,
         // so 1.5 columns; the same height and capture start (IF VB 64 / 66) as the 4:3
         write720(Mode720{707, 683, 1813, 358, 1813, 546, 745, 26, 64, 66, 154});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 16:9 | Dreamcast 576i | 1.5 columns x 1.5 lines | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 16:9 | Dreamcast 576i | 1.5 columns x 1.5 lines | measured placement"));
         return true;
     }
     if (dcSignal() == 2 && uopt->integer720 == 4) {
         // 288p, 720p x3 16:9, his dump of 01:25: HScale 706 = 3.000 columns (every cell 96 in his 2560 capture = 48
         // output px), frame 960 px centred at 639.3 of 1280; 3 lines exact, 240 of the 264 lines shown
         write720(Mode720{706, 683, 1808, 312, 1817, 552, 748, 26, 72, 74, 86});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 16:9 | Dreamcast 288p | 3 x 3, 240 of the 264 lines | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 16:9 | Dreamcast 288p | 3 x 3, 240 of the 264 lines | measured placement"));
         return true;
     }
     if (dcSignal() != 1)
         return false;
     if (uopt->integer720 == 4) {
         write720(Mode720{640, 683, 2017, 410, 2032, 608, 745, 25, 12, 14, 128});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 16:9 | Dreamcast 240p | 3 x 3 | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 16:9 | Dreamcast 240p | 3 x 3 | measured placement"));
         return true;
     }
     if (uopt->integer720 == 1) {
         write720(Mode720{480, 683, 2284, 132, 2320, 338, 745, 25, 12, 14, 134});
-        SerialM.println(F("[3x4x-v122] 720p x3 | 4:3 | Dreamcast 240p | 4 x 3, the whole width | measured placement"));
+        SerialM.println(F("[3x4x-v123l] 720p x3 | 4:3 | Dreamcast 240p | 4 x 3, the whole width | measured placement"));
         return true;
     }
     return false;
@@ -1489,7 +1547,7 @@ static void integer720ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see in
         }
         write720(pm);
         // v106: the mode names itself inside vwhat now, so the prefix no longer repeats "720p PAL"
-        SerialM.print(F("[3x4x-v122] "));
+        SerialM.print(F("[3x4x-v123l] "));
         if (measured) {
             SerialM.print(vwhat);
             if (uopt->integer720 == 1 || pal169) { // x3 and 16:9 use the horizontal entries above as they stand
@@ -1534,9 +1592,9 @@ static void integer720ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see in
             // "320 px": 3.99 columns, picture 1023 px, centre 960.75. The old shared value 641 gave 3.76 columns, which is
             // why that button could never be centred on this console.
             if (nativeWidth == 320)
-                m = {603, 683, 2040, 314, 2063, 569, 745, 27, 24, 26, 66}; // v77: IF VB matched to the 256 px button so the picture does not jump between widths; (after v111g) his state of 2026-11-18 08:05 (HB_ST 2323 -> 2035, window 2063/569), measured 4.000 columns, 1024 px, centre 639.5 of 1280
+                m = {603, 683, 2040, 314, 2063, 569, 745, 27, 24, 26, 76}; // (after v123k) his request: 5 fine touches left (HBIN +2 each, 66 before); v77: IF VB matched to the 256 px button so the picture does not jump between widths; (after v111g) his state of 2026-11-18 08:05 (HB_ST 2323 -> 2035, window 2063/569), measured 4.000 columns, 1024 px, centre 639.5 of 1280
             else
-                m = {804, 683, 1881, 563, 1877, 755, 745, 27, 24, 26, 84}; // (after v111g) his borders of 2026-11-18 08:03 (HB 1886 -> 1876, window 1903/753 -> 1877/755)
+                m = {804, 683, 1881, 563, 1877, 755, 745, 27, 24, 26, 94}; // (after v123k) his request: 5 fine touches left (HBIN +2 each, 84 before); (after v111g) his borders of 2026-11-18 08:03 (HB 1886 -> 1876, window 1903/753 -> 1877/755)
         } else if (snes320w169)
             m = {641, 683, 2146, 422, 2027, 623, 730, 50, 8, 10, 134}; // v77: measured and centred by the user (the v57 estimate had HBIN 78, which left it off-centre). 3.75 columns, 960 px, CRT proportion
         else if (snes)
@@ -1574,15 +1632,17 @@ static void integer720ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see in
             // the user saw clean at x3 (the old SNES-like values 2322/2328 left HB_ST well below HB(d)_ST, the cause suspected for the sparkle)
             m = {481, 409, 2282, 137, 2320, 338, 750, 26, 107, 109, 134}; // v61: his refined timings
         }
+    // (after v123c) his request of 2026-11-22: the PC Engine's 720p x3 4:3 moves two fine steps left (hbSt and hbSp -2)
+    // and its left border opens two fine steps (dHbSp -2, less black on that side). Both widths.
     } else if (pce && !fill) {
         // v72: PC Engine 720p x3 (4:3), his hand-centred windows. He wrote them down while the scale was still on the shared
         // 601 / 481; the grid measurements put the whole-column values at 603 and 483 (a 0.3 % difference, about 3 px over the
         // picture), so the scale here is the measured one and the picture may sit up to 2 px off his centring. The vertical
         // window 745 / 27 is the one his later PC Engine dumps show in every mode.
         if (nativeWidth == 320)
-            m = {482, 683, 2259, 163, 2256, 384, 745, 27, 25, 27, 148}; // v76: his centred state at 482 (he chose it over 483); (after v111g) IF VB 23/25 -> 25/27, his vertical of 2026-11-18 08:00 (measured 5.005 columns, 1280 px, centred)
+            m = {482, 683, 2257, 161, 2256, 382, 745, 27, 25, 27, 152}; // (after v123l) his request: 5 fine touches left (HBIN 142 before); (after v123e) his dump of 2026-11-22 08:57: HBIN 148 -> 142 // v76: his centred state at 482 (he chose it over 483); (after v111g) IF VB 23/25 -> 25/27, his vertical of 2026-11-18 08:00 (measured 5.005 columns, 1280 px, centred)
         else
-            m = {603, 683, 2196, 368, 2062, 568, 745, 27, 25, 27, 130}; // v75: re-centred by the user at scale 603 and measured; (after v111g) IF VB 25/27, the same height as his 320 px of 2026-11-18 (4.000 columns confirmed)
+            m = {603, 683, 2062, 366, 2062, 566, 745, 27, 25, 27, 132}; // (after v123l) his request: 5 fine touches left (HBIN 122 before); (after v123e) his dump of 2026-11-22 08:59: HB_ST 2194 -> 2062, HBIN 130 -> 122 // v75: re-centred by the user at scale 603 and measured; (after v111g) IF VB 25/27, the same height as his 320 px of 2026-11-18 (4.000 columns confirmed)
                                                                         // on the grid: 4.008 columns, 1026 px, centre 959 of 1920
     } else if (nativeWidth == 320) {
         m = {481, 683, 2282, 137, 2320, 338, 722, 52, 8, 10, 116}; // Mega Drive 320 px: the user's final x3 profile (v48, read from his .gbsp)
@@ -1608,6 +1668,15 @@ static void integer720ApplyInner(uint16_t nativeWidth) // v107n: wrapped, see in
         if (pce) { // v76: the crop he positioned himself, both widths
             m.ifVbSt = 84;
             m.ifVbSp = 86;
+        }
+        // (after v123k) HIS REQUEST: the PC Engine x4 has its own entries, independent of the x3 4:3 ones it used to
+        // borrow. Starting values = that borrowed placement + his five fine touches to the left (HBIN +10). Change these
+        // without touching the x3 4:3 and the other way round.
+        if (pce && !fill) {
+            if (nativeWidth == 320)
+                m = {482, 512, 2257, 161, 2256, 382, 750, 26, 84, 86, 152};
+            else
+                m = {603, 512, 2062, 366, 2062, 566, 750, 26, 84, 86, 132};
         }
     }
     write720(m);
@@ -1658,12 +1727,12 @@ void integerLowLoad()
     const bool x2 = (uopt->integerLow == 2);
     // the SNES has no 320 px games; in 480p x2 a 256 px picture needs the lowered ADC clock, so it only loads that way
     // when the 256 px button asked for it (which reloads the preset)
-    const uint16_t w = consoleModeLoadWidth((snesProfile() || (x2 && uopt->integer1080Narrow)) ? 256 : 320); // (after v107v)
+    const uint16_t w = consoleModeLoadWidth(((snesProfile() && !pceProfile()) || (x2 && uopt->integer1080Narrow)) ? 256 : 320); // (after v107v)
+    rto->integer1080Centered = (w == 320) ? 1 : 2; // (after v123i) before the placement: its border record
     integerLowApply(w);
-    rto->integer1080Centered = (w == 320) ? 1 : 2;
-    SerialM.print(x2 ? F("[3x4x-v122] 480p x2 loaded for ") : F("[3x4x-v122] 960p x4 loaded for "));
+    SerialM.print(x2 ? F("[3x4x-v123l] 480p x2 loaded for ") : F("[3x4x-v123l] 960p x4 loaded for "));
     SerialM.print(w);
-    SerialM.println(F(" px sources (ROUND 1: estimated placement, correct it with move / edges)"));
+    SerialM.println(F(" px sources (ROUND 1: estimated placement, correct it with move / borders)"));
 }
 
 void integer720Load()
@@ -1675,10 +1744,10 @@ void integer720Load()
     GBS::IF_HB_ST2::write((md2 - 47) & 0xfffe);
     GBS::IF_HB_SP2::write(116);
     // (after v107v) or the width this console was last used in (ConsoleModes)
-    const uint16_t w = consoleModeLoadWidth(snesProfile() ? 256 : 320); // the SNES has no 320 px games
+    const uint16_t w = consoleModeLoadWidth((snesProfile() && !pceProfile()) ? 256 : 320); // the SNES has no 320 px games; (after v123h) the PC Engine opens in CRT
+    rto->integer1080Centered = (w == 320) ? 1 : 2; // (after v123i) before the placement: its border record
     integer720Apply(w);
-    rto->integer1080Centered = (w == 320) ? 1 : 2;
-    SerialM.print(F("[3x4x-v122] 720p x"));
+    SerialM.print(F("[3x4x-v123l] 720p x"));
     SerialM.print(uopt->integer720 == 2 ? 5 : (uopt->integer720 == 3 ? 4 : 3));
     SerialM.print(F(" loaded for "));
     SerialM.print(w);
@@ -1688,6 +1757,11 @@ void integer720Load()
 bool integerIsSnesProfile()
 {
     return snesProfile();
+}
+
+bool integerIsPceProfile() // (after v123h) for the 1080p load in GBSController
+{
+    return pceProfile();
 }
 
 // v75: the PC Engine shares the SNES placement, but NOT the SNES trick where the "320 px" button means "fill the width with
@@ -1908,7 +1982,7 @@ void memSettingsSave()
     memSettingsPath(path, settingsProfile());
     File f = LittleFS.open(path, "w");
     if (!f) {
-        SerialM.println(F("[3x4x-v122] memory settings: could not open the file"));
+        SerialM.println(F("[3x4x-v123l] memory settings: could not open the file"));
         return;
     }
     const char *hex = "0123456789abcdef";
@@ -1929,7 +2003,7 @@ void memSettingsResetMode()
     typedef TV5725<GBS_ADDR> GBS;
     const uint8_t i = memSettingIndex();
     if (i >= 16) {
-        SerialM.println(F("[3x4x-v122] factory memory: not one of the modes with a setting of its own"));
+        SerialM.println(F("[3x4x-v123l] factory memory: not one of the modes with a setting of its own"));
         return;
     }
     memSettingsEnsureLoaded();
@@ -1943,7 +2017,7 @@ void memSettingsResetMode()
     // its own in memDefaultFor (0 / 0 = "whatever the preset loads") and writing nothing left his 185 MHz in the chip.
     // With no pair of its own the only way back is to load the preset again, which is what carries those registers.
     if (!clock && !phase) {
-        SerialM.println(F("[3x4x-v122] factory memory: this mode has no pair of its own, loading the preset again"));
+        SerialM.println(F("[3x4x-v123l] factory memory: this mode has no pair of its own, loading the preset again"));
         applyPresets(rto->videoStandardInput);
         return;
     }
@@ -1957,7 +2031,7 @@ void memSettingsResetMode()
     }
     ResetSDRAM();
     scanlinesAfterSdramReset();
-    SM_PRINTF("[3x4x-v122] factory memory for %s: clock %u (%u MHz), phase %u/15\n", memModeName(), (unsigned)clock,
+    SM_PRINTF("[3x4x-v123l] factory memory for %s: clock %u (%u MHz), phase %u/15\n", memModeName(), (unsigned)clock,
               (unsigned)memClockMhzFor(clock), (unsigned)phase);
 }
 
@@ -2240,7 +2314,7 @@ static void applyLinesOverride()
         // DOLOR: no scanlines (they cannot line up with 2.5 or 3.75 lines per line). The preference is left alone, so they
         // come back by themselves on leaving DOLOR; enableScanlines() refuses while DOLOR is on.
         disableScanlines();
-        SerialM.println(F("[3x4x-v122] lines: DOLOR"));
+        SerialM.println(F("[3x4x-v123l] lines: DOLOR"));
         return;
     }
     if (mode == 1) {
@@ -2265,7 +2339,7 @@ static void applyLinesOverride()
             GBS::VDS_VB_ST::write((uint16_t)(nsp - 6));
             GBS::VDS_VB_SP::write((uint16_t)(nsp - 4));
         }
-        SerialM.print(F("[3x4x-v122] lines: 240, window "));
+        SerialM.print(F("[3x4x-v123l] lines: 240, window "));
         SerialM.print(nst);
         SerialM.print('/');
         SerialM.println(nsp);
@@ -2345,7 +2419,7 @@ static void mdPal1080x5Measured()
     GBS::IF_VB_SP::write(92);
     GBS::IF_HBIN_ST::write(0);
     GBS::IF_HBIN_SP::write(hbin[st]);
-    SerialM.print(F("[3x4x-v122] 1080p x5 PAL | Mega Drive | step "));
+    SerialM.print(F("[3x4x-v123l] 1080p x5 PAL | Mega Drive | step "));
     SerialM.print(st + 1);
     SerialM.println(sq ? F(" (256): measured placement") : F(": measured placement"));
 }
@@ -2403,9 +2477,9 @@ static void mdPal1080Measured()
         GBS::VDS_DIS_HB_ST::write(1079);
         GBS::VDS_DIS_HB_SP::write(412);
         GBS::IF_HBIN_SP::write(197);
-        SerialM.println(F("[3x4x-v122] 1080p x4 PAL | Mega Drive | 256 px at ADC clock 1759 (4 x 4): measured placement"));
+        SerialM.println(F("[3x4x-v123l] 1080p x4 PAL | Mega Drive | 256 px at ADC clock 1759 (4 x 4): measured placement"));
     }
-    SerialM.print(F("[3x4x-v122] 1080p x4 PAL | Mega Drive | step "));
+    SerialM.print(F("[3x4x-v123l] 1080p x4 PAL | Mega Drive | step "));
     SerialM.print(st + 1);
     SerialM.println(sq ? F(" (256): measured placement") : F(": measured placement"));
 }
@@ -2474,7 +2548,9 @@ static int16_t edgeKeyNow()
     // (after v108h) the Mega Drive's 1080p x4 «4:3» keeps its edges apart from the 16:9 ones, after everything else
     if (tv43Active()) {
         const uint8_t w256 = (rto->presetID == 0x15) ? (uopt->sizeStep == 0 ? 1 : 0) : (rto->integer1080Centered == 2 ? 1 : 0);
-        return (int16_t)(4200 + ((slot * 2) + w256) * 3 + lines);
+        // (after v123h) his report: the console was missing here, so the Mega Drive and the PC Engine shared the 4:3
+        // edges of 1080p x4. Now one record per console too, after the old 4200..4295 block (left unused).
+        return (int16_t)(4300 + (((slot * 2) + w256) * 3 + lines) * CONSOLE_PROFILE_COUNT + settingsProfile());
     }
     const uint8_t prof = settingsProfile();
     if (prof < CONSOLE_PROFILE_FIRST_EMPTY)
@@ -2487,10 +2563,11 @@ static int16_t edgeKeyNow()
     return (int16_t)(768 + ((((slot * 4) + step) * 3 + lines) * 14 + (prof - CONSOLE_PROFILE_FIRST_EMPTY)));
 }
 
-static void edgeRead(int16_t key, int16_t *d)
+// (after v123j) the file is a parameter: the picture position (/pos.bin) uses the same record layout and keys
+static void edgeRead(int16_t key, int16_t *d, const char *file = EDGE_FILE)
 {
     d[0] = d[1] = d[2] = d[3] = 0;
-    File f = LittleFS.open(EDGE_FILE, "r");
+    File f = LittleFS.open(file, "r");
     if (!f)
         return;
     if (f.size() >= (size_t)(key + 1) * 8 && f.seek((size_t)key * 8))
@@ -2498,11 +2575,11 @@ static void edgeRead(int16_t key, int16_t *d)
     f.close();
 }
 
-static void edgeWrite(int16_t key, const int16_t *d)
+static void edgeWrite(int16_t key, const int16_t *d, const char *file = EDGE_FILE)
 {
-    File f = LittleFS.open(EDGE_FILE, LittleFS.exists(EDGE_FILE) ? "r+" : "w+");
+    File f = LittleFS.open(file, LittleFS.exists(file) ? "r+" : "w+");
     if (!f) {
-        SerialM.println(F("[3x4x-v122] edges: could not open the file"));
+        SerialM.println(F("[3x4x-v123l] borders: could not open the file"));
         return;
     }
     const size_t at = (size_t)key * 8;
@@ -2525,7 +2602,7 @@ static void edgesFlush()
     }
     edgeSaveAt = 0;
     edgeWrite(edgeKey, edgeLive);
-    SerialM.print(F("[3x4x-v122] edges kept for this mode: left "));
+    SerialM.print(F("[3x4x-v123l] borders kept for this mode: left "));
     SerialM.print(edgeLive[0]);
     SerialM.print(F(", right "));
     SerialM.print(edgeLive[1]);
@@ -2533,6 +2610,28 @@ static void edgesFlush()
     SerialM.print(edgeLive[2]);
     SerialM.print(F(", bottom "));
     SerialM.println(edgeLive[3]);
+}
+
+// (after v123j) HIS REQUEST of 2026-11-22: the picture position (Mover: ◀▶ = IF_HBIN_SP + IF_HSYNC_RST / IF_LINE_SP,
+// or IF_HB_ST2 / SP2 outside 15 kHz; ▲▼ = IF_VB) is kept per mode like the borders: same key, 30 s after the last press,
+// written at once on any placement and before a restart. Kept as differences from the firmware's placement (placeSnap),
+// in /pos.bin, 4 x int16: HBIN_SP, HSYNC_RST (LINE_SP follows it), HB_ST2 (SP2 follows it), VB (ST and SP together).
+static const char *POS_FILE = "/pos.bin";
+static int16_t posLive[4] = {0, 0, 0, 0};
+static int16_t posKey = -1;
+static uint32_t posSaveAt = 0;
+static void posFlush()
+{
+    if (posSaveAt == 0 || posKey < 0) {
+        posSaveAt = 0;
+        return;
+    }
+    posSaveAt = 0;
+    edgeWrite(posKey, posLive, POS_FILE);
+    SerialM.print(F("[3x4x-v123l] position kept for this mode: horizontal "));
+    SerialM.print(posLive[0]);
+    SerialM.print(F(", vertical "));
+    SerialM.println(posLive[3]);
 }
 
 // called by every edge button after it has moved the window: which register, by how much (signed, in its own units)
@@ -2554,7 +2653,7 @@ void edgesNote(uint8_t which, int16_t amount)
         edgeRead(k, edgeLive);
     }
     edgeLive[which] += amount;
-    edgeSaveAt = millis() + 15000;
+    edgeSaveAt = millis() + 30000; // (after v123j) his request: 30 s, as the preferences (15 s before)
     if (edgeSaveAt == 0)
         edgeSaveAt = 1;
 }
@@ -2567,10 +2666,24 @@ void edgesDiscardPending()
     edgeKey = -1;
 }
 
+void edgesFlushNow() // (after v123j) before a restart: the borders and the position
+{
+    edgesFlush();
+    posFlush();
+}
+
 void edgesTick()
 {
     if (edgeSaveAt != 0 && (long)(millis() - edgeSaveAt) >= 0)
         edgesFlush();
+    if (posSaveAt != 0 && (long)(millis() - posSaveAt) >= 0)
+        posFlush();
+}
+
+void posDiscardPending() // (after v123j) the factory reset: nothing waiting comes back after the wipe
+{
+    posSaveAt = 0;
+    posKey = -1;
 }
 
 // forget the stored edges of the mode on screen (the caller places the mode again to show its own window)
@@ -2583,7 +2696,7 @@ void edgesResetMode()
     const int16_t zero[4] = {0, 0, 0, 0};
     edgeWrite(k, zero);
     edgeKey = -1;
-    SerialM.println(F("[3x4x-v122] edges of this mode: back to the mode's own"));
+    SerialM.println(F("[3x4x-v123l] borders of this mode: back to the mode's own"));
 }
 
 // (after v107r) THREE UNDO BUTTONS, his decision of 2026-11-13: "deshacer" can't send everything back, only what it
@@ -2602,6 +2715,41 @@ struct PlaceSnap {
     uint16_t disHbSp, disHbSt, disVbSp, disVbSt;
 };
 static PlaceSnap placeSnap = {};
+
+// (after v123j) called after every Mover press (◀▶▲▼): the position now, as differences from the firmware's placement
+void posNote()
+{
+    if (!placeSnap.valid)
+        return;
+    const int16_t k = edgeKeyNow();
+    if (k < 0)
+        return; // DOLOR or a personal profile: nothing is kept, as with the borders
+    if (k != posKey) {
+        posFlush();
+        posKey = k;
+    }
+    posLive[0] = (int16_t)GBS::IF_HBIN_SP::read() - (int16_t)placeSnap.ifHbinSp;
+    posLive[1] = (int16_t)GBS::IF_HSYNC_RST::read() - (int16_t)placeSnap.ifHsyncRst;
+    posLive[2] = (int16_t)GBS::IF_HB_ST2::read() - (int16_t)placeSnap.ifHbSt2;
+    posLive[3] = (int16_t)GBS::IF_VB_SP::read() - (int16_t)placeSnap.ifVbSp;
+    posSaveAt = millis() + 30000;
+    if (posSaveAt == 0)
+        posSaveAt = 1;
+}
+
+// the stored position on top of the firmware's placement (the placement has just been written)
+static void applyUserPosition()
+{
+    if (!posLive[0] && !posLive[1] && !posLive[2] && !posLive[3])
+        return;
+    GBS::IF_HBIN_SP::write((uint16_t)((int16_t)placeSnap.ifHbinSp + posLive[0]));
+    GBS::IF_HSYNC_RST::write((uint16_t)((int16_t)placeSnap.ifHsyncRst + posLive[1]));
+    GBS::IF_LINE_SP::write((uint16_t)((int16_t)placeSnap.ifLineSp + posLive[1]));
+    GBS::IF_HB_ST2::write((uint16_t)((int16_t)placeSnap.ifHbSt2 + posLive[2]));
+    GBS::IF_HB_SP2::write((uint16_t)((int16_t)placeSnap.ifHbSp2 + posLive[2]));
+    GBS::IF_VB_SP::write((uint16_t)((int16_t)placeSnap.ifVbSp + posLive[3]));
+    GBS::IF_VB_ST::write((uint16_t)((int16_t)placeSnap.ifVbSt + posLive[3]));
+}
 
 static void placeSnapTake()
 {
@@ -2631,7 +2779,7 @@ static void placeSnapTake()
 static bool placeSnapUsable()
 {
     if (!placeSnap.valid || rto->outModeHdBypass || (!rto->isCustomPreset && !rto->integer720Active && !rto->integer1080Active)) {
-        SerialM.println(F("[3x4x-v122] undo: only in the whole-pixel modes or a personal profile"));
+        SerialM.println(F("[3x4x-v123l] undo: only in the whole-pixel modes or a personal profile"));
         return false;
     }
     return true;
@@ -2640,6 +2788,9 @@ static bool placeSnapUsable()
 void placeSnapFromCustom()
 {
     edgesFlush(); // a change still waiting belongs to the mode that was on screen before the profile
+    posFlush();
+    posKey = -1;
+    posLive[0] = posLive[1] = posLive[2] = posLive[3] = 0;
     edgeKey = -1;
     edgeLive[0] = edgeLive[1] = edgeLive[2] = edgeLive[3] = 0;
     placeSnapTake();
@@ -2678,7 +2829,15 @@ void undoMove()
     GBS::IF_LINE_SP::write(placeSnap.ifLineSp);
     GBS::IF_HB_ST2::write(placeSnap.ifHbSt2);
     GBS::IF_HB_SP2::write(placeSnap.ifHbSp2);
-    SerialM.println(F("[3x4x-v122] undo move: the picture is back where the firmware placed it"));
+    // (after v123j) and the kept position of this mode goes too, as «deshacer borde» does with the border
+    posSaveAt = 0;
+    posLive[0] = posLive[1] = posLive[2] = posLive[3] = 0;
+    {
+        const int16_t k = edgeKeyNow();
+        if (k >= 0)
+            edgeWrite(k, posLive, POS_FILE);
+    }
+    SerialM.println(F("[3x4x-v123l] undo move: the picture is back where the firmware placed it"));
 }
 
 void undoScale()
@@ -2692,7 +2851,11 @@ void undoScale()
     GBS::VDS_HB_ST::write(placeSnap.hbSt);
     GBS::VDS_HB_SP::write(placeSnap.hbSp);
     writeWindowWithEdge(edgeLive); // the edge he has now (kept or still waiting) stays
-    SerialM.println(F("[3x4x-v122] undo scale: the firmware's scale, the edge kept"));
+    // (after v123l) his report: the same break as «deshacer borde» (PCE 720p x3 4:3 320 px, HB_ST 2257 over DIS 2256 is
+    // clean, the guard pulled it to 2256). With no border the window is the firmware's: its own HB_ST goes back.
+    if (!edgeLive[0] && !edgeLive[1] && !edgeLive[2] && !edgeLive[3])
+        GBS::VDS_HB_ST::write(placeSnap.hbSt);
+    SerialM.println(F("[3x4x-v123l] undo scale: the firmware's scale, the border kept"));
 }
 
 void undoEdge()
@@ -2702,8 +2865,15 @@ void undoEdge()
     edgesResetMode(); // erases the kept edge of this mode (the web asks first)
     edgeLive[0] = edgeLive[1] = edgeLive[2] = edgeLive[3] = 0;
     const int16_t zero[4] = {0, 0, 0, 0};
+    // (after v123l) his report: PCE 720p x3 4:3 320 px comes with HB_ST 2257 over DIS_HB_ST 2256 and is clean; the guard in
+    // writeWindowWithEdge pulled HB_ST down to 2256 and that corrupted it. Removing the border must not touch HB_ST, so
+    // the value it had (the firmware's, or the one his scale left) goes back.
+    // (if a border had pulled HB_ST down, the firmware's value is the right one while the scale is still the firmware's)
+    const bool scaleAsFirmware = GBS::VDS_HSCALE::read() == placeSnap.hscale;
+    const uint16_t hbStBefore = GBS::VDS_HB_ST::read();
     writeWindowWithEdge(zero);
-    SerialM.println(F("[3x4x-v122] undo edge: the firmware's edge for this mode"));
+    GBS::VDS_HB_ST::write(scaleAsFirmware ? placeSnap.hbSt : hbStBefore);
+    SerialM.println(F("[3x4x-v123l] undo border: the firmware's border for this mode"));
 }
 
 // written last, after the placement and the Líneas row, so the user's change sits on top of the window the mode chose
@@ -2711,6 +2881,13 @@ static void applyUserEdges()
 {
     placeSnapTake(); // (after v107r) the firmware's placement, before the user's edge, for the three undo buttons
     edgesFlush(); // a change still waiting belongs to the mode that was on screen: keep it before reading the new one
+    posFlush();   // (after v123j) the same for the position
+    posKey = edgeKeyNow();
+    if (posKey < 0)
+        posLive[0] = posLive[1] = posLive[2] = posLive[3] = 0;
+    else
+        edgeRead(posKey, posLive, POS_FILE);
+    applyUserPosition();
     edgeKey = edgeKeyNow();
     if (edgeKey < 0) {
         edgeLive[0] = edgeLive[1] = edgeLive[2] = edgeLive[3] = 0;

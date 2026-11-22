@@ -169,7 +169,7 @@ static void saveFile()
 {
     File f = LittleFS.open(CM_FILE, "w");
     if (!f) {
-        SerialM.println(F("[3x4x-v122] console modes: could not open the file"));
+        SerialM.println(F("[3x4x-v123l] console modes: could not open the file"));
         return;
     }
     f.write(CM_VERSION);
@@ -240,7 +240,7 @@ bool consoleModeCheck()
     if (settled && sameMode(cur, recs[key]))
         return false;
     if (recs[key].pref == OutputCustomized && !slotStillThere(recs[key].slot)) {
-        SerialM.println(F("[3x4x-v122] console mode: its personal preset is gone, the mode stays as it is"));
+        SerialM.println(F("[3x4x-v123l] console mode: its personal preset is gone, the mode stays as it is"));
         return false;
     }
     restoreKey = key;
@@ -281,7 +281,7 @@ static void restoreNow(int16_t key)
     else
         pendingWidth = r.centered;
     saveUserPrefs(); // first: a personal preset is read from the slot the preferences file names
-    SerialM.print(F("[3x4x-v122] console mode: "));
+    SerialM.print(F("[3x4x-v123l] console mode: "));
     if (key >= CM_OTHERS)
         SerialM.print(F("Others"));
     else if (key >= CM_DC_INTERLACED)

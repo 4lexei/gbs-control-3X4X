@@ -1,4 +1,6 @@
 #include "OTAUpdate.h"
+#include "../storage/PreferencesManager.h"
+#include "../video/Integer1080.h"
 #ifdef ESP32
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -378,6 +380,8 @@ FirmwareUpdater::UpdateStatus FirmwareUpdater::performUpdate(void (*progressCall
     Serial.print(F("[OTA] Content length: "));
     Serial.println(contentLength);
     
+    prefsFlush(); // (after v123j) nothing waiting is lost to the restart
+    edgesFlushNow();
     if (!Update.begin(contentLength)) {
         Serial.print(F("[OTA] Not enough space. "));
 #ifdef ESP8266

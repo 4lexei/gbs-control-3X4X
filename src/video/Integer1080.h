@@ -51,11 +51,15 @@ const char *consoleProfileName(uint8_t prof); // the name the status bar prints 
 // v107q: true where the mode has three size steps (square, CRT, wide): the Mega Drive in PAL 1080p x4
 bool sizeStepsThree();
 bool sizeStepsTwoMd();
-// (after v107q) the user's edges, kept per mode 15 s after the last press
+// (after v107q) the user's edges, kept per mode 30 s after the last press (15 s before v123j)
 void edgesNote(uint8_t which, int16_t amount);
 void edgesTick();
+void edgesFlushNow();
 void edgesResetMode();
 void edgesDiscardPending();
+// (after v123j) the picture position (Mover), kept per mode like the borders
+void posNote();
+void posDiscardPending();
 // (after v107r) the three undo buttons: each puts back only its own group
 void undoMove();
 void undoScale();
@@ -69,6 +73,7 @@ void integer720ReapplyTick();
 
 // v51: true when the console profile is SNES / NES (chosen or detected), false for Mega Drive
 bool integerIsSnesProfile();
+bool integerIsPceProfile();
 
 // v75: true when the "320 px" button should mean "fill the width" (SNES / NES only, not the PC Engine).
 bool integerWidthButtonIsFill();

@@ -314,7 +314,7 @@ void syncFinishSetup()
             }
             GBS::TEST_BUS_SEL::write(debugRegBackup);
             GBS::PAD_BOUT_EN::write(debugPinBackup);
-            SerialM.println(F("[3x4x-v122] auto gain: one pass while locking"));
+            SerialM.println(F("[3x4x-v123l] auto gain: one pass while locking"));
         }
     }
 }
@@ -327,7 +327,7 @@ void syncAutoLockRearm()
     rto->clampPositionIsSet = false;
     rto->continousStableCounter = 0;
     autoLockGraceUntil = millis() + 1200;
-    SerialM.println(F("[3x4x-v122] auto-lock re-armed: coast, phase and clamp let go, counting again from zero"));
+    SerialM.println(F("[3x4x-v123l] auto-lock re-armed: coast, phase and clamp let go, counting again from zero"));
 }
 
 // v66: hands-free attempts. While auto-retry is on, a locked state is let go again after a few seconds so the next
@@ -343,7 +343,7 @@ void syncAutoRetryTick()
     autoRetryAt = 0;
     rto->syncWatcherEnabled = true;
     syncAutoLockRearm();
-    SerialM.println(F("[3x4x-v122] auto-retry: next attempt"));
+    SerialM.println(F("[3x4x-v123l] auto-retry: next attempt"));
 }
 
 void runSyncWatcher()
@@ -875,7 +875,7 @@ void runSyncWatcher()
                 if (uopt->autoRetrySync) {
                     autoRetryAt = millis() + 3500; // v66: hands-free attempts, so he only has to watch and capture
                 }
-                SerialM.print(F("[3x4x-v122] auto-lock: sync watcher paused at "));
+                SerialM.print(F("[3x4x-v123l] auto-lock: sync watcher paused at "));
                 SerialM.print(want);
                 SerialM.println(F(" stable reads (the watcher kept quiet while counting). Press SyncWatcher to try again from a clean state; nothing is detected while it is paused"));
             }
@@ -919,7 +919,7 @@ void runSyncWatcher()
                                 }
                                 enableMotionAdaptDeinterlace();
                                 // (after v107y) his request: say it when the firmware switches it by itself
-                                SerialM.print(F("[3x4x-v122] motion adaptive ON (vp "));
+                                SerialM.print(F("[3x4x-v123l] motion adaptive ON (vp "));
                                 SerialM.print(VPERIOD_IF);
                                 SerialM.println(')');
                                 if (timingAdjustDelay == 0) {
@@ -941,7 +941,7 @@ void runSyncWatcher()
                             if (uopt->deintMode == 0 && rto->motionAdaptiveDeinterlaceActive) {
                                 disableMotionAdaptDeinterlace();
                                 // (after v107y) and when it switches it off by itself
-                                SerialM.print(F("[3x4x-v122] motion adaptive OFF (vp "));
+                                SerialM.print(F("[3x4x-v123l] motion adaptive OFF (vp "));
                                 SerialM.print(VPERIOD_IF);
                                 SerialM.println(')');
                                 if (timingAdjustDelay == 0) {

@@ -46,7 +46,7 @@ static bool touched[REG_COUNT];
 
 static void logReg(const char *what, uint8_t i, uint8_t from, uint8_t to)
 {
-    SM_PRINTF("[3x4x-v122] test %s: register %u %u -> %u (before the tests %u)\n", what, (unsigned)(i + 1), (unsigned)from,
+    SM_PRINTF("[3x4x-v123l] test %s: register %u %u -> %u (before the tests %u)\n", what, (unsigned)(i + 1), (unsigned)from,
                    (unsigned)to, (unsigned)(touched[i] ? before[i] : from));
 }
 
@@ -54,7 +54,7 @@ void regTestNext()
 {
     sel = (uint8_t)((sel + 1) % REG_COUNT);
     const uint8_t v = regs[sel].rd();
-    SM_PRINTF("[3x4x-v122] test register %u of %u = %u (0..%u)\n", (unsigned)(sel + 1), (unsigned)REG_COUNT,
+    SM_PRINTF("[3x4x-v123l] test register %u of %u = %u (0..%u)\n", (unsigned)(sel + 1), (unsigned)REG_COUNT,
                    (unsigned)v, (unsigned)regs[sel].max);
 }
 
@@ -84,7 +84,7 @@ void regTestUndo()
         count++;
     }
     if (!count)
-        SerialM.println(F("[3x4x-v122] test undo: nothing was changed"));
+        SerialM.println(F("[3x4x-v123l] test undo: nothing was changed"));
 }
 
 void regTestForget()

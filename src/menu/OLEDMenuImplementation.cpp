@@ -9,6 +9,8 @@
 #include <ESPAsyncWebServer.h>
 #include "OLEDMenuImplementation.h"
 #include "OTAUpdate.h"
+#include "../storage/PreferencesManager.h"
+#include "../video/Integer1080.h"
 #include "../core/options.h"
 #include "../gbs/tv5725.h"
 #include "../core/slot.h"
@@ -180,6 +182,8 @@ bool resetMenuHandler(OLEDMenuManager *manager, OLEDMenuItem *item, OLEDMenuNav,
         // not precise
         if (millis() - oledMenuFreezeStartTime >= oledMenuFreezeTimeoutInMS) {
             manager->unfreeze();
+            prefsFlush(); // (after v123j) nothing waiting is lost to the restart
+            edgesFlushNow();
             ESP.restart();
             return false;
         }
@@ -631,6 +635,8 @@ bool firmwareUpdateMenuHandler(OLEDMenuManager *manager, OLEDMenuItem *item, OLE
                 display->drawXbm(CENTER_IMAGE(TEXT_REBOOTING));
                 display->display();
                 delay(500);
+                prefsFlush(); // (after v123j)
+                edgesFlushNow();
                 ESP.restart();
                 break;
             }

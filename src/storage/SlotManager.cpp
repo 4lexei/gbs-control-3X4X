@@ -1,6 +1,7 @@
 #include "SlotManager.h"
 #include "../core/Globals.h"
 #include "../web/SerialMirror.h"
+#include "PreferencesManager.h"
 #include "../gbs/GBSRegister.h"
 #include "../video/Scanlines.h"
 #include "../video/framesync.h"
@@ -24,6 +25,7 @@ const uint8_t *loadPresetFromLittleFS(byte forVideoMode)
     Ascii8 slot = 0;
     File f;
 
+    prefsFlush(); // (after v123j) the slot chosen may still be waiting for its 30 s
     f = LittleFS.open("/preferencesv2.txt", "r");
     if (f) {
         SerialM.println(F("preferencesv2.txt opened"));
@@ -99,6 +101,7 @@ void savePresetToLittleFS()
     Ascii8 slot = 0;
 
     // first figure out if the user has set a preferenced slot
+    prefsFlush(); // (after v123j) the slot chosen may still be waiting for its 30 s
     f = LittleFS.open("/preferencesv2.txt", "r");
     if (f) {
         uint8_t result[3];

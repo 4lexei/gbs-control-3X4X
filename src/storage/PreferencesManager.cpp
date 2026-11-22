@@ -72,13 +72,72 @@ void loadDefaultUserOptions()
     syncReverseRotaryEncoderIsrMirror();
 }
 
+// (after v122) his request of 2026-11-22: the preferences are built in a buffer and compared with what is already in
+// the flash. If nothing changed, nothing is written. Two of the writes happen on their own every time a console is
+// switched on (the mode restore and the colour preset), and they almost always wrote the very same bytes.
+#define PREFS_BUF_MAX 320
+struct PrefsBuf {
+    uint8_t b[PREFS_BUF_MAX];
+    uint16_t n = 0;
+    bool over = false;
+    void write(uint8_t c)
+    {
+        if (n < PREFS_BUF_MAX) b[n++] = c; else over = true;
+    }
+    void write(char c) { write((uint8_t)c); }
+    void write(int c) { write((uint8_t)c); }
+    void write(const uint8_t *p, size_t len)
+    {
+        while (len--) write(*p++);
+    }
+    void close() {}
+};
+
+// true when the flash already holds exactly these bytes
+static bool prefsSameAsFlash(const uint8_t *buf, uint16_t n)
+{
+    File r = LittleFS.open("/preferencesv2.txt", "r");
+    if (!r)
+        return false;
+    bool same = ((uint16_t)r.size() == n);
+    for (uint16_t i = 0; same && i < n; i++)
+        same = (r.read() == (int)buf[i]);
+    r.close();
+    return same;
+}
+
+// (after v123j) his request of 2026-11-22, step 2: the preferences are written 30 s after the last change, like the
+// borders, so a run of presses writes the flash once. saveUserPrefs() only arms the deadline (and keeps the encoder
+// mirror up to date at once, as before); prefsTick() writes when it comes; prefsFlush() writes now, before anything
+// that reads the file or restarts the board.
+static uint32_t prefsSaveAt = 0;
+static void writeUserPrefsNow();
+
 void saveUserPrefs()
 {
-    File f = LittleFS.open("/preferencesv2.txt", "w");
-    if (!f) {
-        SerialM.println(F("saveUserPrefs: open file failed"));
+    syncReverseRotaryEncoderIsrMirror();
+    prefsSaveAt = millis() + 30000;
+    if (prefsSaveAt == 0)
+        prefsSaveAt = 1;
+}
+
+void prefsFlush()
+{
+    if (prefsSaveAt == 0)
         return;
-    }
+    prefsSaveAt = 0;
+    writeUserPrefsNow();
+}
+
+void prefsTick()
+{
+    if (prefsSaveAt != 0 && (long)(millis() - prefsSaveAt) >= 0)
+        prefsFlush();
+}
+
+static void writeUserPrefsNow()
+{
+    PrefsBuf f;
     f.write(uopt->presetPreference + '0'); // #1
     f.write(uopt->enableFrameTimeLock + '0');
     f.write(uopt->presetSlot);
@@ -141,6 +200,19 @@ void saveUserPrefs()
     f.write((uopt->outputChosen ? 1 : 0) + '0'); // #220 (after v111f) an output was picked by hand
 
     f.close();
-    syncReverseRotaryEncoderIsrMirror();
+    syncReverseRotaryEncoderIsrMirror(); // before the comparison: it must run on every call, as it always did
+    if (f.over) { // should never happen: the buffer is bigger than the file
+        SerialM.println(F("[3x4x-v123l] preferences: buffer too small, not saved"));
+        return;
+    }
+    if (prefsSameAsFlash(f.b, f.n))
+        return; // nothing changed: the flash is left alone
+    File w = LittleFS.open("/preferencesv2.txt", "w");
+    if (!w) {
+        SerialM.println(F("saveUserPrefs: open file failed"));
+        return;
+    }
+    w.write(f.b, f.n);
+    w.close();
 }
 

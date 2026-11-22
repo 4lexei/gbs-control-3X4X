@@ -5,6 +5,7 @@
 #include "../config/WiFiConfig.h"
 #include "../storage/PreferencesManager.h"
 #include "../video/Scanlines.h"
+#include "../video/Integer1080.h" // (after v123j) edgesFlushNow
 // 3X4X: one language per firmware; the English web comes with -DWEBUI_LANG_EN (env gbsc_en)
 #ifdef WEBUI_LANG_EN
 #include "../../webui/build/webui_html_en.h"
@@ -439,6 +440,8 @@ void startWebserver()
             if (ok) {
                 request->onDisconnect([]() {
                     delay(100);
+                    prefsFlush(); // (after v123j)
+                    edgesFlushNow();
                     ESP.restart();
                 });
             }
@@ -454,6 +457,8 @@ void startWebserver()
                 WiFi.setSleepMode(WIFI_NONE_SLEEP);
 #endif
                 SerialM.println(F("Web update: start"));
+                prefsFlush();    // (after v123j) nothing waiting is lost to the restart
+                edgesFlushNow();
                 // a valid ESP image starts with 0xE9; refuse anything else before touching flash
                 if (len == 0 || data[0] != 0xE9) {
                     SerialM.println(F("Web update: not a firmware image, refused"));
@@ -520,6 +525,8 @@ void startWebserver()
         });
 
     server.on("/filesystem/download", HTTP_GET, [](AsyncWebServerRequest *request) {
+        prefsFlush(); // (after v123j) the backup carries what is waiting too
+        edgesFlushNow();
         if (ESP.getFreeHeap() > 10000) {
             // On ESP32 query parameter ordering and
             // unnamed params (e.g. cache-busters like "&176...") can make getParam(0) unreliable.
@@ -708,6 +715,10 @@ void initUpdateOTA()
     // rely on the user having to enable the OTA feature on the web ui
 
     ArduinoOTA.onStart([]() {
+        if (ArduinoOTA.getCommand() == U_FLASH) { // (after v123j) not for a filesystem upload, which replaces it
+            prefsFlush();
+            edgesFlushNow();
+        }
         String type;
         if (ArduinoOTA.getCommand() == U_FLASH)
             type = "sketch";

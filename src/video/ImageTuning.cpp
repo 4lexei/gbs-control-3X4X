@@ -233,7 +233,7 @@ void nudgeHue(int8_t dir)
     if (n < -21) n = -21;
     hueStep = (int8_t)n;
     writeColourMatrix();
-    SerialM.print(F("[3x4x-v122] hue "));
+    SerialM.print(F("[3x4x-v123l] hue "));
     SerialM.print(hueStep * 3);
     SerialM.print(F(" degrees (U/V cos "));
     SerialM.print(GBS::VDS_UCOS_GAIN::read());
@@ -256,7 +256,7 @@ void resetHue()
     GBS::VDS_VSIN_GAIN::write(0);
     GBS::VDS_UCOS_GAIN::write(satU);
     GBS::VDS_VCOS_GAIN::write(satV);
-    SerialM.println(F("[3x4x-v122] hue back to 0 degrees"));
+    SerialM.println(F("[3x4x-v123l] hue back to 0 degrees"));
 }
 
 // v74: saturation now goes through the matrix too. which: 0 = both, 1 = Pb/U, 2 = Pr/V.
@@ -272,7 +272,7 @@ void nudgeSaturation(uint8_t which, int8_t delta)
         satV = (uint8_t)(n < 0 ? 0 : (n > 127 ? 127 : n));
     }
     writeColourMatrix();
-    SerialM.print(F("[3x4x-v122] saturation U/V "));
+    SerialM.print(F("[3x4x-v123l] saturation U/V "));
     SerialM.print(satU);
     SerialM.print('/');
     SerialM.print(satV);
@@ -308,7 +308,7 @@ static void captureAdcOffsetBase()
     offG = GBS::ADC_GOFCTRL::read();
     offB = GBS::ADC_BOFCTRL::read();
     offBaseValid = true;
-    SerialM.print(F("[3x4x-v122] ADC black level base taken: "));
+    SerialM.print(F("[3x4x-v123l] ADC black level base taken: "));
     SerialM.print(offR);
     SerialM.print('/');
     SerialM.print(offG);
@@ -328,7 +328,7 @@ void resetAdcOffset()
     GBS::ADC_ROFCTRL::write(offR);
     GBS::ADC_GOFCTRL::write(offG);
     GBS::ADC_BOFCTRL::write(offB);
-    SerialM.print(F("[3x4x-v122] ADC black level back to the base: "));
+    SerialM.print(F("[3x4x-v123l] ADC black level back to the base: "));
     SerialM.print(offR);
     SerialM.print('/');
     SerialM.print(offG);
@@ -351,7 +351,7 @@ void nudgeAdcOffset(uint8_t channel, int8_t delta)
         adco->b_off = clampU8((int)GBS::ADC_BOFCTRL::read() + delta, 255);
         GBS::ADC_BOFCTRL::write(adco->b_off);
     }
-    SerialM.print(F("[3x4x-v122] ADC black level R/G/B: "));
+    SerialM.print(F("[3x4x-v123l] ADC black level R/G/B: "));
     SerialM.print(GBS::ADC_ROFCTRL::read());
     SerialM.print('/');
     SerialM.print(GBS::ADC_GOFCTRL::read());

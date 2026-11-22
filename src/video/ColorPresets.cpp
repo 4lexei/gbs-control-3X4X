@@ -214,7 +214,7 @@ void colorPresetSaveCurrent()
     const uint8_t s = activeSlot();
     captureCurrent(slots[s]);
     saveToFile();
-    SerialM.print(F("[3x4x-v122] colour preset saved for "));
+    SerialM.print(F("[3x4x-v123l] colour preset saved for "));
     SerialM.println(slotName(s));
 }
 
@@ -301,7 +301,7 @@ void colorPresetApply()
     }
     if (p.fValid) // v107p
         applyFilters(p);
-    SerialM.print(F("[3x4x-v122] colour preset applied for "));
+    SerialM.print(F("[3x4x-v123l] colour preset applied for "));
     SerialM.print(slotName(s));
     SerialM.print(F(" (white balance "));
     SerialM.print((int8_t)p.dR);
@@ -315,8 +315,10 @@ void colorPresetApply()
 void colorPresetClear()
 {
     const uint8_t s = activeSlot();
-    memset(&slots[s], 0, sizeof(ColorPreset));
-    saveToFile();
+    // (after v123d) his decision of 2026-11-22: "reiniciar tiene que reiniciar, no borrar mi perfil". It used to wipe this
+    // console's saved slot and write the file. Now it only puts the firmware's picture on screen, so he can compare before
+    // and after; his saved profile stays untouched and «cargar» brings it back. (To really get rid of it: reiniciar, then
+    // guardar, which saves the factory values over it.)
     // v107p: "volver a lo de serie" for this console: the filters back to the firmware defaults as well
     {
         ColorPreset d;
@@ -334,8 +336,9 @@ void colorPresetClear()
     resetAdcOffset();
     resetHue(); // v74
     resetImageFine();
-    SerialM.print(F("[3x4x-v122] colour preset removed for "));
-    SerialM.println(slotName(s));
+    SerialM.print(F("[3x4x-v123l] colour and filters back to the firmware's values for "));
+    SerialM.print(slotName(s));
+    SerialM.println(F(" (the saved profile is kept: load brings it back)"));
 }
 
 // (after v107v) EXPORT / IMPORT ONE CONSOLE, his request: separate per console, in case one day it is shared with others.
@@ -348,7 +351,7 @@ void colorPresetExportActive()
     const uint8_t s = activeSlot();
     File f = LittleFS.open("/colorexp.txt", "w");
     if (!f) {
-        SerialM.println(F("[3x4x-v122] colour export: could not open the file"));
+        SerialM.println(F("[3x4x-v123l] colour export: could not open the file"));
         return;
     }
     f.print(s);
@@ -363,7 +366,7 @@ void colorPresetExportActive()
     }
     f.write('\n');
     f.close();
-    SerialM.print(F("[3x4x-v122] colour export ready for "));
+    SerialM.print(F("[3x4x-v123l] colour export ready for "));
     SerialM.println(slotName(s));
 }
 
@@ -371,7 +374,7 @@ void colorPresetImportFile()
 {
     File f = LittleFS.open("/colorimp.txt", "r");
     if (!f) {
-        SerialM.println(F("[3x4x-v122] colour import: no file"));
+        SerialM.println(F("[3x4x-v123l] colour import: no file"));
         return;
     }
     String first = f.readStringUntil('\n');
@@ -382,19 +385,19 @@ void colorPresetImportFile()
     data.trim();
     const int s = first.toInt();
     if (first.length() < 1 || first.length() > 2 || s < 0 || s >= COLOR_PRESET_SLOTS || data.length() != (unsigned)(COLOR_PRESET_FIELDS * 2)) {
-        SerialM.println(F("[3x4x-v122] colour import: the file is not valid"));
+        SerialM.println(F("[3x4x-v123l] colour import: the file is not valid"));
         return;
     }
     uint8_t raw[sizeof(ColorPreset)];
     for (uint8_t i = 0; i < COLOR_PRESET_FIELDS; i++)
         raw[i] = (uint8_t)((nibble(data[2 * i]) << 4) | nibble(data[2 * i + 1]));
     if (raw[0] == 0) { // the "valid" byte: an export of a console with nothing saved
-        SerialM.println(F("[3x4x-v122] colour import: the file holds no settings"));
+        SerialM.println(F("[3x4x-v123l] colour import: the file holds no settings"));
         return;
     }
     memcpy(&slots[s], raw, sizeof(raw));
     saveToFile();
-    SerialM.print(F("[3x4x-v122] colour import saved for "));
+    SerialM.print(F("[3x4x-v123l] colour import saved for "));
     SerialM.println(slotName((uint8_t)s));
     if ((uint8_t)s == activeSlot())
         colorPresetApply();
@@ -402,7 +405,7 @@ void colorPresetImportFile()
 
 void colorPresetStatus()
 {
-    SerialM.print(F("[3x4x-v122] colour presets:"));
+    SerialM.print(F("[3x4x-v123l] colour presets:"));
     bool any = false;
     for (uint8_t s = 0; s < COLOR_PRESET_SLOTS; s++) {
         if (slots[s].valid) {
