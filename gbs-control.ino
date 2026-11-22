@@ -788,7 +788,8 @@ void loop()
     handleWiFi(0); // WiFi + OTA + WS + MDNS, checks for server enabled + started
 
     integer720ReapplyTick(); // v50
-    edgesTick();             // (after v107q) the user's edges, kept 15 s after the last press
+    edgesTick();             // (after v107q) the user's edges, kept 30 s after the last press (15 s before v123j)
+    prefsTick();             // (after v123j) the preferences, written 30 s after the last change
     consoleModeTick();       // (after v107v) the last mode of each console
 
     if (webUpdateBusy()) {
@@ -854,9 +855,11 @@ void loop()
                 break;
             case '*':
                 shiftVerticalUpIF();
+                posNote(); // (after v123j) the position is kept per mode
                 break;
             case '/':
                 shiftVerticalDownIF();
+                posNote(); // (after v123j) the position is kept per mode
                 break;
             case 'z':
                 SerialM.println(F("scale+"));
@@ -1271,9 +1274,11 @@ void loop()
             } break;
             case '6':
                 moveCanvasHorizontal(true);
+                posNote(); // (after v123j) the position is kept per mode
                 break;
             case '7':
                 moveCanvasHorizontal(false);
+                posNote(); // (after v123j) the position is kept per mode
                 break;
             case '8':
                 //SerialM.println(F("invert sync"));
