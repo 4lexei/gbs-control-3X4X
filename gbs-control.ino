@@ -159,7 +159,7 @@
 
 void setup()
 {
-    // (after v111e) his decision: the OLED screen and its menu only when a screen answers at 0x3c. Without one, its memory
+    // (after v111e) the OLED screen and its menu only when a screen answers at 0x3c. Without one, its memory
     // (~7 KB) stays free for the web. display.init() used to be what started the I2C bus, so it is started here first.
     startWire();
     Wire.beginTransmission(0x3c);
@@ -392,8 +392,9 @@ void setup()
             if (uopt->wantTap6 > 1)
                 uopt->wantTap6 = 1;
 
-            (void)f.read(); // (after v107r) the old "Force PAL 50Hz to 60Hz": its byte is still read to keep the file in
-            uopt->PalForce60 = 0; // place, but it is always off now; the output rates of our own do it without a reboot
+            uopt->PalForce60 = (uint8_t)(f.read() - '0'); // (after v127i) "forzar perfiles NTSC": PAL 50 Hz input loads the NTSC presets
+            if (uopt->PalForce60 > 1)
+                uopt->PalForce60 = 0;
 
             uopt->matchPresetSource = (uint8_t)(f.read() - '0'); // #14
             if (uopt->matchPresetSource > 1)
@@ -486,7 +487,7 @@ void setup()
                     uopt->consoleProfile = 0;
             }
             if (f.available()) {
-                // v73: the 960p x4 and 480p x2 modes are gone (1280x960 has no matching capture resolution on the user's
+                // v73: the 960p x4 and 480p x2 modes are gone (1280x960 has no matching capture resolution on the
                 // card, and neither mode was ever verified with a grid). The byte is still read so the ones after it keep
                 // their position, but the value is dropped: a board updating from v72 with one of them active would
                 // otherwise keep loading a mode with no button left to switch it off.
@@ -528,7 +529,7 @@ void setup()
                 const uint8_t v = (uint8_t)(f.read() - '0');
                 uopt->memPhaseSlot[i] = (v <= 15) ? v : 0;
             }
-            // v88: the two old single-byte settings seed the slot of the mode they used to apply to, so his saved 185 MHz for
+            // v88: the two old single-byte settings seed the slot of the mode they used to apply to, so the saved 185 MHz for
             // 720p x5 is not lost on the first boot of this version. x5MemClock only ever applied in 720p x5 (slots 1 NTSC and
             // 9 PAL); memPhase was global but was only ever written there too.
             if (uopt->x5MemClock != 0) {
@@ -588,6 +589,14 @@ void setup()
                     uopt->outputChosen = (f.read() == '0') ? 0 : 1;
                 // (after v111h) #221 is gone: the console's gain lives in /autogainv1.txt now. A byte left by an older
                 // file is simply not read.
+                // (after v126) the H protect switch, written as 'h' + 0/1: digits left by older files are skipped
+                uopt->hProtectForce = 0;
+                while (f.available()) {
+                    if (f.read() == 'h') {
+                        uopt->hProtectForce = (f.available() && f.read() == '1') ? 1 : 0;
+                        break;
+                    }
+                }
             } else {
                 // A file from before v107m: one value per mode. Where the mode has no measurements per step, that value meant
                 // the same on every step, so it goes to all four. In the three modes measured step by step (PAL 720p x4,
@@ -1815,9 +1824,9 @@ void loop()
     // v69: the same for the first measurement of best htotal, which also used to stop with the watcher
     if (rto->autoBestHtotalEnabled && !FrameSync::ready() && (rto->syncWatcherEnabled || syncHeldWithPicture())) {
         // v71: ... and without demanding the coast flag while held. A saved sync state leaves that flag off on purpose
-        // (it is what makes his PC Engine lock), and that was blocking the one measurement the frame time lock needs
+        // (it is what makes the PC Engine lock), and that was blocking the one measurement the frame time lock needs
         // before it can correct anything: when the measurement had not happened before the lock, the output rate stayed
-        // off for good, however long he waited.
+        // off for good, however long the wait.
         if ((rto->continousStableCounter >= 10 || syncHeldWithPicture()) &&
             (rto->coastPositionIsSet || syncHeldWithPicture()) &&
             ((millis() - lastVsyncLock) > 500)) {
