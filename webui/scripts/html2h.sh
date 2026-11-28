@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 3X4X: "./html2h.sh" makes webui_html.h (Spanish); "./html2h.sh en" makes webui_html_en.h from webui_en.html.
 # The array keeps the same name in every language: the firmware includes only one of them.
-# (after v120) his request of 2026-11-21: gzip -n, so the compression time does not go into the header. Without it the
+# (after v120) 2026-11-21: gzip -n, so the compression time does not go into the header. Without it the
 # two .h files come out different on every build even when the web has not changed, and GitHub shows them as modified.
 cd ..
 SUF=""

@@ -125,19 +125,25 @@
             <div class="gbs-card">
               <div class="gbs-card__head">
                 <div class="gbs-card__title" id="workMode">Presets disponibles</div>
-                <div class="gbs-asp" id="workAspect" hidden>
-                  <button data-asp="4:3">4:3</button>
-                  <button data-asp="16:9">16:9</button>
+                <div class="gbs-aspwrap" id="workAspect" hidden>
+                  <span class="gbs-asp__label" id="workAspectLabel">Formato de tu pantalla</span>
+                  <div class="gbs-asp">
+                    <button data-asp="4:3">4:3</button>
+                    <button data-asp="16:9">16:9</button>
+                  </div>
                 </div>
               </div>
               <div class="gbs-card__desc" id="workDesc">Elige un modo de salida abajo.</div>
               <div class="gbs-card__chips" id="workSteps" hidden>
-                <button gbs-message=")" gbs-message-type="user" gbs-click="normal" class="gbs-chip" data-step="0"><span>cuadrado</span><small>256 px, píxel exacto</small></button>
+                <button gbs-message=")" gbs-message-type="user" gbs-click="normal" class="gbs-chip" data-step="0"><span>cuadrado</span><small>256 px, píxel cuadrado</small></button>
+                <!-- (after v124d) the new buttons: the PC Engine's 320 / 352 px games in whole pixels (720p x3 only) -->
+                <button gbs-message="88" gbs-message-type="img" gbs-click="normal" class="gbs-chip" id="workMid320" hidden><span>320 px</span><small>píxel cuadrado</small></button>
+                <button gbs-message="89" gbs-message-type="img" gbs-click="normal" class="gbs-chip" id="workMid352" hidden><span>352 px</span><small>píxel cuadrado</small></button>
                 <button gbs-message="(" gbs-message-type="user" gbs-click="normal" class="gbs-chip" data-step="1"><span>CRT</span><small>aspecto de TV</small></button>
                 <button gbs-message="46" gbs-message-type="img" gbs-click="normal" class="gbs-chip" data-step="2"><span>ancho</span><small>experimental</small></button>
                 <button gbs-message="47" gbs-message-type="img" gbs-click="normal" class="gbs-chip" data-step="3"><span>llenar</span><small>experimental</small></button>
               </div>
-              <!-- (after v107r) his text: the edge is kept in every mode, not only with 240 -->
+              <!-- (after v107r) the text: the edge is kept in every mode, not only with 240 -->
               <div class="gbs-note" id="workEdgeNote" hidden><span class="gbs-note__ico">&#9650;</span><span>Ajusta el borde para corregirlo si se come parte del juego o úsalo para tapar basura (menú AJUSTE). Se guardará automáticamente.</span></div>
               <div class="gbs-lines" id="workLines" hidden>
                 <div class="gbs-card__label gbs-lines__label">Líneas</div>
@@ -170,7 +176,7 @@
                 <button gbs-message="43" gbs-message-type="img" gbs-click="normal" class="gbs-seg__b" data-prof="MD">Mega Drive</button>
                 <button gbs-message="44" gbs-message-type="img" gbs-click="normal" class="gbs-seg__b" data-prof="SNES">SNES</button>
                 <button gbs-message="45" gbs-message-type="img" gbs-click="normal" class="gbs-seg__b" data-prof="PC-Engine">PC Engine</button>
-                <!-- (after v108e) his request: the Dreamcast out of «Otras consolas» now that it is measured -->
+                <!-- (after v108e) the Dreamcast out of «Otras consolas» now that it is measured -->
                 <button gbs-message="69" gbs-message-type="img" gbs-click="normal" class="gbs-seg__b" data-prof="Dreamcast">Dreamcast</button>
               </div>
               <button type="button" class="gbs-cons-more" id="workConsoleMore">Otras consolas ▸</button>
@@ -188,10 +194,10 @@
                 <button gbs-message="71" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat gbs-cons-chip" data-prof="Xbox">Xbox</button>
                 <button gbs-message="72" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat gbs-cons-chip" data-prof="GameCube">GameCube</button>
                 <button gbs-message="73" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat gbs-cons-chip" data-prof="Wii">Wii</button>
-                <!-- (after v108e) his request: for whoever does not see his console and does not know what to choose -->
+                <!-- (after v108e) for whoever does not see the console and does not know what to choose -->
                 <button gbs-message="75" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat gbs-cons-chip" data-prof="Others">Otras</button>
               </div>
-              <div class="gbs-card__desc gbs-col__desc gbs-cons__desc" id="workConsoleDesc">Elige el sistema que vas a usar para que se muestre lo mejor posible. Actualmente el firmware sólo detecta y está probado con unos pocos.</div>
+              <div class="gbs-card__desc gbs-col__desc gbs-cons__desc" id="workConsoleDesc">Elige el sistema en uso para mostrar la mejor imagen posible. Actualmente el firmware sólo está probado con: PC-Engine, Mega Drive, Super Nintendo y Dreamcast. El resto de perfiles son genéricos.</div>
             </div>
             <div class="gbs-card" id="workSlot">
               <div class="gbs-card__label">Presets personales</div>
@@ -248,14 +254,14 @@
               <button data-mode="crop" class="gbs-seg__b">Bordes</button>
               <button data-mode="scale" class="gbs-seg__b">Escalar</button>
             </div>
-            <!-- (after v107s) no "Encoger / Agrandar borde" switch any more: in Bordes every key has two arrows (his design) -->
+            <!-- (after v107s) no "Encoger / Agrandar borde" switch any more: in Bordes every key has two arrows -->
             <div class="gbs-adj__help" id="padHelp"></div>
             <div class="gbs-adj__pad" id="padKeys">
               <button class="gbs-pad__k gbs-pad__blank"></button>
               <button class="gbs-pad__k" data-pad="up">&#9650;</button>
               <button class="gbs-pad__k gbs-pad__blank"></button>
               <button class="gbs-pad__k" data-pad="left">&#9664;</button>
-              <!-- (after v108d) his request: the fine step in the middle of the pad, an arrow-sized key (the mode it was
+              <!-- (after v108d) the fine step in the middle of the pad, an arrow-sized key (the mode it was
                    labelled with is already on the Mover / Bordes / Escalar buttons above) -->
               <button class="gbs-pad__k gbs-pad__fine" id="workFine"><span>ajuste<br>fino</span></button>
               <button class="gbs-pad__k" data-pad="right">&#9654;</button>
@@ -263,15 +269,20 @@
               <button class="gbs-pad__k" data-pad="down">&#9660;</button>
               <button class="gbs-pad__k gbs-pad__blank"></button>
             </div>
+            <!-- (after v123l) option A: the values of what the pad is touching, under it (step 1: raw values) -->
+            <div class="gbs-padvals" id="padVals">
+              <div class="gbs-padval"><small id="padValHLabel">posición horizontal</small><b id="padValH">—</b><i id="padValHPx" hidden></i><small id="padValHRaw" hidden></small></div>
+              <div class="gbs-padval"><small id="padValVLabel">posición vertical</small><b id="padValV">—</b><i id="padValVPx" hidden></i><small id="padValVRaw" hidden></small></div>
+            </div>
             <div id="padMid" hidden>MOVER</div>
-            <!-- (after v107r) three undo buttons, his choice: each one puts back only what it names. The edge one asks first,
+            <!-- (after v107r) three undo buttons, each one puts back only what it names. The edge one asks first,
                  because it erases the edge kept for this mode. -->
             <div class="gbs-adj__acts gbs-adj__undo">
               <button gbs-message="55" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Volver a la posición del firmware? Se borrará la posición actual para este modo" class="gbs-bar__ghost" id="workUndoMove"><small>deshacer</small><span>movimiento</span></button>
               <button gbs-message="56" gbs-message-type="img" gbs-click="normal" gbs-confirm="¿Volver al borde del firmware? Se borrará el borde actual para este modo" class="gbs-bar__ghost" id="workUndoEdge"><small>deshacer</small><span>borde</span></button>
               <button gbs-message="57" gbs-message-type="img" gbs-click="normal" class="gbs-bar__ghost" id="workUndoScale"><small>deshacer</small><span>escala</span></button>
             </div>
-            <!-- (after v107q) his request: always visible, right under the pad (first moved to the top, then here: whoever plays with the pad sees it) -->
+            <!-- (after v107q) always visible, right under the pad (first moved to the top, then here: whoever plays with the pad sees it) -->
             <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>El borde y la posición quedarán guardados automáticamente para el modo y perfil de esta consola.</span></div>
             <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>Si escalas la imagen, te corresponde guardar a ti los cambios en un preset personal (menú MODO).</span></div>
             <div class="gbs-note gbs-adj__edgesaved"><span class="gbs-note__ico">&#9650;</span><span>Los cambios anteriores pueden ocasionar conflictos y glitches. No es fácil obtener una buena imagen, reajustar la RAM podría ayudar.</span></div>
@@ -353,7 +364,7 @@
                 <button gbs-message="T" gbs-message-type="action" gbs-click="normal" gbs-toggle="adcAutoGain" class="gbs-chip gbs-chip--flat gbs-col__wide">
                   <span>ganancia automática</span><small>calibra unos segundos sobre una pantalla blanca</small>
                 </button>
-                <!-- (after v111h) his decision of 2026-11-21: the gain his own board finds is kept per console. Simple
+                <!-- (after v111h) 2026-11-21: the gain its own board finds is kept per console. Simple
                      enough for anyone, so it lives with the picture controls, not in Avanzado. -->
                 <button gbs-message="85" gbs-message-type="img" gbs-click="normal" class="gbs-chip gbs-chip--flat gbs-col__wide">
                   <span>guardar ganancia <b class="gbs-chip__val" id="agSavedNow">—</b></span><small>Cuando la ganancia automática se asiente y la imagen te convenza, guárdala para esta consola. Esto bloquea la ganancia automática hasta que la reinicies.</small>
@@ -500,7 +511,7 @@
               <div class="gbs-icon">sync_problem</div>
               <div>Sync (fuentes que no enganchan)</div>
             </legend>
-            <!-- (after v107r) his description, always visible -->
+            <!-- (after v107r) the description, always visible -->
             <div class="gbs-fieldset__desc">Bloque experimental para reparar la atroz sincronía del transcodificador ODV-II (compuesto a componentes) al usar PC-Engine. No tiene utilidad para el resto de usuarios.</div>
             <!-- prettier-ignore -->
             <ul class="gbs-help">
@@ -516,6 +527,8 @@
               <li>Mientras hay un estado guardado en uso, la recuperación ya no sobrescribe el pulse ignore ni el coast, que era lo que lo estropeaba en cada intento.</li>
               <li>El estado guardado se vuelve a escribir tras cada carga de preset, y «cargar sync» lo escribe de nuevo en cualquier momento. Contiene el nivel SOG, el coast y si quedó sin fijar, el pulse ignore y la fase: lo que necesita una fuente débil o problemática y lo que el vigilante tendría que volver a buscar desde cero.</li>
               <li>La receta ODV escribe el estado que se midió funcionando con la PC Engine a través de un transcodificador ODV (nivel SOG 14, coast 16/256 sin fijar, pulse ignore 51), como punto de partida en vez de nada. No es una garantía: captúralo si la imagen sale bien.</li>
+              <li>Ignorar pulsos falsos (experimental): para consolas conectadas a través de un transcodificador (ODV y similares) que no enganchan. El GBS deja de hacer caso a los pulsos de sincronía falsos que mete el transcodificador. No cambia nada más; apágalo si no lo necesitas.</li>
+              <li>Receta ODV 60 Hz: para juegos de PC-Engine a 60,05 Hz, como Bonk u Out Run, que no enganchan con la receta normal.</li>
               <li>Info de sync escribe el estado actual de la sincronía en el log, para comparar ajustes mientras los pruebas.</li>
             </ul>
             <div class="gbs-flex gbs-margin__bottom--16">
@@ -578,6 +591,7 @@
                 <div>nivel SOG</div>
               </button>
             </div>
+            <!-- (after v126b) five buttons in a row overlapped; two per row like the rest of the block -->
             <div class="gbs-flex gbs-margin__bottom--16">
               <button
                 gbs-message="25"
@@ -599,7 +613,7 @@
                 <div>capturar sync</div>
               </button>
             </div>
-            <div class="gbs-flex">
+            <div class="gbs-flex gbs-margin__bottom--16">
               <button
                 gbs-message="12"
                 gbs-message-type="img"
@@ -610,6 +624,18 @@
                 <div>cargar sync</div>
               </button>
               <button
+                gbs-message="13"
+                gbs-message-type="img"
+                gbs-confirm="¿Borrar el sync guardado de {profile}?"
+                gbs-click="normal"
+                class="gbs-danger gbs-button gbs-button__control gbs-button__secondary"
+              >
+                <div class="gbs-icon">bookmark_remove</div>
+                <div>olvidar sync</div>
+              </button>
+            </div>
+            <div class="gbs-flex gbs-margin__bottom--16">
+              <button
                 gbs-message="14"
                 gbs-message-type="img"
                 gbs-confirm="¿Escribir la receta ODV sobre el sync que tiene ahora el chip? El perfil activo es {profile}."
@@ -619,15 +645,55 @@
                 <div class="gbs-icon">auto_fix_high</div>
                 <div>receta ODV</div>
               </button>
+              <!-- (after v125) the second recipe: the Bonk capture -->
               <button
-                gbs-message="13"
+                gbs-message="90"
                 gbs-message-type="img"
-                gbs-confirm="¿Borrar el sync guardado de {profile}?"
+                gbs-confirm="¿Escribir la receta ODV 60 Hz sobre el sync que tiene ahora el chip? El perfil activo es {profile}."
                 gbs-click="normal"
-                class="gbs-danger gbs-button gbs-button__control gbs-button__secondary"
+                class="gbs-button gbs-button__control gbs-button__secondary"
               >
-                <div class="gbs-icon">bookmark_remove</div>
-                <div>olvidar sync</div>
+                <div class="gbs-icon">auto_fix_high</div>
+                <div>receta ODV 60 Hz</div>
+              </button>
+            </div>
+            <!-- (after v126b) temporary test button, the request -->
+            <div class="gbs-flex gbs-margin__bottom--16">
+              <button
+                gbs-message="92"
+                gbs-message-type="img"
+                gbs-confirm="¿Escribir la receta de prueba sobre el sync que tiene ahora el chip? El perfil activo es {profile}."
+                gbs-click="normal"
+                class="gbs-button gbs-button__control gbs-button__secondary"
+              >
+                <div class="gbs-icon">science</div>
+                <div>receta de prueba</div>
+              </button>
+            </div>
+            <div class="gbs-flex">
+              <!-- (after v126) the experimental switch -->
+              <button
+                gbs-message="91"
+                gbs-message-type="img"
+                gbs-click="normal"
+                class="gbs-button gbs-button__control gbs-button__secondary"
+                id="syncHpf"
+              >
+                <div class="gbs-icon">filter_alt</div>
+                <div>ignorar pulsos falsos</div>
+              </button>
+            </div>
+            <div class="gbs-flex">
+              <!-- (after v127i) force the NTSC presets with a PAL 50 Hz input -->
+              <button
+                gbs-message="97"
+                gbs-message-type="img"
+                gbs-click="normal"
+                gbs-toggle-switch="palForce60"
+                class="gbs-button gbs-button__control gbs-button__secondary"
+              >
+                <div class="gbs-icon">hd</div>
+                <div>forzar perfiles NTSC</div>
               </button>
             </div>
           </fieldset>
@@ -741,7 +807,7 @@
                   toggle_off
                 </td>
               </tr>
-              <!-- (after v111b) his request: an exact output rate typed in the web -->
+              <!-- (after v111b) an exact output rate typed in the web -->
               <tr>
                 <td class="gbs-padding__left-16">Exacta</td>
                 <td
@@ -1183,7 +1249,7 @@
                 <div>Reset Chip</div>
               </button>
             </div>
-            <!-- (after v111b) his request: the clocks, typed or nudged live -->
+            <!-- (after v111b) the clocks, typed or nudged live -->
             <div class="gbs-regtest">
               <div class="gbs-regtest__title">Relojes</div>
               <ul class="gbs-help">
@@ -1214,19 +1280,25 @@
                 <button gbs-message="83" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">−15°</button>
                 <button gbs-message="84" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">+15°</button>
                 <button gbs-message="82" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">Reiniciar memoria</button>
-                <!-- (after v120c) his request of 2026-11-21: a way back to the values the firmware carries -->
+                <!-- (after v120c) 2026-11-21: a way back to the values the firmware carries -->
                 <button gbs-message="87" gbs-message-type="img" gbs-click="normal" class="gbs-button gbs-clk__btn">Memoria de fábrica</button>
               </div>
             </div>
-            <!-- (after v111) his request: try the chip registers nobody used yet (deinterlacer and output fields) -->
+            <!-- (after v111) try the chip registers nobody used yet (deinterlacer and output fields) -->
             <div class="gbs-regtest">
               <div class="gbs-regtest__title">Registros por probar</div>
               <ul class="gbs-help">
-                <li>Registros del chip que el firmware no usaba: los del desentrelazador (MADPT) y uno de los campos de salida (VDS_HALF_EN). Prueba con una fuente entrelazada (480i / 576i).</li>
-                <li>«Siguiente» elige el registro; «−» y «+» cambian su valor. Nada se guarda: al cargar un preset vuelven a su valor.</li>
+                <li>Registros del chip que el firmware no usaba: los del desentrelazador (MADPT), uno de los campos de salida (VDS_HALF_EN), para una fuente entrelazada (480i / 576i); los de la reducción de ruido (VDS_NR), para el ruido del vídeo compuesto; y los de la nitidez fina (VDS_PK_HL / HB / HH).</li>
+                <li>Los botones de grupo saltan al primer registro de cada grupo; «Anterior» y «Siguiente» eligen el registro; «−» y «+» cambian su valor. Nada se guarda: al cargar un preset vuelven a su valor.</li>
               </ul>
               <div class="gbs-regtest__state" id="regTestState">—</div>
               <div class="gbs-flex">
+                <button gbs-message="94" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">first_page</div><div>Desentrelazador</div></button>
+                <button gbs-message="95" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">first_page</div><div>Ruido</div></button>
+                <button gbs-message="96" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">first_page</div><div>Nitidez</div></button>
+              </div>
+              <div class="gbs-flex">
+                <button gbs-message="93" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">skip_previous</div><div>Anterior</div></button>
                 <button gbs-message="77" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">skip_next</div><div>Siguiente</div></button>
                 <button gbs-message="79" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">remove</div><div>−</div></button>
                 <button gbs-message="78" gbs-message-type="img" gbs-click="normal" class="gbs-button"><div class="gbs-icon">add</div><div>+</div></button>
@@ -1306,7 +1378,7 @@
             <div class="gbs-card">
               <div class="gbs-card__label gbs-colprof-label">Perfil de color y filtro</div>
               <div class="gbs-card__desc gbs-col__desc">Este firmware recuerda los ajustes de color y filtros para cada consola por separado (sólo si existe su perfil específico, estoy trabajando en ello). Tocando el botón GUARDAR, quedarán almacenados para la próxima vez que la uses, convirtiéndose en su ajuste global.<br><br>Si un juego concreto necesita otros ajustes (ejemplo: típico juego de miedo demasiado oscuro en el que no se ve nada), ¡no guardes aquí! Guarda un preset personal para dicho juego en la pestaña MODO; ese preset llevará sus propios colores y filtros, y no alterará el ajuste global de la consola.</div>
-              <!-- (after v107q) a replica of the colour profile card of Color, his request: the same buttons, the same messages, so the
+              <!-- (after v107q) a replica of the colour profile card of Color, the same buttons, the same messages, so the
                    changes made in Filtros can be saved without going back to the other tab.
                    v107p: guardar now keeps the filters too (scanlines, line filter, peaking, edge, deinterlacer) and brightness /
                    contrast. "reiniciar" puts the factory values on screen; (after v123d) what this console has saved is kept. -->
@@ -1349,7 +1421,7 @@
             <div class="gbs-card">
               <div class="gbs-card__label">Actualizar firmware</div>
               <div class="gbs-card__desc gbs-col__desc">Elige el archivo firmware.bin del proyecto compilado (.pio/build/gbsc/firmware.bin) y pulsa subir. No apagues el GBS hasta que termine.</div>
-              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v123l</b></div>
+              <div class="gbs-sys__ver">Versión de la web: <b>3x4x-v130k</b></div>
               <label class="gbs-chip gbs-chip--flat gbs-sys__file"><span>elegir archivo</span><small gbs-update-filename>ninguno elegido</small><input type="file" accept=".bin" gbs-update-file /></label>
               <div class="gbs-sys__status" gbs-update-status></div>
               <div class="gbs-sys__bar" gbs-update-bar-wrap hidden><div gbs-update-bar></div></div>
@@ -1383,7 +1455,7 @@
               <div class="gbs-grid3">
                 <button gbs-message="a" gbs-message-type="user" gbs-click="normal" class="gbs-chip gbs-chip--flat">reiniciar</button>
                 <button gbs-message="c" gbs-message-type="action" gbs-click="normal" class="gbs-chip gbs-chip--flat">activar OTA</button>
-                <!-- (after v108f) his request: it erases everything the user did; the personal presets only after a second yes -->
+                <!-- (after v108f) it erases everything the user did; the personal presets only after a second yes -->
                 <button id="sysFactory" class="gbs-chip gbs-chip--flat gbs-sys__reset gbs-danger">valores de fábrica</button>
               </div>
               <div class="gbs-card__hint">OTA permite actualizar por red desde el ordenador (PlatformIO). Se desactiva al reiniciar.</div>

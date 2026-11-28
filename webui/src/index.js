@@ -686,7 +686,7 @@ const markActiveModes = (text) => {
     setButtonActive("(", "user", anyMode && (has("320 px") || starts("step 2/")));
     setButtonActive(")", "user", anyMode && (has("256 px") || starts("step 1/")));
     setButtonActive("<", "user", anyMode && (has("wide") || starts("step 3/4") || starts("step 4/4")));
-    // (after v107v) his request: with one of our modes on, nothing is lit among Rama's original resolutions (ours sits on top
+    // (after v107v) with one of our modes on, nothing is lit among Rama's original resolutions (ours sits on top
     // of one of them, and seeing both lit was confusing). The "#" message would light it again, so it reads this flag.
     ourModeOn = anyMode || has("960p x4") || has("480p x2");
     if (ourModeOn) {
@@ -1070,31 +1070,32 @@ const PAD_CROP_OUT = { up: ",", down: "$", left: "_", right: "~" };
 // v107f: the description is built from three parts, because the size step changes what is true about the picture:
 // what is seen vertically (the mode), how wide it is (the step), and which screen it is for (the mode and shape).
 const WORK_DESC = {
-    "720p x3 4:3": ["", // (after v107v) his decision: the "224 lines" sentence is not needed here
-        "Para pantalla 4:3 o 16:9 a elección del usuario."],
-    "720p x3 16:9": ["", // (after v107v) his decision: the "224 lines" sentence is not needed here
-        "Para pantalla 4:3 o 16:9 a elección del usuario."],
-    "720p x4 16:9": ["Recomendado para Super Game Boy y juegos con ventanas reducidas. Se ven 180 de las 224 líneas.", "Para una pantalla 16:9."],
-    "720p x5 16:9": ["Experimental. Recomendado para Super Game Boy y juegos con ventanas muy pequeñas. Se ven 144 de las 224 líneas: Game Boy a pantalla completa.", "Para una pantalla 16:9."],
-    "1080p x4": ["", // (after v107v) his decision: the "224 lines" sentence is not needed here
-        "Para una pantalla 16:9 a 1080p."],
+    "720p x3 4:3": ["", // (after v107v) the "224 lines" sentence is not needed here
+        ""], // (after v124d) «Formato de tu pantalla» next to 4:3 / 16:9 already says it
+    "720p x3 16:9": ["", // (after v107v) the "224 lines" sentence is not needed here
+        ""], // (after v124d) «Formato de tu pantalla» next to 4:3 / 16:9 already says it
+    "720p x4 16:9": ["Recomendado para Super Game Boy y juegos con ventanas reducidas. Se ven 180 de las 224 líneas.", ""],
+    // (after v127f) 2026-11-25: no longer experimental, and no «Para una pantalla 16:9»
+    "720p x5 16:9": ["Modo recomendado para jugar a Super Game Boy a pantalla completa.", ""],
+    "1080p x4": ["", // (after v107v) the "224 lines" sentence is not needed here
+        ""], // (after v130h) «Formato de tu pantalla» says it: no «para qué pantalla» notice
     // (after v108h) the Mega Drive's 1080p x4 «4:3»: the picture 4/3 wider, for a 16:9 set switched to 4:3 by its remote
-    "1080p x4 4:3": ["", "Para una tele 16:9 puesta en modo 4:3."],
+    "1080p x4 4:3": ["", ""],
     // (after v123e) the PC Engine's 1080p x5 «4:3»
-    "1080p x5 4:3": ["Se ven 216 de las 224 líneas. En CRT desborda un poco por los lados.", "Para una tele 16:9 puesta en modo 4:3."],
-    "1080p x5": ["Se ven 216 de las 224 líneas: faltan 4 arriba y 4 abajo, que en muchos juegos apenas se notan.", "Para una pantalla 16:9 a 1080p."],
+    "1080p x5 4:3": ["Se ven 216 de las 224 líneas. En CRT desborda un poco por los lados.", ""],
+    "1080p x5": ["Se ven 216 de las 224 líneas: faltan 4 arriba y 4 abajo, que en muchos juegos apenas se notan.", ""],
 };
 // v107n: with any console other than the SNES the Super Game Boy means nothing, so x4 and x5 have their own sentence
 const WORK_DESC_OTHER = {
-    "720p x4 16:9": ["Recomendado para juegos con ventanas pequeñas. Se ven 180 de las 224 líneas.", "Para una pantalla 16:9."],
-    "720p x5 16:9": ["Experimental. Recomendado para juegos con ventanas muy pequeñas. Se ven 144 de las 224 líneas.", "Para una pantalla 16:9."],
+    "720p x4 16:9": ["Recomendado para juegos con ventanas pequeñas. Se ven 180 de las 224 líneas.", ""],
+    "720p x5 16:9": ["Experimental. Recomendado para juegos con ventanas muy pequeñas. Se ven 144 de las 224 líneas.", ""],
 };
-// v107n: the Líneas row (his texts). 1 is 240 with the Mega Drive and 239 with the SNES.
+// v107n: the Líneas row (the texts). 1 is 240 with the Mega Drive and 239 with the SNES.
 const LINES_NOTE_224 = "Se ven las 224 líneas que usan casi todos los juegos. Un borde tapa la basura, ajústalo manualmente si se come algunos píxeles del juego o está desplazado.";
-const LINES_NOTE_240 = "Se muestran hasta 240 líneas. Juegos no optimizados se ven al completo."; // (after v107q) his text
-const LINES_NOTE_239 = "Se ven todas las líneas, ya sean 224 o 239."; // v107p: his text for the SNES "224 / 239" button
+const LINES_NOTE_240 = "Se muestran hasta 240 líneas. Juegos no optimizados se ven al completo."; // (after v107q) the text
+const LINES_NOTE_239 = "Se ven todas las líneas, ya sean 224 o 239."; // v107p: the text for the SNES "224 / 239" button
 const LINES_NOTE_DOLOR = "Franjas, marcos de colorines y achatado. Así solía ser el formato PAL. Scanlines no disponibles en este modo.";
-const LINES_NOTE_DOLOR_SNES = "Franjas y achatado, así solía ser el formato PAL. Scanlines no disponibles en este modo."; // v107p: his text
+const LINES_NOTE_DOLOR_SNES = "Franjas y achatado, así solía ser el formato PAL. Scanlines no disponibles en este modo."; // v107p: the text
 // the row, from "ln=" (0 224, 1 240 / 239, 2 DOLOR) and "lna=" (bit 0 row, bit 1 DOLOR) of the data line. DOLOR also
 // switches the scanlines off (the firmware refuses them), so their controls in Filtros are locked meanwhile, and the size
 // buttons do nothing in DOLOR, which has one placement of its own, so they are locked too.
@@ -1115,7 +1116,7 @@ const paintLines = (raw, s) => {
         nodelistToArray(box.querySelectorAll("[data-lines]")).forEach((c) => {
             const n = parseInt(c.getAttribute("data-lines") || "0", 10);
             // v107p: no 224 with the SNES (bit 2): its games have no frame, so the window is always open to 239
-            // (after v107q) and no 224 at all any more: the row is 240 and DOLOR (his decision of 2026-11-13)
+            // (after v107q) and no 224 at all any more: the row is 240 and DOLOR (2026-11-13)
             (n === 2 && !(lna & 2)) || n === 0 ? c.setAttribute("hidden", "") : c.removeAttribute("hidden");
             n === ln ? c.setAttribute("active", "") : c.removeAttribute("active");
         });
@@ -1137,18 +1138,24 @@ const paintLines = (raw, s) => {
     });
     return { row, dolor };
 };
-const WORK_WIDTH_SNESCRT = "Proporción con la que jugábamos a SNES en tele de tubo. Píxel horizontal no entero.";
-const WORK_WIDTH_MD256 = "Píxel cuadrado en juegos de 256px, probablemente en MD te interese más el modo 320px.";
-// (after v121) his decision of 2026-11-21: the 256 px button is pixel perfect, but that is not the shape anyone
+const WORK_WIDTH_SNESCRT = "Proporción similar a la que jugábamos a SNES en tele de tubo. Píxel no entero.";
+const WORK_WIDTH_MD256 = "Píxel cuadrado en juegos de 256px, aunque nunca los jugamos tan estrechos. Quizá prefieras el modo 320px.";
+const WORK_WIDTH_SNES256 = "Píxel cuadrado en juegos de 256px, aunque nunca los jugamos tan estrechos. Quizá prefieras el modo CRT.";
+// (after v121) 2026-11-21: the 256 px button is square pixel, but that is not the shape anyone
 // played the PC Engine in, nor the one its art was drawn for. Shown in every mode, 4:3 and 16:9 alike.
-const WORK_WIDTH_PCE256 = "Píxel perfecto en juegos 256px de PCE. Ojo: píxel perfecto no significa proporción ideal. Nadie jugó así en la época y supongo que ni se tuvo en cuenta al diseñar el arte.";
-const WORK_WIDTH_PCECRT = "Proporción con la que jugábamos a PCE en tele de tubo. Píxel horizontal no entero.";
-const WORK_WIDTH_MD320 = "Píxel perfecto en juegos 320px de MD, mismas proporciones que en tele de tubo.";
+const WORK_WIDTH_PCE256 = "Píxel cuadrado en juegos de 256px, aunque nunca los jugamos tan estrechos. Quizá prefieras el modo CRT.";
+const WORK_WIDTH_PCECRT = "Proporción similar a la que jugábamos a PCE en tele de tubo. Píxel no entero.";
+const WORK_WIDTH_MD320 = "Píxel cuadrado en juegos 320px de MD.";
+// (after v130d) the PC Engine's 320 / 352 px buttons: their sentence is the description of the width, like every other button's
+// (it was a yellow notice before)
+const WORK_WIDTH_PCE320 = "Píxel cuadrado en juegos de 320px, aunque nunca los jugamos tan anchos. Quizá prefieras el modo CRT.";
+const WORK_WIDTH_PCE352 = "Píxel cuadrado en juegos de 352px como R-Type, aunque nunca los jugamos tan anchos. Quizá prefieras el modo CRT.";
+const WORK_WIDTH_PCE352_43 = "En el modo 720p 4:3 con píxel cuadrado no caben los juegos a 352, se pierden píxeles por los laterales. Nunca se jugaron con estas proporciones, usa el botón CRT.";
 // the width, by size step: 0 square (256 px), 1 CRT (320 px), 2 wide, 3 fill
 const WORK_WIDTH = [
-    "Píxeles enteros y del mismo tamaño.",
-    "Forma de tele de tubo: más ancha, el píxel ya no es entero en horizontal (en vertical sí).",
-    // v107m: steps 3 and 4 are the "ancho" and "llenar" buttons, one description for both (his text)
+    "Píxeles enteros.", // (after v127f) «y del mismo tamaño» was redundant
+    "Forma de tele de tubo: más ancha, el píxel ya no es entero.",
+    // v107m: steps 3 and 4 are the "ancho" and "llenar" buttons, one description for both (the text)
     "Este modo llena más pantalla, deforma el aspecto. Sólo para experimentar.",
     "Este modo llena más pantalla, deforma el aspecto. Sólo para experimentar.",
 ];
@@ -1157,21 +1164,21 @@ const WORK_WIDTH = [
 let dcNow = 0;
 let dcAspect1080 = false; // the Dreamcast's 1080p in 480i is on screen: its 4:3 / 16:9 go to code 74
 const DC_MODES = {
-    1: ["720p x3", "1080p x4"], // (after v108f) his decision: the 240p 1080p x5 stays in the firmware (its measures and text) but is never shown
+    1: ["720p x3", "1080p x4"], // (after v108f) the 240p 1080p x5 stays in the firmware (its measures and text) but is never shown
     2: ["720p x3", "1080p x4"],
     3: ["720p x3", "1080p x4"],
     4: ["720p x3", "1080p x4"],
     5: ["720p x3", "1080p x4"], // (after v108b) the Dreamcast through VGA: Rama's presets with its measured placements on top
 };
 const DC_DESC = {
-    // (after v108f) his simpler texts; for 480i/576i/VGA the data aspect 16:9 is «Normal» and 4:3 is «Panorámico»
-    "1 720p x3 16:9": "Píxel perfecto con toda la imagen. Para una tele 16:9.",
-    "1 720p x3 4:3": "Píxel perfecto a todo lo ancho. Para una tele puesta en modo 4:3.",
-    "1 1080p x4": "Píxel perfecto con toda la imagen.",
-    "1 1080p x5": "Experimental. Píxel perfecto más grande: se pierde un poco de imagen arriba y abajo.",
-    "2 720p x3 16:9": "Píxel perfecto. Se pierde un poco de imagen arriba y abajo. Para una tele 16:9.",
-    "2 720p x3 4:3": "Píxel perfecto a todo lo ancho. Se pierde un poco de imagen arriba y abajo. Para una tele puesta en modo 4:3.",
-    "2 1080p x4": "Píxel perfecto con toda la imagen.",
+    // (after v108f) the simpler texts; for 480i/576i/VGA the data aspect 16:9 is «Normal» and 4:3 is «Panorámico»
+    "1 720p x3 16:9": "Píxel cuadrado con toda la imagen.",
+    "1 720p x3 4:3": "Píxel cuadrado a todo lo ancho.",
+    "1 1080p x4": "Píxel cuadrado con toda la imagen.",
+    "1 1080p x5": "Experimental. Píxel cuadrado más grande: se pierde un poco de imagen arriba y abajo.",
+    "2 720p x3 16:9": "Píxel cuadrado. Se pierde un poco de imagen arriba y abajo.",
+    "2 720p x3 4:3": "Píxel cuadrado a todo lo ancho. Se pierde un poco de imagen arriba y abajo.",
+    "2 1080p x4": "Píxel cuadrado con toda la imagen.",
     "3 1080p x4 16:9": "Para la mayoría de juegos de Dreamcast. Imagen nítida y proporciones correctas.",
     "3 1080p x4 4:3": "Para el modo panorámico de juegos como Rayman 2, F355, MSR... La imagen llenará el ancho de tu pantalla 16:9.",
     "3 720p x3 16:9": "Para la mayoría de juegos de Dreamcast. Imagen nítida y proporciones correctas.",
@@ -1188,25 +1195,25 @@ const DC_DESC = {
 // modes that crop the picture vertically, and so need the hint about moving it
 const WORK_CROPS = { "720p x4 16:9": true, "720p x5 16:9": true, "1080p x5": true, "1080p x5 16:9": true, "1080p x5 4:3": true }; // (after v123e) the PC Engine's x5 carries its shape in the key
 // the status bar is written for the log, in English; on the screen it is shown in Spanish
-// (after v107v) his list of 2026-11-14: console profiles without measurements (firmware profiles 4..17, in this order,
+// (after v107v) 2026-11-14: console profiles without measurements (firmware profiles 4..17, in this order,
 // web codes 60..73). The status bar prints these names as they are; their placement is the Mega Drive's, so the width
 // buttons treat them as "MD".
-// No TurboGrafx-16 (his decision): it is the PC Engine itself.
+// No TurboGrafx-16: it is the PC Engine itself.
 const EMPTY_PROFILES = ["PlayStation", "Saturn", "Nintendo 64", "NES", "Master System", "Neo Geo AES",
     "Neo Geo CD", "3DO", "Jaguar", "Dreamcast", "PlayStation 2", "Xbox", "GameCube", "Wii"];
 // the profile in the bar: "profile MD", "profile auto SNES", "profile Neo Geo CD"
 // (after v108e) the profiles that keep only colour, filters, edges and last state: the Dreamcast is measured now (its button
-// is next to the Mega Drive's), and «Otras» is his choice for any console not in the list, with its own text
+// is next to the Mega Drive's), and «Otras» is the choice for any console not in the list, with its own text
 const UNMEASURED = EMPTY_PROFILES.filter((n) => n !== "Dreamcast").concat(["Others"]); // (after v108f) the bar names it in English, «Otras» only on the screen
 const CONSOLE_DESC_OTHERS = "¿No encuentras tu consola? Usa esta opción: guarda el color, filtros, bordes y estados del último uso. Si la imagen no encaja, prueba los presets originales de Rama en la pestaña Modo. Facilitar tus mediciones y la huella de tu sistema ayudará a incluirla en el próximo firmware.";
 const barProfile = (text) => {
     const m = /profile (auto )?([^|\n]+)/.exec(text || "");
     return m ? { auto: !!m[1], name: m[2].trim() } : null;
 };
-const CONSOLE_DESC = "Elige el sistema que vas a usar para que se muestre lo mejor posible. Actualmente el firmware sólo detecta y está probado con unos pocos.";
-// (after v107v) his text of 2026-11-14 for the profiles without measurements
-const CONSOLE_DESC_EMPTY = "Perfil sin mediciones, de momento sólo guarda el color, filtros, bordes y estados del último uso. Si sabes calcular el píxel perfecto para este sistema, ponte en contacto con Alexei. Facilitar tus mediciones y la huella de tu sistema, ayudará a incluirlo en el próximo firmware.";
-// (after v110b) his request: the bar no longer says "paso 1 de 3": it names the width the user chose, with the same
+const CONSOLE_DESC = "Elige el sistema en uso para mostrar la mejor imagen posible. Actualmente el firmware sólo está probado con: PC-Engine, Mega Drive, Super Nintendo y Dreamcast. El resto de perfiles son genéricos.";
+// (after v107v) 2026-11-14 the profiles without measurements
+const CONSOLE_DESC_EMPTY = "Perfil sin mediciones, de momento sólo guarda el color, filtros, bordes y estados del último uso. Si sabes calcular el píxel cuadrado para este sistema, ponte en contacto con Alexei. Facilitar tus mediciones y la huella de tu sistema, ayudará a incluirlo en el próximo firmware.";
+// (after v110b) the bar no longer says "paso 1 de 3": it names the width the user chose, with the same
 // words as its button (the Mega Drive's second size is its 320 px, everybody else's is CRT)
 // (after v111b) the typed numbers: exact output rate (Avanzado) and the two clocks (Developer). Sent on /set; the
 // firmware applies them from its main loop and the data line shows the result.
@@ -1256,6 +1263,17 @@ const REGTEST_NAMES = [
     "MADPT_VT_FILTER_CNTRL", "MADPT_HTAP_BYPS", "MADPT_BIT_STILL_EN", "MADPT_VTAP2_BYPS", "MADPT_VTAP2_ROUND_SEL",
     "MADPT_EN_NOUT_FOR_STILL", "MADPT_EN_NOUT_FOR_LESS_STILL", "MADPT_DD0_SEL", "MADPT_NRD_VIIR_PD_BYPS",
     "MADPT_UVDLY_PD_BYPS", "MADPT_CMP_EN", "MADPT_EN_STILL_FOR_NRD", "VDS_HALF_EN",
+    // (after v127) the noise reduction of the output
+    "VDS_NR_Y_BYPS", "VDS_NR_C_BYPS", "VDS_NR_DIF_LPF5_BYPS", "VDS_NR_MI_TH_EN", "VDS_NR_MI_OFFSET", "VDS_NR_MIG_USER_EN",
+    "VDS_NR_MI_GAIN", "VDS_NR_STILL_GAIN", "VDS_NR_MI_THRES", "VDS_NR_EN_H_NOISY", "VDS_NR_EN_GLB_STILL",
+    "VDS_NR_GLB_STILL_MENU", "VDS_NR_NOISY_OFFSET",
+    // (after v127b) the fine sharpness bands
+    "VDS_PK_HL_GAIN", "VDS_PK_HL_CORE", "VDS_PK_HL_CMP", "VDS_PK_HB_GAIN", "VDS_PK_HB_CORE", "VDS_PK_HB_CMP",
+    "VDS_PK_HH_GAIN", "VDS_PK_HH_CORE", "VDS_PK_HH_CMP",
+    // (after v127d) the switches of the bands
+    "VDS_PK_Y_V_BYPS", "VDS_PK_RAM_BYPS", "VDS_PK_VH_HL_SEL", "VDS_PK_VH_HH_SEL",
+    // (after v127d) the scaler's interpolators
+    "VDS_1ST_INT_BYPS", "VDS_2ND_INT_BYPS",
 ];
 const STEP_LABEL = { square: "256 px", wide: "ancho", fill: "llenar" };
 const translateStatus = (text) => text
@@ -1269,9 +1287,16 @@ const translateStatus = (text) => text
     .replace(/watcher off/g, "vigilante parado")
     .replace(/retrying/g, "reintentando")
     .replace(/losses (\d+) retries (\d+)/g, "pérdidas $1, reintentos $2")
+    .replace(/step \d\/\d \w+ \| ((?:320|352) px whole)/g, "$1") // (after v130e) PAL: the 320 / 352 px button replaces the step name in the bar
     .replace(/step \d\/\d (square|CRT|wide|fill)/g, (all, name) => name === "CRT" ? (/profile (auto )?MD\b/.test(text) ? "320 px" : "CRT") : STEP_LABEL[name] || name)
+    // (after v124d) outside the Mega Drive the second width is the CRT button, so the bar says «CRT», as the
+    // button does (the GBS still sends "320 px", which the buttons read)
+    .replace(/ \| 320 px$/m, (all) => (/profile (auto )?MD\b/.test(text) ? all : " | CRT"))
+    // (after v127f) on the SNES and the PC Engine the 256 button always reads «píxel cuadrado 8:7» on the second line
+    .replace(/ \| 256 px$/m, (all) => (/profile (auto )?(SNES|PC-Engine)\b/.test(text) ? " | " + "píxel cuadrado 8:7" : all))
+    .replace(/ \| (320|352) px whole(?= \| fine$|$)/m, " | $1 px") // (after v124d) the PC Engine's whole-pixel 320 / 352 px (after the CRT line)
     .replace(/\| wide$/m, "| ancho")
-    .replace(/ \| fine$/m, "") // (after v111f) his rule: the fine-step switch is not shown in the bar (the web still reads it)
+    .replace(/ \| fine$/m, "") // (after v111f) the fine-step switch is not shown in the bar (the web still reads it)
     // (after v108e) the Dreamcast in 480i / 576i / VGA: no multiplier on its modes (2 and 1.5 lines), as on its buttons
     .replace(/^(720p) x3( \| [^\n]*\| dc (?:480i|576i|vga))/m, "$1$2")
     .replace(/^(1080p) x4( \| [^\n]*\| dc (?:480i|576i|vga))/m, "$1$2");
@@ -1390,8 +1415,11 @@ const updateWorkScreen = (raw) => {
     // the mode buttons: only the measured ones for this signal, and in 480i / 576i the 1080p is one button, «1080p»
     nodelistToArray(document.querySelectorAll("#workModes [data-mode]")).forEach((c) => {
         const m = c.getAttribute("data-mode") || "";
-        dcModes && dcModes.indexOf(m) < 0 ? c.setAttribute("hidden", "") : c.removeAttribute("hidden");
-        // (after v108d) his decision: in 480i / 576i / VGA neither multiplier is real (2 and 1.5 lines), so plain «720p» / «1080p»
+        // (after v124e) 720p x5 is useless with the PC Engine (crops top and bottom; 1080p x5 shows it whole).
+        // Only hidden here, the firmware keeps the mode in case it is needed again. Shown if it is the mode in use.
+        const pceX5Hidden = m === "720p x5" && !!s.pce && s.mode !== "720p x5";
+        (dcModes && dcModes.indexOf(m) < 0) || pceX5Hidden ? c.setAttribute("hidden", "") : c.removeAttribute("hidden");
+        // (after v108d) in 480i / 576i / VGA neither multiplier is real (2 and 1.5 lines), so plain «720p» / «1080p»
         if (m === "1080p x4")
             c.textContent = dcNow >= 3 && dcNow <= 5 ? "1080p" : "1080p x4";
         if (m === "720p x3")
@@ -1414,9 +1442,9 @@ const updateWorkScreen = (raw) => {
         paintLines("", s);
         title.textContent = "Presets disponibles";
         aspect.setAttribute("hidden", "");
-        // (after v111) his text and his colour: a red notice while no 3X4X mode is on (after a reset the board starts on
+        // (after v111) the text and the colour: a red notice while no 3X4X mode is on (after a reset the board starts on
         // Rama's 1280x960, and the grey line went unnoticed)
-        // (after v111f) his rule: once an output was picked by hand (Rama's presets too), no red notice
+        // (after v111f) once an output was picked by hand (Rama's presets too), no red notice
         if (/\boc=1\b/.test(raw)) {
             desc.textContent = "Elige un modo de salida abajo.";
             desc.classList.remove("gbs-card__desc--warn");
@@ -1439,10 +1467,14 @@ const updateWorkScreen = (raw) => {
         // only, so there 4:3 is shown switched off, so it reads as "not available here" rather than missing.
         aspect.removeAttribute("hidden");
         const shape = s.aspect || "16:9";
-        // (after v108f) his names for the Dreamcast in 480i / 576i / VGA: «Normal» (the 2 x 2, internally 16:9) first and
+        // (after v108f) the names for the Dreamcast in 480i / 576i / VGA: «Normal» (the 2 x 2, internally 16:9) first and
         // «Panorámico» (the wider one, internally 4:3) for the games with a widescreen option; each with a small shape drawn
         // in it (a 4:3 box, a 16:9 box) so the two are told apart at a glance. Everywhere else, 4:3 and 16:9 as before.
         const dcNames = dcNow >= 3 && dcNow <= 5;
+        // (after v123l) the label «Formato de tu pantalla»; not on the Dreamcast «Normal / Panorámico», which is the game's format
+        const aspLabel = document.getElementById("workAspectLabel");
+        if (aspLabel)
+            dcNames ? aspLabel.setAttribute("hidden", "") : aspLabel.removeAttribute("hidden");
         nodelistToArray(aspect.querySelectorAll("[data-asp]")).forEach((b) => {
             const v = b.getAttribute("data-asp");
             v === shape ? b.setAttribute("active", "") : b.removeAttribute("active");
@@ -1467,13 +1499,17 @@ const updateWorkScreen = (raw) => {
         const wStep = s.key === "720p x3 4:3" ? Math.min(s.step, 1) : Math.min(s.step, 3);
         // Mega Drive: its games are 320 px wide, so the 320 step is whole pixels there, and that already is the shape a CRT
         // gave it. Its own sentence, separate from every other console.
-        const w = s.step < 0 ? "" :
-            s.md && wStep === 0 ? WORK_WIDTH_MD256 :
-                s.md && wStep === 1 ? WORK_WIDTH_MD320 :
-                    s.snes && wStep === 1 ? WORK_WIDTH_SNESCRT :
-                        s.pce && wStep === 0 ? WORK_WIDTH_PCE256 :
-                            s.pce && wStep === 1 ? WORK_WIDTH_PCECRT :
-                                WORK_WIDTH[wStep];
+        const midPce = !!s.pce && ["720p x3 4:3", "720p x3 16:9", "1080p x4 16:9", "1080p x4 4:3", "1080p x5 16:9"].indexOf(s.key) >= 0;
+        const w = midPce && /\| 320 px whole\b/.test(raw) ? WORK_WIDTH_PCE320 :
+            midPce && /\| 352 px whole\b/.test(raw) ? (s.key === "720p x3 4:3" ? WORK_WIDTH_PCE352_43 : WORK_WIDTH_PCE352) :
+                s.step < 0 ? "" :
+                    s.md && wStep === 0 ? WORK_WIDTH_MD256 :
+                        s.snes && wStep === 0 ? WORK_WIDTH_SNES256 : // (after v130c) the same sentence, but pointing to the CRT button
+                            s.md && wStep === 1 ? WORK_WIDTH_MD320 :
+                                s.snes && wStep === 1 ? WORK_WIDTH_SNESCRT :
+                                    s.pce && wStep === 0 ? WORK_WIDTH_PCE256 :
+                                        s.pce && wStep === 1 ? WORK_WIDTH_PCECRT :
+                                            WORK_WIDTH[wStep];
         const dcd = dcModes ? DC_DESC[`${dcNow} ${s.mode}${s.aspect ? " " + s.aspect : ""}`] || DC_DESC[`${dcNow} ${s.mode}`] : "";
         desc.innerHTML = dcd
             ? dcd // (after v108f) no second line for the Dreamcast: the text and the button names already say it
@@ -1503,11 +1539,19 @@ const updateWorkScreen = (raw) => {
     const memClock = document.getElementById("memClock");
     const memPhase = document.getElementById("memPhase");
     if (memClock)
-        memClock.textContent = mem ? (mem[1] === "0" ? "stock" : `${mem[1]} MHz`) : "—"; // (after v107v) his word: "stock" (nobody would understand "realimentado")
+        memClock.textContent = mem ? (mem[1] === "0" ? "stock" : `${mem[1]} MHz`) : "—"; // (after v107v) the word: "stock" (nobody would understand "realimentado")
     if (memPhase)
         memPhase.textContent = mem ? `${mem[2]} de 15` : "—";
     // v107j: every other picture control, from the fifth line ("v pk=1 st=1 ...")
     paintPictureValues(raw);
+    paintPadValues(raw); // (after v123l) the pad's values
+    // (after v126) the experimental switch, lit while it is on
+    {
+        const m = /\bhpf=(\d)/.exec(raw);
+        const b = document.getElementById("syncHpf");
+        if (m && b)
+            m[1] === "1" ? b.setAttribute("active", "") : b.removeAttribute("active");
+    }
     // (after v111b) exact output rate and the two clocks: " hzx=… orm=… adc=… si=…" of the data line
     const hzx = /\bhzx=(\d+)/.exec(raw);
     const adcM = /\badc=(\d+)/.exec(raw);
@@ -1595,10 +1639,10 @@ const updateWorkScreen = (raw) => {
     // that width and the second is the CRT shape. Mega Drive: 256 and 320 are both whole pixels, each for its own games.
     // Anything else keeps the generic names.
     const chipText = s.md
-        ? [["256 px", "píxel exacto"], ["320 px", "píxel exacto"], ["ancho", "experimental"], ["llenar", "experimental"]]
+        ? [["256 px", "píxel cuadrado 8:7"], ["320 px", "píxel cuadrado"], ["ancho", "experimental"], ["llenar", "experimental"]] // (after v127s) the Mega Drive 256 «píxel cuadrado 8:7», 320 «píxel cuadrado»
         : s.snes || s.pce
-            ? [["256 px", "píxel exacto"], ["CRT", "aspecto de TV"], ["ancho", "experimental"], ["llenar", "experimental"]]
-            : [["cuadrado", "256 px, píxel exacto"], ["CRT", "aspecto de TV"], ["ancho", "experimental"], ["llenar", "experimental"]];
+            ? [["256 px", "píxel cuadrado 8:7"], ["CRT", "aspecto de TV"], ["ancho", "experimental"], ["llenar", "experimental"]] // (after v127s) the SNES and the PC Engine 256 px say «píxel cuadrado 8:7»
+            : [["cuadrado", "256 px, píxel cuadrado"], ["CRT", "aspecto de TV"], ["ancho", "experimental"], ["llenar", "experimental"]];
     nodelistToArray(document.querySelectorAll("#workSteps [data-step]")).forEach((c) => {
         const t = chipText[parseInt(c.getAttribute("data-step") || "0", 10)];
         const big = c.querySelector("span");
@@ -1619,8 +1663,8 @@ const updateWorkScreen = (raw) => {
     // (after v107z) the Dreamcast's modes have no sizes: each one is the measured picture for its signal
     if (stepsRow)
         s.mode && !dcModes ? stepsRow.removeAttribute("hidden") : stepsRow.setAttribute("hidden", "");
-    // (after v107r) the edge note, his text, in every whole-pixel mode (the stock preset has no edge to keep), and not in
-    // DOLOR: a joke, nothing is kept there (his decision)
+    // (after v107r) the edge note, the text, in every whole-pixel mode (the stock preset has no edge to keep), and not in
+    // DOLOR: a joke, nothing is kept there
     const edgeNote = document.getElementById("workEdgeNote");
     const lnDolor = /\bln=2\b/.test(raw) && /\blna=\d*[13579]\b/.test(raw);
     if (edgeNote)
@@ -1630,20 +1674,41 @@ const updateWorkScreen = (raw) => {
     nodelistToArray(document.querySelectorAll("#workSteps [data-step]")).forEach((c) => {
         const n = parseInt(c.getAttribute("data-step") || "0", 10);
         // v107q: three sizes (the Mega Drive in PAL 1080p x4, "step n/3"): no llenar
-        // (after v108h) his decision of 2026-11-17: the Mega Drive in NTSC 720p x5 (no size steps, so the old llenar button
+        // (after v108h) 2026-11-17: the Mega Drive in NTSC 720p x5 (no size steps, so the old llenar button
         // stood) already fills the screen at 1280 columns: no llenar there either
-        // (after v111f) his decision: the Mega Drive's 1080p x4 has no «ancho» / «llenar» in 16:9 either (the 4:3 button gives it)
-        // (after v120c) his decision of 2026-11-21: the PC Engine's 1080p x4 the same, now that it has its own 4:3
-        // (after v121) his report: 720p x4 still showed «llenar». The firmware already cycled two states there, the button
+        // (after v111f) the Mega Drive's 1080p x4 has no «ancho» / «llenar» in 16:9 either (the 4:3 button gives it)
+        // (after v120c) 2026-11-21: the PC Engine's 1080p x4 the same, now that it has its own 4:3
+        // (after v121) 720p x4 still showed «llenar». The firmware already cycled two states there, the button
         // was just still being drawn. So it is listed once and for all: NO «llenar» on the PC Engine, in any mode.
-        const x5NoFill = n === 3 && oldFill && (s.pce || s.mode === "720p x5" || s.key === "1080p x4 4:3" || (s.mode === "1080p x4" && s.md && !!s.aspect));
-        const hide = (n >= 2 && twoSizes) || (n === 2 && oldFill) || (n === 3 && s.steps === 3) || x5NoFill;
+        // (after v127f) 2026-11-24: no «llenar» on the SNES in 720p x4 either (its CRT already fills the width)
+        const x5NoFill = n === 3 && oldFill && (s.pce || s.mode === "720p x5" || (!!s.snes && (s.mode === "720p x4" || s.mode === "1080p x4")) || s.key === "1080p x4 4:3" || s.key === "1080p x5 4:3" || (s.mode === "1080p x4" && s.md && !!s.aspect));
+        // (after v127p) 2026-11-25: the SNES in 720p x4 has neither «ancho» nor «llenar» (256 and 320 only)
+        const snes720x4 = !!s.snes && s.mode === "720p x4" && n >= 2;
+        const hide = snes720x4 || (n >= 2 && twoSizes) || (n === 2 && oldFill) || (n === 3 && s.steps === 3) || x5NoFill;
         hide ? c.setAttribute("hidden", "") : c.removeAttribute("hidden");
         const st = twoSizes ? Math.min(s.step, 1) : s.steps === 3 ? Math.min(s.step, 2) : s.step;
-        const on = !!s.mode && (oldFill && n === 3 ? st >= 2 : st === n);
+        // (after v130g) PAL: the status keeps the size step next to the 320 / 352 px button, so the step button must not light with it
+        const midOn = s.pce && /\| (?:320|352) px whole\b/.test(raw);
+        const on = !!s.mode && !midOn && (oldFill && n === 3 ? st >= 2 : st === n);
         on ? c.setAttribute("active", "") : c.removeAttribute("active");
     });
     nodelistToArray(document.querySelectorAll("#workModes [data-mode]")).forEach((c) => c.getAttribute("data-mode") === s.mode ? c.setAttribute("active", "") : c.removeAttribute("active"));
+    // (after v124d) the new buttons: PC Engine 320 / 352 px whole pixels, 720p x3 (4:3 and 16:9) only. The GBS names them
+    // "320 px whole" / "352 px whole" in the bar (it reads «320 px» / «352 px») ("320 px" stays the CRT button).
+    // (after v124e) and 1080p x4 (16:9 and 4:3) and 1080p x5 16:9, measured on 2026-11-23
+    const x3pce = !!s.pce && ["720p x3 4:3", "720p x3 16:9", "1080p x4 16:9", "1080p x4 4:3", "1080p x5 16:9"].indexOf(s.key) >= 0;
+    const mid320 = /\| 320 px whole\b/.test(raw);
+    const mid352 = /\| 352 px whole\b/.test(raw);
+    const b320 = document.getElementById("workMid320");
+    const b352 = document.getElementById("workMid352");
+    if (b320) {
+        x3pce ? b320.removeAttribute("hidden") : b320.setAttribute("hidden", "");
+        mid320 ? b320.setAttribute("active", "") : b320.removeAttribute("active");
+    }
+    if (b352) {
+        x3pce ? b352.removeAttribute("hidden") : b352.setAttribute("hidden", "");
+        mid352 ? b352.setAttribute("active", "") : b352.removeAttribute("active");
+    }
 };
 // v107j: the values of the Color and Filtros controls. Each one goes up when its + is pressed (the firmware sends the
 // ADC gain inverted for that reason), so the number always moves the way the button says.
@@ -1718,6 +1783,46 @@ const openSection = (name) => {
     if (b)
         b.click();
 };
+// (after v123l) option A, step 1: the raw values of what the pad touches, from the data line (kept between lines:
+// the data line only comes when something changed)
+let padRaw = "";
+const paintPadValues = (raw) => {
+    if (raw && /\bhsc=\d+/.test(raw))
+        padRaw = raw;
+    const num = (k) => { const m = new RegExp(`\\b${k}=(\\d+)`).exec(padRaw); return m ? m[1] : "—"; };
+    const seg = document.getElementById("padSeg");
+    const on = seg ? seg.querySelector("[data-mode][active]") : null;
+    const mode = on ? on.getAttribute("data-mode") : "move";
+    const hl = document.getElementById("padValHLabel");
+    const vl = document.getElementById("padValVLabel");
+    const h = document.getElementById("padValH");
+    const v = document.getElementById("padValV");
+    const hpx = document.getElementById("padValHPx");
+    const vpx = document.getElementById("padValVPx");
+    const hraw = document.getElementById("padValHRaw");
+    const vraw = document.getElementById("padValVRaw");
+    if (!hl || !vl || !h || !v || !hpx || !vpx || !hraw || !vraw)
+        return;
+    [hpx, vpx, hraw, vraw].forEach((e) => e.setAttribute("hidden", ""));
+    if (mode === "crop") {
+        hl.textContent = "borde horizontal";
+        vl.textContent = "borde vertical";
+        h.textContent = `${num("dhs")} / ${num("dhp")}`;
+        v.textContent = `${num("dvs")} / ${num("dvp")}`;
+    }
+    else if (mode === "scale") {
+        hl.textContent = "escala horizontal";
+        vl.textContent = "escala vertical";
+        h.textContent = num("hsc");
+        v.textContent = num("vsc");
+    }
+    else {
+        hl.textContent = "posición horizontal";
+        vl.textContent = "posición vertical";
+        h.textContent = num("hbin");
+        v.textContent = `${num("ivs")} / ${num("ivp")}`;
+    }
+};
 const initWorkScreen = () => {
     // v107h: the pad lives in its own tab, "Ajuste", instead of a bar fixed over every screen
     const bar = document.getElementById("padKeys");
@@ -1728,9 +1833,9 @@ const initWorkScreen = () => {
         return;
     }
     let mode = "move";
-    // (after v107s) his design: in Bordes each key is two arrows, one per direction, so the pad never has to be switched
+    // (after v107s) in Bordes each key is two arrows, one per direction, so the pad never has to be switched
     // between "open" and "close" while it is used. Each arrow pushes that edge the way it points; the outward one (green)
-    // opens the edge (less black), the inward one closes it. (after v107t) all arrows white and no explanation: he found it odd.
+    // opens the edge (less black), the inward one closes it. (after v107t) all arrows white and no explanation: the extra arrow was confusing.
     const ARROW = { up: "&#9650;", down: "&#9660;", left: "&#9664;", right: "&#9654;" };
     const DOUBLE = {
         // [first arrow, second arrow] as drawn, each "dir:out" or "dir:in"
@@ -1761,6 +1866,7 @@ const initWorkScreen = () => {
     const paint = () => {
         nodelistToArray(seg.querySelectorAll("[data-mode]")).forEach((b) => b.getAttribute("data-mode") === mode ? b.setAttribute("active", "") : b.removeAttribute("active"));
         drawKeys();
+        paintPadValues(); // (after v123l)
         mid.textContent = mode === "move" ? "MOVER" : mode === "crop" ? "BORDES" : "ESCALA";
         if (help) {
             help.textContent =
@@ -2113,7 +2219,7 @@ const buildDiagnosticsText = () => {
     const log = GBSControl.ui.terminal.value;
     const tail = log.length > 6000 ? log.substring(log.length - 6000) : log;
     return [
-        "GBS-Control diagnostics (web UI 3x4x-v123l)",
+        "GBS-Control diagnostics (web UI 3x4x-v130k)",
         new Date().toISOString(),
         "Status: " + (statusBar ? statusBar.textContent : "n/a"),
         "Free heap: " + (lastFreeHeap ? `${lastFreeHeap} bytes` : "n/a"), // (after v111c)
@@ -2146,7 +2252,7 @@ const initDiagnosticsButton = () => {
         btn.addEventListener("click", () => {
             btn.setAttribute("disabled", "");
             btn.textContent = "Reading...";
-            // (after v107y) his report: the copy sometimes came out without the answer (in 1080p x5 the board and its Wi-Fi are
+            // (after v107y) the copy sometimes came out without the answer (in 1080p x5 the board and its Wi-Fi are
             // slower). Instead of one fixed 1.5 s wait, it now waits for the answer itself ("HT / scale" for the timings,
             // "huella:" for the fingerprint), checking every 250 ms, and copies as soon as it is there or after 4 s at most
             // (the browser still counts that as part of the click; if it does not, the text is saved as a file).
@@ -2254,7 +2360,7 @@ const exportProfile = () => {
         .then((files) => {
         const profile = {
             gbsProfile: 1,
-            firmware: "3x4x-v123l",
+            firmware: "3x4x-v130k",
             name: meta.name,
             meta: {
                 presetID: meta.presetID,
@@ -2701,7 +2807,7 @@ const gbsPrompt = (text, defaultValue = "") => {
         GBSControl.ui.promptInput.focus();
     });
 };
-// (after v107v) THE COLOUR AND FILTERS OF ONE CONSOLE, TO A FILE AND BACK. His request: one file per console, in case one
+// (after v107v) THE COLOUR AND FILTERS OF ONE CONSOLE, TO A FILE AND BACK. one file per console, in case one
 // day it is shared with others. Export asks the board for the active console's record (/colorexp.txt), then wraps it in a
 // small JSON file with the console's name. Import reads such a file, asks first (it replaces what that console has saved)
 // and hands it to the board, which puts it into THE CONSOLE NAMED IN THE FILE and applies it if that console is on.
@@ -2725,7 +2831,7 @@ const colorExport = () => {
                 gbsAlert(`El perfil de ${name} no tiene nada guardado. Pulsa GUARDAR antes de exportar.`);
                 return;
             }
-            const payload = { gbsColor: 1, firmware: "3x4x-v123l", consola: name, perfil: slot, datos: data };
+            const payload = { gbsColor: 1, firmware: "3x4x-v130k", consola: name, perfil: slot, datos: data };
             downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), `color-${COLOR_FILE_SLUGS[slot] || "consola"}.gbsc`);
         })
             .catch(() => gbsAlert("No se ha podido exportar. Inténtalo otra vez."));

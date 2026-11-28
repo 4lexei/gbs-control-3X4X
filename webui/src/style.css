@@ -972,7 +972,7 @@ section[name="alert"] {
 }
 .gbs-card__aspect[hidden] { display: none; }
 .gbs-card__desc { color: var(--work-dim); font-size: 14px; line-height: 1.5; margin: 6px 0 12px; }
-/* (after v111) his red notice while no 3X4X mode is on */
+/* (after v111) the red notice while no 3X4X mode is on */
 .gbs-card__desc--warn { background: #3a1414; border-left: 3px solid #ff4d4d; border-radius: 6px; color: #ff6b6b; font-size: 16px; font-weight: 600; padding: 10px 12px; }
 .gbs-card__label {
   color: var(--work-faint);
@@ -1087,6 +1087,22 @@ section[name="alert"] {
 .gbs-card__head { align-items: center; justify-content: space-between; }
 .gbs-asp { background: #242424; border-radius: 9px; display: flex; flex-shrink: 0; padding: 3px; }
 .gbs-asp[hidden] { display: none; }
+/* (after v123l) the label in front of 4:3 / 16:9, in a box of its own */
+.gbs-aspwrap { align-items: stretch; display: flex; flex-shrink: 0; gap: 6px; }
+.gbs-aspwrap[hidden] { display: none; }
+.gbs-asp__label { align-items: center; background: #242424; border-radius: 9px; color: #8a8a8a; display: flex; font-size: 11px; padding: 0 10px; white-space: nowrap; }
+.gbs-asp__label[hidden] { display: none; }
+/* (after v123l) option A: the pad's values under it */
+.gbs-padvals { display: flex; gap: 8px; justify-content: center; margin: 10px 0 4px; }
+.gbs-padval { background: #1d1d1d; border-radius: 9px; min-width: 130px; padding: 6px 12px; text-align: center; }
+.gbs-padval small { color: #8a8a8a; display: block; font-size: 11px; }
+.gbs-padval b { color: #3cd278; display: block; font-size: 20px; font-weight: 500; }
+.gbs-padval i { color: #bbb; display: block; font-size: 12px; font-style: normal; }
+.gbs-padval i[hidden], .gbs-padval small[hidden] { display: none; }
+@media (max-width: 520px) { /* on a phone the selector goes to its own row so the mode's name stays on one line */
+  .gbs-card__head { flex-wrap: wrap; }
+  .gbs-card__title { white-space: nowrap; }
+}
 .gbs-asp button {
   background: transparent;
   border: 1px solid transparent;
@@ -1414,7 +1430,7 @@ section[name="alert"] {
 /* (after v107r) a plain description right under a fieldset title (Sync block) */
 .gbs-fieldset__desc { color: var(--color-silver-chalice); font-size: 13px; line-height: 1.5; margin: 0 0 14px; }
 
-/* (after v107s) his design: a bigger pad across the whole width, and in Bordes two arrows per key */
+/* (after v107s) a bigger pad across the whole width, and in Bordes two arrows per key */
 .gbs-adj__pad { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 112px); gap: 10px; justify-content: stretch; }
 .gbs-adj__pad .gbs-pad__k { font-size: 28px; }
 .gbs-adj__pad .gbs-pad__k--dbl { background: transparent; display: flex; gap: 6px; padding: 0; align-items: stretch; }
@@ -1427,7 +1443,7 @@ section[name="alert"] {
 .gbs-adj__pad .gbs-pad__k--dbl > span.gbs-pad__out { color: var(--color-primary); }
 .gbs-adj__pad .gbs-pad__mid { font-size: 11px; }
 
-/* (after v108d) the fine step as a key of the pad (its middle), his request */
+/* (after v108d) the fine step as a key of the pad (its middle), the request */
 .gbs-adj__pad .gbs-pad__fine {
   background: #2a2a2a;
   border: 1px solid transparent;
@@ -1440,7 +1456,7 @@ section[name="alert"] {
 }
 .gbs-adj__pad .gbs-pad__fine[active] { background: var(--work-chip-on); border-color: var(--color-primary); color: var(--color-primary); }
 
-/* (after v108e) his request: with a mouse, every text of the interface can be selected and copied (to quote it when
+/* (after v108e) with a mouse, every text of the interface can be selected and copied (to quote it when
    something has to be corrected). On touch screens it stays blocked as in Rama's original, so a tap on a button never
    starts a selection. */
 @media (hover: hover) and (pointer: fine) {
