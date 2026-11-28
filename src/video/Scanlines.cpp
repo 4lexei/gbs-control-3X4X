@@ -41,7 +41,7 @@ void enableScanlines()
 
 // v92: the scanlines live in the RFF buffer of the SDRAM (see RFF_LINE_FLIP above, whose own comment is "clears potential
 // garbage in rff buffer"), and ResetSDRAM reinitialises exactly that. So every memory reset while scanlines are on leaves
-// the buffer scrambled, which is the "broken scanlines" the user has been seeing whenever he shifts the signal or changes
+// the buffer scrambled, which is the "broken scanlines" seen whenever the signal is shifted or changes
 // the size: both of those now change the clock or the phase. Re-kicking the line flip puts the buffer back without touching
 // anything else, and costs one register write.
 void scanlinesAfterSdramReset()

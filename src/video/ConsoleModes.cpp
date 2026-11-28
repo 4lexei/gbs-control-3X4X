@@ -25,7 +25,7 @@ struct ConsoleMode
 };
 
 #define CM_RECORDS 34 // profiles 1..17, 60 Hz and 50 Hz (fixed: «Otras» goes after the Dreamcast's two, see below)
-// (after v107z) his decision of 2026-11-16: the Dreamcast keeps its 480i / 576i mode apart from its 240p / 288p one (the
+// (after v107z) 2026-11-16: the Dreamcast keeps its 480i / 576i mode apart from its 240p / 288p one (the
 // buttons are not the same: 720p x3 and 1080p x4 / x5 in 240p, one 1080p with its 4:3 / 16:9 in 480i). Two more
 // records after the others, 60 Hz and 50 Hz, so the file of v107z still reads the same.
 #define CM_DC_INTERLACED CM_RECORDS
@@ -60,7 +60,7 @@ static int16_t keyNow()
         return -1; // Auto, and this console has not been measured since the last load
     const uint8_t prof = settingsProfile();
     if (prof == 0 || prof >= CONSOLE_PROFILE_COUNT)
-        return -1; // the unknown console keeps nothing (his decision: "el resto de consolas ahora nos dan igual")
+        return -1; // the unknown console keeps nothing ("el resto de consolas ahora nos dan igual")
     // (after v107z) the Dreamcast through VGA keeps nothing until it has modes of its own: it used to share the 60 Hz
     // record of its 240p, so plugging the VGA in loaded the 240p mode on it
     if (prof == CONSOLE_PROFILE_DREAMCAST && dcSignal() == 5)
@@ -169,7 +169,7 @@ static void saveFile()
 {
     File f = LittleFS.open(CM_FILE, "w");
     if (!f) {
-        SerialM.println(F("[3x4x-v123l] console modes: could not open the file"));
+        SerialM.println(F("[3x4x-v130k] console modes: could not open the file"));
         return;
     }
     f.write(CM_VERSION);
@@ -240,7 +240,7 @@ bool consoleModeCheck()
     if (settled && sameMode(cur, recs[key]))
         return false;
     if (recs[key].pref == OutputCustomized && !slotStillThere(recs[key].slot)) {
-        SerialM.println(F("[3x4x-v123l] console mode: its personal preset is gone, the mode stays as it is"));
+        SerialM.println(F("[3x4x-v130k] console mode: its personal preset is gone, the mode stays as it is"));
         return false;
     }
     restoreKey = key;
@@ -281,7 +281,7 @@ static void restoreNow(int16_t key)
     else
         pendingWidth = r.centered;
     saveUserPrefs(); // first: a personal preset is read from the slot the preferences file names
-    SerialM.print(F("[3x4x-v123l] console mode: "));
+    SerialM.print(F("[3x4x-v130k] console mode: "));
     if (key >= CM_OTHERS)
         SerialM.print(F("Others"));
     else if (key >= CM_DC_INTERLACED)
@@ -328,6 +328,14 @@ void consoleModeTick()
         saveAt = 1;
 }
 
+// (after v124d) what the user picks stays. A mode switch inside 720p (4:3 <-> 16:9, x3 / x4 / x5) reloads the
+// preset; this hands the width in use to that load, as a console record would.
+void consoleModeKeepWidth(uint8_t centered)
+{
+    if (centered)
+        pendingWidth = centered;
+}
+
 uint8_t consoleModePendingWidth()
 {
     return pendingWidth;
@@ -335,11 +343,17 @@ uint8_t consoleModePendingWidth()
 
 uint16_t consoleModeLoadWidth(uint16_t def)
 {
-    if (pendingWidth == 1)
+    if (pendingWidth == 1 || pendingWidth == 3 || pendingWidth == 4) // (after v124d) 3 / 4: the PC Engine's 320 / 352 px
         return 320;
     if (pendingWidth == 2)
         return 256;
     return def;
+}
+
+// (after v124d) the PC Engine's whole-pixel 320 px (3) or 352 px (4) of 720p x3, when that is what was last used
+uint8_t consoleModePendingMid()
+{
+    return (pendingWidth == 3 || pendingWidth == 4) ? pendingWidth : 0;
 }
 
 void consoleModeLoadDone()

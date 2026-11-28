@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "../core/State.h"
 
-// v66: one sync state per console profile. On a source whose sync is only just good enough (the user's PC Engine through
+// v66: one sync state per console profile. On a source whose sync is only just good enough (a PC Engine through
 // an ODV composite-to-component transcoder) the picture only locks in a particular state, which the watcher reaches by
 // chance while it recovers: a SOG slicing level it walked up to, the coast of the recovery path left unfixed, a halved
 // pulse-ignore. Finding it again was a lottery of manual retries, so it can now be captured the moment it looks right and
@@ -23,8 +23,12 @@ void syncPresetApply(bool quiet);
 void syncPresetClear();
 // True when the active console profile has a sync state saved.
 bool syncPresetAvailable();
-// Write the user's known-good PC Engine state (measured on v64) without having to win the lottery first.
+// Write the known-good PC Engine state (measured on v64) without having to win the lottery first.
 void syncPresetApplyOdvRecipe();
+// (after v125) the Bonk capture, for the PC Engine's 60.05 Hz games (web code 90)
+void syncPresetApplyOdvRecipe60();
+// (after v126b) temporary test: the 60 Hz recipe with pre / post coast 9 / 9 (web code 92)
+void syncPresetApplyOdvRecipeTest();
 // v68: print the saved state of the active profile, so it can be copied somewhere outside the board.
 void syncPresetPrintSaved();
 

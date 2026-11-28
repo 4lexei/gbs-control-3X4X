@@ -19,6 +19,8 @@ static bool wbBaseValid = false;
 static bool hueBaseValid = false; // v74: the colour matrix, so hue and saturation do not fight each other
 static uint8_t satU = 0, satV = 0; // the COS gains at hue zero (what the saturation buttons set)
 static int8_t hueStep = 0;         // one step = 3 degrees, range +/- 63
+static uint8_t presetU = 0, presetV = 0; // (after v130b) the colour gains the preset itself loaded, before any saved profile
+static bool presetSatValid = false;
 static bool offBaseValid = false; // v73: the ADC black level the preset loaded, so Reset color can put it back
 static uint8_t offR = 0, offG = 0, offB = 0;
 static uint8_t wbR = 0, wbG = 0, wbB = 0, wbU = 0, wbV = 0;
@@ -98,6 +100,9 @@ void applyImageTuning()
     wbBaseValid = false;  // v54: new preset, new white balance base
     offBaseValid = false; // v73: and a new ADC black level base
     hueBaseValid = false; // v74: the preset brings its own colour matrix, so the hue starts at zero again
+    presetU = GBS::VDS_UCOS_GAIN::read(); // (after v130b) kept for «reiniciar» of the colour profile: this runs before the
+    presetV = GBS::VDS_VCOS_GAIN::read(); // saved profile is applied, so these are the firmware's own values
+    presetSatValid = true;
     if (uopt->peakLevel != 1 || uopt->stepLevel != 1 || uopt->adcFilterLevel != 0) {
         writeLevels();
     }
@@ -122,7 +127,7 @@ void nudgePeaking(int8_t delta)
     SerialM.println(GBS::VDS_PK_LH_GAIN::read());
 }
 
-// v107j: step response in steps of 1, like the fine peaking. It replaces the four-level cycle in the web: the user asked for
+// v107j: step response in steps of 1, like the fine peaking. It replaces the four-level cycle in the web: asked for
 // one - / + per sharpening control, with the preset's own value shown as the reference.
 void nudgeStepGain(int8_t delta)
 {
@@ -233,7 +238,7 @@ void nudgeHue(int8_t dir)
     if (n < -21) n = -21;
     hueStep = (int8_t)n;
     writeColourMatrix();
-    SerialM.print(F("[3x4x-v123l] hue "));
+    SerialM.print(F("[3x4x-v130k] hue "));
     SerialM.print(hueStep * 3);
     SerialM.print(F(" degrees (U/V cos "));
     SerialM.print(GBS::VDS_UCOS_GAIN::read());
@@ -256,7 +261,27 @@ void resetHue()
     GBS::VDS_VSIN_GAIN::write(0);
     GBS::VDS_UCOS_GAIN::write(satU);
     GBS::VDS_VCOS_GAIN::write(satV);
-    SerialM.println(F("[3x4x-v123l] hue back to 0 degrees"));
+    SerialM.println(F("[3x4x-v130k] hue back to 0 degrees"));
+}
+
+// (after v130b) «reiniciar» of the colour profile: saturation (Pb/U and Pr/V) and hue back to what the preset loaded.
+// resetHue() alone keeps whatever saturation is on the chip, which after a saved profile is the profile's own.
+void resetSaturationToPreset()
+{
+    if (!presetSatValid)
+        return;
+    satU = presetU;
+    satV = presetV;
+    hueStep = 0;
+    hueBaseValid = true;
+    GBS::VDS_USIN_GAIN::write(0);
+    GBS::VDS_VSIN_GAIN::write(0);
+    GBS::VDS_UCOS_GAIN::write(satU);
+    GBS::VDS_VCOS_GAIN::write(satV);
+    SerialM.print(F("[3x4x-v130k] saturation back to the preset: U/V "));
+    SerialM.print(satU);
+    SerialM.print('/');
+    SerialM.println(satV);
 }
 
 // v74: saturation now goes through the matrix too. which: 0 = both, 1 = Pb/U, 2 = Pr/V.
@@ -272,7 +297,7 @@ void nudgeSaturation(uint8_t which, int8_t delta)
         satV = (uint8_t)(n < 0 ? 0 : (n > 127 ? 127 : n));
     }
     writeColourMatrix();
-    SerialM.print(F("[3x4x-v123l] saturation U/V "));
+    SerialM.print(F("[3x4x-v130k] saturation U/V "));
     SerialM.print(satU);
     SerialM.print('/');
     SerialM.print(satV);
@@ -308,7 +333,7 @@ static void captureAdcOffsetBase()
     offG = GBS::ADC_GOFCTRL::read();
     offB = GBS::ADC_BOFCTRL::read();
     offBaseValid = true;
-    SerialM.print(F("[3x4x-v123l] ADC black level base taken: "));
+    SerialM.print(F("[3x4x-v130k] ADC black level base taken: "));
     SerialM.print(offR);
     SerialM.print('/');
     SerialM.print(offG);
@@ -328,7 +353,7 @@ void resetAdcOffset()
     GBS::ADC_ROFCTRL::write(offR);
     GBS::ADC_GOFCTRL::write(offG);
     GBS::ADC_BOFCTRL::write(offB);
-    SerialM.print(F("[3x4x-v123l] ADC black level back to the base: "));
+    SerialM.print(F("[3x4x-v130k] ADC black level back to the base: "));
     SerialM.print(offR);
     SerialM.print('/');
     SerialM.print(offG);
@@ -351,7 +376,7 @@ void nudgeAdcOffset(uint8_t channel, int8_t delta)
         adco->b_off = clampU8((int)GBS::ADC_BOFCTRL::read() + delta, 255);
         GBS::ADC_BOFCTRL::write(adco->b_off);
     }
-    SerialM.print(F("[3x4x-v123l] ADC black level R/G/B: "));
+    SerialM.print(F("[3x4x-v130k] ADC black level R/G/B: "));
     SerialM.print(GBS::ADC_ROFCTRL::read());
     SerialM.print('/');
     SerialM.print(GBS::ADC_GOFCTRL::read());
@@ -476,7 +501,9 @@ void cycleAdcFilterLevel()
         captureBase();
     }
     uopt->adcFilterLevel = (uopt->adcFilterLevel + 1) & 3;
-    writeLevels();
+    // (after v127e) writeLevels() also wrote the peaking and step gains back from their level, so a fine
+    // peaking value (set with - / +) jumped to the preset's 22. Only the filter is written now.
+    GBS::ADC_FLTR::write(uopt->adcFilterLevel == 0 ? baseFltr : uopt->adcFilterLevel);
     saveUserPrefs();
     SerialM.print(F("ADC low-pass filter: "));
     switch (uopt->adcFilterLevel) {

@@ -5,7 +5,7 @@
 
 // [patch 1080p-integer] horizontal placement of the NTSC integer 1080p modes (uopt->integer1080: 3 = x4, 4 = x5).
 // Every horizontal adjustment made here is tracked as a difference, so it can be undone exactly
-// without touching what the user did afterwards with the move / border buttons.
+// without touching what was done afterwards with the move / border buttons.
 
 // A new preset was loaded: forget all tracked adjustments.
 void integer1080Reset();
@@ -28,22 +28,22 @@ void integerLowLoad();
 // v62: 1 = Mega Drive, 2 = SNES / NES, 3 = PC Engine (PC Engine uses the Mega Drive values for now)
 uint8_t activeConsoleProfile();
 // v107p: 0 unknown, 1 Mega Drive, 2 SNES / NES, 3 PC Engine: whose picture memory is in use
-// (after v107v) 4..17: the profiles without measurements (his list), chosen by hand; activeConsoleProfile() gives 1 for them
+// (after v107v) 4..17: the profiles without measurements (the list), chosen by hand; activeConsoleProfile() gives 1 for them
 #define CONSOLE_PROFILE_COUNT 19
-// (after v108e) his «Otras»: for whoever does not see his console in the list. A profile without measurements like
+// (after v108e) the «Otras» entry: for whoever does not see the console in the list. A profile without measurements like
 // 4..17, kept after them so every file of v108e (colours, sync states, edges, last modes) still reads the same.
 #define CONSOLE_PROFILE_OTHERS 18
 #define CONSOLE_PROFILE_FIRST_EMPTY 4
 #define CONSOLE_PROFILE_DREAMCAST 13 // (after v107w) the first one Auto can recognise (rto->consoleDetected 3)
 uint8_t settingsProfile();
-// (after v107z) THE DREAMCAST'S OWN MODES, his measurements of 2026-11-16 with the 240p Test Suite. What the Dreamcast is
+// (after v107z) THE DREAMCAST'S OWN MODES, the measurements of 2026-11-16 with the 240p Test Suite. What the Dreamcast is
 // sending, only while its profile is in use: 0 = not the Dreamcast profile, 1 = 240p, 2 = 288p, 3 = 480i, 4 = 576i,
 // 5 = anything else (VGA). The interlace comes from the line count of the input formatter (even = 480i / 576i), latched
 // so that one odd reading does not flip it.
 uint8_t dcSignal();
 void interlaceNote(uint16_t vperiodIf); // the detection's reading, every measurement
 // (after v108b) the Dreamcast through VGA: our 1080p button loads Rama's 1920x1080 there (31 kHz, see applyPresets) and
-// his measured «4:3» (the whole width) is written on top. True when the load is one for it.
+// the measured «4:3» (the whole width) is written on top. True when the load is one for it.
 bool dcVgaWanted();
 void dcVgaLoad();      // at the load: notes Rama's ADC clock, then places
 void dcVga1080Apply(); // the placement (again in the 700 ms pass): «4:3» or, with the ADC clock lowered, «16:9» 2 x 2
@@ -87,15 +87,15 @@ void applyMemPhase();
 // v88: the memory slot of the mode on screen, 0..15, or 16 when no integer mode is on (see Integer1080.cpp).
 uint8_t memSettingIndex();
 
-// v88: write the SDRAM clock and phase the user saved FOR THIS MODE. True if anything was written (reset the SDRAM then).
+// v88: write the SDRAM clock and phase saved FOR THIS MODE. True if anything was written (reset the SDRAM then).
 bool applyMemSettings();
 
 // v88: the name of the mode whose memory slot is in use ("PAL 1080p x4"), for the log.
 const char *memModeName();
 
-// v90: the SDRAM clock and phase that will actually be written for the mode on screen (the user's, else the mode's default).
+// v90: the SDRAM clock and phase that will actually be written for the mode on screen (the stored one, else the mode's default).
 void memEffective(uint8_t *clock, uint8_t *phase);
-// v107m: the user's own clock / phase byte for the mode and size step on screen (nullptr outside the integer modes)
+// v107m: the stored clock / phase byte for the mode and size step on screen (nullptr outside the integer modes)
 // (after v120c) the memory settings are per console now, in /memsetN.txt; "memoria de fábrica" clears the mode's own
 void memSettingsEnsureLoaded();
 void memSettingsSave();

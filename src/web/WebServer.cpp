@@ -132,7 +132,8 @@ void startWebserver()
             // without disturbing the letters already in use (the character is only a dispatch key inside the main loop).
             // v107j: 45 is now taken (console profile PC Engine). v107m: 46 / 47 are the wide / fill size steps. v107n: 48..50 the Líneas row, 51 / 52 the vertical memory window. v107o: 53 = 720p x3 in its last shape, 54 = ver huella. (after v107r) 55..57 the three undo buttons (move, edge, scale). (after v107v) 58 / 59 colour export / import; 60..73 the console profiles without measurements; (after v107z) 74 the Dreamcast's 4:3 / 16:9 in 1080p, and 74 is the last: 75 would land on 'a' (code 0). (A code 75 or above would need its own character: 'a'..'z' are codes 0..25.) A new code needs this limit raised AND a mapping in
             // the main loop that does not land on a character another command already uses.
-            if (n.length() >= 1 && n.length() <= 2 && code >= 0 && code <= 87 && // (after v120c) 85 / 86 the console's gain, 87 factory memory
+            if (n.length() >= 1 && n.length() <= 2 && code >= 0 && code <= 97 && // (after v127i) 97 force NTSC presets; (after v127c) 93 register test previous, 94..96 its groups; (after v126) 91 ignore false pulses; (after v126b) 92 test recipe; (after v124d) 88 / 89 the PC Engine's 320 / 352 px; (after v125) 90 the ODV 60 Hz recipe
+                // (after v120c) 85 / 86 the console's gain, 87 factory memory
                 // (after v111c) 82..84 memory reset, FTL phase -/+
                 // (after v111) 77..80 the register tests of Developer; (after v111b) 81 exact output rate
                  imgCommandBuffer.length() < 16) {

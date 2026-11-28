@@ -317,7 +317,15 @@ void moveCanvasHorizontal(bool right)
         const uint16_t step = fine ? 2 : 8; // IF_HBIN_SP
         const uint16_t rstStep = fine ? 1 : 4;
         if (right) {
-            if (GBS::IF_HBIN_SP::read() >= step + 2) {
+            // (after v127f) THE RIGHT LIMIT, 720p x5 ONLY: HBIN 186 (the dump, MD 320 at HScale 386). Fixed: it is where
+            // the line starts showing, not a width. Every other mode keeps Rama's step + 2.
+            // (after v127z) 2026-11-26: with the ADC clock lowered (MD PAL 720p x5 at 1900) left / right hit their stop
+            // at once. The two limits of the dump (HBIN 186, 704 units at HScale 386) were measured at the stock clock (IF_HSYNC_RST
+            // 1172); the input line is in that sample domain, so they scale with it: x IF_HSYNC_RST / 1172 (1.000 at the stock clock,
+            // 0.810 at 1900: floor 151, and the span 638 x 0.810 = 517 at HScale 350 instead of 638).
+            const uint32_t clkNum = (rto->integer720Active && uopt->integer720 == 2) ? GBS::IF_HSYNC_RST::read() : 1172;
+            const uint16_t hbinFloor = (rto->integer720Active && uopt->integer720 == 2) ? (uint16_t)((186UL * clkNum + 586) / 1172) : 2;
+            if (GBS::IF_HBIN_SP::read() >= step + hbinFloor) {
                 GBS::IF_HBIN_SP::write(GBS::IF_HBIN_SP::read() - step);
                 if ((GBS::IF_HSYNC_RST::read() - rstStep) > ((GBS::PLLAD_MD::read() >> 1) + 5)) {
                     GBS::IF_HSYNC_RST::write(GBS::IF_HSYNC_RST::read() - rstStep);
@@ -327,7 +335,21 @@ void moveCanvasHorizontal(bool right)
                 SerialM.println(F("limit"));
             }
         } else {
-            if (GBS::IF_HBIN_SP::read() < 0x150) {
+            // (after v127e) in 720p x5 ONLY, the left move is no longer capped at Rama's 0x150 (336): the
+            // Mega Drive 320 starts at HBIN 326 there and hit "limit" after one press. The cap there is the end of the
+            // capture (IF_HB_ST2) less a margin. Every other mode keeps 0x150.
+            // (after v127f) THE LIMIT: past it the end of the capture crosses the line reset (IF_HSYNC_RST) and the last
+            // pixels come from the next line (one line lower). the dump: HBIN 468 is the last clean one at HScale 386 with
+            // HRST 1172, i.e. 704 units of visible line. Those units grow with the scale (fewer output columns per
+            // sample), so the cap is HRST - 704 x HScale / 386 and a press never goes past it.
+            const bool x5_720 = rto->integer720Active && uopt->integer720 == 2;
+            uint16_t hbinCap = 0x150;
+            if (x5_720) {
+                const uint16_t rst = GBS::IF_HSYNC_RST::read();
+                const uint32_t span = (704UL * GBS::VDS_HSCALE::read() * rst + 193UL * 1172) / (386UL * 1172); // (after v127z) x rst / 1172: the stock-clock sample domain
+                hbinCap = (rst > span) ? (uint16_t)(rst - span) : 0;
+            }
+            if (GBS::IF_HBIN_SP::read() + step <= hbinCap) {
                 GBS::IF_HBIN_SP::write(GBS::IF_HBIN_SP::read() + step);
             } else {
                 SerialM.println(F("limit"));

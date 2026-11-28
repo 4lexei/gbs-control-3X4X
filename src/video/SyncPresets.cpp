@@ -83,11 +83,11 @@ static uint8_t nibble(int c)
     return 0;
 }
 
-// (after v123i) the PC Engine's sync state, captured by him on 2026-11-22 ("sync state, all fields" line), in file order:
+// (after v123i) the PC Engine's sync state, captured on 2026-11-22 ("sync state, all fields" line), in file order:
 // valid, SOG level 14, SOG mode 1, coast 16/256, pre/post coast 7/3, pulse ignore 2, H protect 0, no coast 0,
-// phase SP/ADC 11/16, coast set 1, clamp set 1. Written by the «receta» button (his decision: «olvidar sync» leaves the
+// phase SP/ADC 11/16, coast set 1, clamp set 1. Written by the «receta» button («olvidar sync» leaves the
 // console with no saved state; the firmware's one comes back only through that button).
-// PCE_FACTORY_SYNC (not used since his decision of 2026-11-22, kept as reference): {1, 14, 1, 16, 0, 0, 1, 7, 3, 2, 0, 0, 11, 16, 1, 1}
+// PCE_FACTORY_SYNC (not used since 2026-11-22, kept as reference): {1, 14, 1, 16, 0, 0, 1, 7, 3, 2, 0, 0, 11, 16, 1, 1}
 
 void syncPresetsLoad()
 {
@@ -123,7 +123,7 @@ void syncPresetsLoad()
     f.close();
     for (uint8_t s = 0; s < SYNC_PRESET_SLOTS; s++) {
         if (slots[s].valid) {
-            SerialM.print(F("[3x4x-v123l] sync state saved for "));
+            SerialM.print(F("[3x4x-v130k] sync state saved for "));
             SerialM.println(slotName(s));
         }
     }
@@ -158,7 +158,7 @@ void syncPresetCaptureNow()
     p.clampWasSet = rto->clampPositionIsSet ? 1 : 0;
     rto->syncPresetActive = true; // v70: from now on the recovery leaves these values alone
     saveToFile();
-    SerialM.print(F("[3x4x-v123l] sync state captured for "));
+    SerialM.print(F("[3x4x-v130k] sync state captured for "));
     SerialM.print(slotName(s));
     SerialM.print(F(": SOG level "));
     SerialM.print(p.sogLevel);
@@ -175,8 +175,8 @@ void syncPresetCaptureNow()
     SerialM.print('/');
     SerialM.print(p.phaseADC);
     SerialM.println(F(". It is written back after every preset load"));
-    // (after v123g) his request: every stored field, in file order, so he can hand it over to be built in as the default
-    SerialM.print(F("[3x4x-v123l] sync state, all fields: "));
+    // (after v123g) every stored field, in file order, so it can be handed over to be built in as the default
+    SerialM.print(F("[3x4x-v130k] sync state, all fields: "));
     const uint8_t *b = (const uint8_t *)&p;
     for (uint8_t i = 0; i < SYNC_PRESET_FIELDS; i++) {
         if (i)
@@ -209,7 +209,7 @@ void syncPresetApply(bool quiet)
     const SyncPreset &p = slots[s];
     if (!p.valid) {
         if (!quiet) {
-            SerialM.print(F("[3x4x-v123l] no sync state saved for "));
+            SerialM.print(F("[3x4x-v130k] no sync state saved for "));
             SerialM.println(slotName(s));
         }
         return;
@@ -222,7 +222,7 @@ void syncPresetApply(bool quiet)
     rto->phaseADC = p.phaseADC;
     setAndUpdateSogLevel(rto->currentLevelSOG); // re-latches SP / ADPLL with the phase above
     rto->phaseIsSet = true;                     // do not search for a phase over the captured one
-    SerialM.print(F("[3x4x-v123l] sync state written for "));
+    SerialM.print(F("[3x4x-v130k] sync state written for "));
     SerialM.print(slotName(s));
     SerialM.print(F(": SOG level "));
     SerialM.print(p.sogLevel);
@@ -242,7 +242,7 @@ void syncPresetClear()
     memset(&slots[s], 0, sizeof(SyncPreset));
     rto->syncPresetActive = false;
     saveToFile();
-    SerialM.print(F("[3x4x-v123l] sync state removed for "));
+    SerialM.print(F("[3x4x-v130k] sync state removed for "));
     SerialM.println(slotName(s));
 }
 
@@ -250,7 +250,7 @@ void syncPresetPrintSaved()
 {
     const uint8_t s = activeSlot();
     const SyncPreset &p = slots[s];
-    SerialM.print(F("[3x4x-v123l] saved sync state for "));
+    SerialM.print(F("[3x4x-v130k] saved sync state for "));
     SerialM.print(slotName(s));
     if (!p.valid) {
         SerialM.println(F(": none"));
@@ -286,11 +286,51 @@ void syncPresetPrintSaved()
     SerialM.println(p.clampWasSet);
 }
 
+// (after v125) THE CAPTURE of 2026-11-23 20:04 with Bonk (60.05 Hz) through the ODV: caught in the ODV's smoothed 240p
+// (a cleaner sync), went back to the plain 240p, wrote it there and it held; then captured it again. In file order:
+// valid, SOG 14 (mode 1), coast 16/256 fixed, pre/post 7/3, pulse ignore 2, H PROTECT 1, no coast 0, phase SP/ADC 11/16,
+// coast set, clamp set. The only difference with the capture of 22-11 for the normal games is H protect (1 there 0).
+static const uint8_t PCE262_RECIPE[SYNC_PRESET_FIELDS] = {1, 14, 1, 16, 0, 0, 1, 7, 3, 2, 1, 0, 11, 16, 1, 1};
+
+// (after v125) a second recipe button of its own (no switching by the game on screen)
+void syncPresetApplyOdvRecipe60()
+{
+    {
+        const uint8_t *b = PCE262_RECIPE;
+        writeState(b[1], (uint16_t)b[3] | ((uint16_t)(b[4] & 0x0f) << 8), (uint16_t)b[5] | ((uint16_t)(b[6] & 0x0f) << 8),
+                   b[7], b[8], b[9], b[10], b[11], b[14] != 0, b[15] != 0);
+        rto->phaseSP = b[12];
+        rto->phaseADC = b[13];
+        setAndUpdateSogLevel(rto->currentLevelSOG);
+        rto->phaseIsSet = true;
+        rto->syncPresetActive = true;
+        syncFinishSetup();
+        SerialM.println(F("[3x4x-v130k] ODV 60 Hz recipe written (the Bonk capture): SOG 14, coast 16/256, pulse ignore 2, H protect 1, phase 11/16"));
+    }
+}
+
+// (after v126b) TEST, the 60 Hz recipe with the old recipe's pre / post coast (9 / 9 instead of 7 / 3), the
+// only vertical setting that differs. the 60 Hz recipe is clean in 1080p but sits one line off in 720p (light
+// scanlines); the old one is right in 720p and snows in 1080p. Temporary button, to be removed once settled.
+void syncPresetApplyOdvRecipeTest()
+{
+    const uint8_t *b = PCE262_RECIPE;
+    writeState(b[1], (uint16_t)b[3] | ((uint16_t)(b[4] & 0x0f) << 8), (uint16_t)b[5] | ((uint16_t)(b[6] & 0x0f) << 8),
+               9, 9, b[9], b[10], b[11], b[14] != 0, b[15] != 0);
+    rto->phaseSP = b[12];
+    rto->phaseADC = b[13];
+    setAndUpdateSogLevel(rto->currentLevelSOG);
+    rto->phaseIsSet = true;
+    rto->syncPresetActive = true;
+    syncFinishSetup();
+    SerialM.println(F("[3x4x-v130k] TEST recipe written: the 60 Hz one with pre/post coast 9/9 (SOG 14, coast 16/256, pulse ignore 2, H protect 1, phase 11/16)"));
+}
+
 void syncPresetApplyOdvRecipe()
 {
-    // (after v123k) HIS DECISION of 2026-11-22: back to the v64 recipe; with his capture of today (PCE_FACTORY_SYNC
+    // (after v123k) of 2026-11-22: back to the v64 recipe; with the capture of today (PCE_FACTORY_SYNC
     // above, kept for reference) the PC Engine found its place much harder.
-    // The state the user measured on v64 with the PC Engine through the ODV, in the one attempt that came out perfect:
+    // The state measured on v64 with the PC Engine through the ODV, in the one attempt that came out perfect:
     // SOG level 14, coast 16 / 256 left unfixed (the values of the recovery path), pulse ignore 51, clamp fixed.
     // It is not a promise: the picture also depends on what the chip latched at that moment, but it starts where it worked.
     // v69: the clamp is NOT claimed as already placed any more (that is what left the picture with a colour cast), and the
@@ -298,5 +338,5 @@ void syncPresetApplyOdvRecipe()
     writeState(14, 16, 256, 9, 9, 51, GBS::SP_H_PROTECT::read(), GBS::SP_NO_COAST_REG::read(), false, false);
     rto->syncPresetActive = true;
     syncFinishSetup();
-    SerialM.println(F("[3x4x-v123l] ODV recipe written: SOG level 14, coast 16/256 unfixed, pulse ignore 51. Capture it if the picture comes out right"));
+    SerialM.println(F("[3x4x-v130k] ODV recipe written: SOG level 14, coast 16/256 unfixed, pulse ignore 51. Capture it if the picture comes out right"));
 }

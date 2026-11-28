@@ -314,7 +314,7 @@ void syncFinishSetup()
             }
             GBS::TEST_BUS_SEL::write(debugRegBackup);
             GBS::PAD_BOUT_EN::write(debugPinBackup);
-            SerialM.println(F("[3x4x-v123l] auto gain: one pass while locking"));
+            SerialM.println(F("[3x4x-v130k] auto gain: one pass while locking"));
         }
     }
 }
@@ -327,11 +327,11 @@ void syncAutoLockRearm()
     rto->clampPositionIsSet = false;
     rto->continousStableCounter = 0;
     autoLockGraceUntil = millis() + 1200;
-    SerialM.println(F("[3x4x-v123l] auto-lock re-armed: coast, phase and clamp let go, counting again from zero"));
+    SerialM.println(F("[3x4x-v130k] auto-lock re-armed: coast, phase and clamp let go, counting again from zero"));
 }
 
 // v66: hands-free attempts. While auto-retry is on, a locked state is let go again after a few seconds so the next
-// candidate state comes up by itself; the user only watches and presses "capture" when the picture looks right.
+// candidate state comes up by itself; the picture is only watched and "capture" pressed when the picture looks right.
 void syncAutoRetryTick()
 {
     if (!uopt->autoRetrySync || autoRetryAt == 0 || rto->syncWatcherEnabled) {
@@ -343,7 +343,7 @@ void syncAutoRetryTick()
     autoRetryAt = 0;
     rto->syncWatcherEnabled = true;
     syncAutoLockRearm();
-    SerialM.println(F("[3x4x-v123l] auto-retry: next attempt"));
+    SerialM.println(F("[3x4x-v130k] auto-retry: next attempt"));
 }
 
 void runSyncWatcher()
@@ -498,7 +498,7 @@ void runSyncWatcher()
         // picture is simply frozen and the preset kept, which rides out dropouts shorter than the window (3 s since v64). If the
         // signal is really gone the window expires and the normal recovery runs as always.
         // v66: the SOG level bump of the block below is the one recovery step that is NOT held back, because walking that
-        // level up is how a marginal source finds a level that holds (measured: the user's working state sits at 14).
+        // level up is how a marginal source finds a level that holds (measured: the working state sits at 14).
         if (uopt->tolerantSync && tolerantHoldUntil != 0 && (long)(millis() - tolerantHoldUntil) < 0) {
             if (rto->noSyncCounter == 2 && rto->currentLevelSOG <= 1 && videoStandardInputIsPalNtscSd()) {
                 rto->currentLevelSOG += 1;
@@ -548,7 +548,7 @@ void runSyncWatcher()
                 GBS::SP_PRE_COAST::write(9);
                 GBS::SP_POST_COAST::write(9);
                 // new: test SD<>EDTV changes
-                // v70: with a saved state in force this is skipped: his working pulse ignore is exactly 0x33, so this
+                // v70: with a saved state in force this is skipped: the working pulse ignore is exactly 0x33, so this
                 // halved it to 25 on the eighth bad read and the lock became impossible
                 uint8_t ignore = GBS::SP_H_PULSE_IGNOR::read();
                 if (ignore >= 0x33) {
@@ -585,7 +585,7 @@ void runSyncWatcher()
 
         if (rto->syncTypeCsync) {
             if (rto->noSyncCounter > 47) {
-                if (rto->noSyncCounter % 16 == 0) {
+                if (rto->noSyncCounter % 16 == 0 && !uopt->hProtectForce) { // (after v126) not while the switch holds it on
                     GBS::SP_H_PROTECT::write(!GBS::SP_H_PROTECT::read());
                 }
             }
@@ -608,7 +608,7 @@ void runSyncWatcher()
                 GBS::SP_EXT_SYNC_SEL::write(extSyncBackup);
             }
             GBS::SP_H_COAST::write(0);   // 5_3e 2
-            GBS::SP_H_PROTECT::write(0); // 5_3e 4
+            GBS::SP_H_PROTECT::write(uopt->hProtectForce ? 1 : 0); // 5_3e 4; (after v126) the switch keeps it on
             GBS::SP_H_CST_ST::write(0x10);
             GBS::SP_H_CST_SP::write(0x100); // instead of disabling 5_3e 5 coast
             GBS::SP_CS_CLP_ST::write(32);   // neutral clamp values
@@ -854,13 +854,13 @@ void runSyncWatcher()
             updateSpDynamic(0);
         }
 
-        // v64 auto-lock (off by default): what the user did by hand - stop the sync watcher at the moment the picture looks
+        // v64 auto-lock (off by default): what was done by hand - stop the sync watcher at the moment the picture looks
         // right - done by the firmware at the first stable read instead of by reflex. The lock point matters: the steps above
         // (unfreeze, updateSpDynamic, SOG level, phase search, clamp) run at particular counter values, so locking at 2 keeps
         // a barely set up state and locking at 62 keeps a fully set up one. That is why the point is selectable: on a source
         // that only holds for a moment the early points are the ones that can be reached at all.
         // v70: and only for a console profile that has a sync state saved (or while hunting for one with auto-retry).
-        // Every other source - his Mega Drive, his SNES - keeps the stock behaviour, which is what got them right.
+        // Every other source - the Mega Drive, the SNES - keeps the stock behaviour, which is what got them right.
         if (uopt->autoLockSync && rto->syncWatcherEnabled && (syncPresetAvailable() || uopt->autoRetrySync)) {
             static const uint8_t lockPoints[4] = {2, 10, 30, 62};
             const uint8_t want = lockPoints[(uopt->autoLockSync - 1) & 0x03];
@@ -873,9 +873,9 @@ void runSyncWatcher()
                     unfreezeVideo();
                 }
                 if (uopt->autoRetrySync) {
-                    autoRetryAt = millis() + 3500; // v66: hands-free attempts, so he only has to watch and capture
+                    autoRetryAt = millis() + 3500; // v66: hands-free attempts, so only watching and capturing is left
                 }
-                SerialM.print(F("[3x4x-v123l] auto-lock: sync watcher paused at "));
+                SerialM.print(F("[3x4x-v130k] auto-lock: sync watcher paused at "));
                 SerialM.print(want);
                 SerialM.println(F(" stable reads (the watcher kept quiet while counting). Press SyncWatcher to try again from a clean state; nothing is detected while it is paused"));
             }
@@ -918,8 +918,8 @@ void runSyncWatcher()
                                     disableScanlines();
                                 }
                                 enableMotionAdaptDeinterlace();
-                                // (after v107y) his request: say it when the firmware switches it by itself
-                                SerialM.print(F("[3x4x-v123l] motion adaptive ON (vp "));
+                                // (after v107y) say it when the firmware switches it by itself
+                                SerialM.print(F("[3x4x-v130k] motion adaptive ON (vp "));
                                 SerialM.print(VPERIOD_IF);
                                 SerialM.println(')');
                                 if (timingAdjustDelay == 0) {
@@ -941,7 +941,7 @@ void runSyncWatcher()
                             if (uopt->deintMode == 0 && rto->motionAdaptiveDeinterlaceActive) {
                                 disableMotionAdaptDeinterlace();
                                 // (after v107y) and when it switches it off by itself
-                                SerialM.print(F("[3x4x-v123l] motion adaptive OFF (vp "));
+                                SerialM.print(F("[3x4x-v130k] motion adaptive OFF (vp "));
                                 SerialM.print(VPERIOD_IF);
                                 SerialM.println(')');
                                 if (timingAdjustDelay == 0) {
@@ -1144,7 +1144,7 @@ void runSyncWatcher()
                         }
                         // v105: those three writes are the stock sync-recovery patch, and they land on IF_HB_ST2 / SP2 and
                         // IF_HBIN_SP, which in an integer mode are exactly the capture canvas the user measured. Only NTSC
-                        // 1080p had an exception, so in PAL this left the canvas at 8 / 104 with HBIN 80 against his measured
+                        // 1080p had an exception, so in PAL this left the canvas at 8 / 104 with HBIN 80 against the measured
                         // 844 / 104 and 98, and the picture jumped. It fires from the sync watcher when the signal re-locks,
                         // which is why it struck at random and a plain preset reload cured it. Ask for the mode to be placed
                         // again once the chip has settled, through the same 700 ms deadline the preset load uses.
@@ -1271,7 +1271,7 @@ void runSyncWatcher()
                             }
                             // v105: those three writes are the stock sync-recovery patch, and they land on IF_HB_ST2 / SP2 and
                             // IF_HBIN_SP, which in an integer mode are exactly the capture canvas the user measured. Only NTSC
-                            // 1080p had an exception, so in PAL this left the canvas at 8 / 104 with HBIN 80 against his measured
+                            // 1080p had an exception, so in PAL this left the canvas at 8 / 104 with HBIN 80 against the measured
                             // 844 / 104 and 98, and the picture jumped. It fires from the sync watcher when the signal re-locks,
                             // which is why it struck at random and a plain preset reload cured it. Ask for the mode to be placed
                             // again once the chip has settled, through the same 700 ms deadline the preset load uses.

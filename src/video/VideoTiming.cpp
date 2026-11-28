@@ -197,10 +197,10 @@ void printVideoTimings()
     SerialM.print(getCsVsStart());
     SerialM.print(F(" "));
     SerialM.println(getCsVsStop());
-    // v88: the SDRAM clock and phase belong in the dump. In the PAL 1080p x4 mode the user positions the picture by moving the
+    // v88: the SDRAM clock and phase belong in the dump. In the PAL 1080p x4 mode the picture is positioned by moving the
     // capture window left, away from the sync garbage at the right of the line, and then shifts the WHOLE block back to the
     // right with the memory phase: the phase is part of the placement there, not just a cleanliness setting. Without these two
-    // numbers in the dump, a dump describes only half of his state and the picture cannot be reproduced from it.
+    // numbers in the dump, a dump describes only half of the state and the picture cannot be reproduced from it.
     {
         const uint8_t pllMs = GBS::PLL_MS::read();
         const uint8_t phase = (uint8_t)((GBS::MEM_INTER_DLYCELL_SEL::read() << 0) |
@@ -402,7 +402,7 @@ boolean runAutoBestHTotal()
                     const uint16_t htotalBefore = GBS::VDS_HSYNC_RST::read(); // (after v111b)
                     boolean success = applyBestHTotal(bestHTotal);
                     if (success) {
-                        // (after v111b) his report of 2026-11-17 (240p suite -> 480i, 720p x3, FTL on): IN 59.8076, OUT stuck
+                        // (after v111b) 2026-11-17 (240p suite -> 480i, 720p x3, FTL on): IN 59.8076, OUT stuck
                         // at 59.73. The new best HTotal follows the input (262 -> 262.5 lines a field, 0.19 %), so every
                         // output frame takes that many clocks more; the frame time lock's "clock per output frame" was
                         // measured with the old HTotal and is now 0.19 % off, more than the 0.06 % it may correct, so it

@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 void SerialMirror::flushToWebSocket() {
-    // (after v111e) his v111e: the page loaded but nothing ever arrived («esperando estado»): the board idles between 10
+    // (after v111e) the v111e: the page loaded but nothing ever arrived («esperando estado»): the board idles between 10
     // and 14 KB free, so a 14 KB margin silenced the bar and the log for good. The log steps aside at 11 KB, the bar at
     // 10.5 KB, the web's own requests at 10 KB.
     if (wsBufferPos > 0 && ESP.getFreeHeap() > 11000) {
@@ -19,7 +19,7 @@ static const char *const NOISY_PREFIXES[] = {
     // v37.1: FTL (frame time lock) housekeeping
     "runFreq:", "runFrequency()", "Skipping FrameSyncManager", "externalClockGenSync",
     "FrameSyncManager::runFrequency()",
-    // (after v111h) his request of 2026-11-21: the deinterlacer switching back and forth is housekeeping, not news
+    // (after v111h) 2026-11-21: the deinterlacer switching back and forth is housekeeping, not news
     "motion adaptive",
 };
 
@@ -99,7 +99,7 @@ void SerialMirror::sendStatus(const char *text) {
     if (ESP.getFreeHeap() < 10500) { // (after v111e) see flushToWebSocket()
         return;
     }
-    // v92: 128 was enough for the old one-line status bar but not for the three-line one: the user's bar came to 129
+    // v92: 128 was enough for the old one-line status bar but not for the three-line one: the bar came to 129
     // characters and arrived cut off at "step 1/4 squ". The sender builds at most 260, so this has to hold that plus the
     // 0x1e marker and the terminator.
     static char buf[64]; // (after v111d) only the short notices now ("No signal / syncing...", "Measuring..."): the bar itself is

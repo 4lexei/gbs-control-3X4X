@@ -20,7 +20,7 @@ void imageTuningWbBase(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *u, uint8_t *
 // v54: white balance / colour cast, codes 'a'..'j' (see ImageTuning.cpp)
 void imageCommand(char code);
 // v72: ADC black level (the analog offset, before digitising). The Black level buttons act on VDS_BLEV, which is after the
-// ADC, so on a source whose black arrives lifted (the user's PC Engine through the ODV) they cannot reach it: the black is
+// ADC, so on a source whose black arrives lifted (a PC Engine through the ODV) they cannot reach it: the black is
 // already digitised as grey. These move ADC_ROFCTRL / GOFCTRL / BOFCTRL instead. channel: 0 = all three, 1 = R, 2 = G, 3 = B.
 void nudgeAdcOffset(uint8_t channel, int8_t delta);
 // v73: the ADC black level back to what the preset loaded (what Reset color and remove colour use).
@@ -29,6 +29,7 @@ void resetAdcOffset();
 void nudgeHue(int8_t dir);
 // v74: back to 0 degrees, keeping the saturation.
 void resetHue();
+void resetSaturationToPreset(); // (after v130b) saturation U/V and hue back to the preset's own values
 // v74: saturation, which shares the same registers as the hue and so must go through the same writer.
 // which: 0 = both axes, 1 = Pb/U, 2 = Pr/V.
 void nudgeSaturation(uint8_t which, int8_t delta);

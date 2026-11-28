@@ -516,7 +516,7 @@ public:
         if (maybeFreqExt_per_videoFps < 0) {
             // (after v107v) normal for a moment after every preset load: externalClockGenResetClock() clears the mapping and
             // the next externalClockGenSyncInOutRate() sets it again, a second or two later. Until then there is nothing to
-            // tune with, so this waits quietly instead of printing an "Error" the user saw after every load.
+            // tune with, so this waits quietly instead of printing an "Error" after every load.
             fsDebugPrintf("Skipping FrameSyncManager::runFrequency(), clock frequency not initialized yet\n");
             return true;
         }
@@ -636,7 +636,7 @@ public:
         // that otherwise causes the output clock to oscillate.
         constexpr float FPS_EMA_ALPHA = 0.15f;
         if (smoothedFpsInput < 47.0f) smoothedFpsInput = fpsInput;
-        // (after v111f) his log of 2026-11-18 (Sonic 2, 240p -> 480i): the input went 59.92 -> 59.81 at once and the
+        // (after v111f) the log of 2026-11-18 (Sonic 2, 240p -> 480i): the input went 59.92 -> 59.81 at once and the
         // smoothed rate took ~14 readings to follow (59.90, 59.89 ... 59.82), the output chasing it all the way. The
         // measurement jitter this filter is for is a few thousandths; a jump of 0.05 Hz or more is a new rate: take it.
         if (fabsf(fpsInput - smoothedFpsInput) > 0.05f) smoothedFpsInput = fpsInput;
@@ -682,7 +682,12 @@ public:
         // the impact of incorrect input FPS measurements, clamp the maximum FPS
         // deviation relative to the previous frame's *output* FPS. This
         // provides short-term FPS stability.
-        constexpr float MAX_FPS_CHANGE = 0.0006f;
+        // (after v127n) PAL 50 Hz on the NTSC preset: the output starts near 60 Hz and the lock runs once every ~1.7 s, so
+        // 0.06 % a time took minutes (the log of 2026-11-25 13:47). While it is more than 0.1 Hz from the source the step
+        // is 0.6 % (about 0.34 Hz, ~600 kHz, still walked in 1 kHz stages by setExternalClockGenFrequencySmooth), then back
+        // to the usual 0.06 % for the last bit.
+        const float MAX_FPS_CHANGE =
+            (rto->presetIsPalForce60 && fabsf(prevFpsOutput - fpsInput) > 0.1f) ? 0.006f : 0.0006f;
         float fpsOutput = rawFpsOutput;
         fpsOutput = std::min(fpsOutput, prevFpsOutput * (1 + MAX_FPS_CHANGE));
         fpsOutput = std::max(fpsOutput, prevFpsOutput * (1 - MAX_FPS_CHANGE));

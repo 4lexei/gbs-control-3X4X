@@ -18,7 +18,7 @@ void syncReverseRotaryEncoderIsrMirror()
 void loadDefaultUserOptions()
 {
     uopt->presetPreference = Output960P;    // #1
-    uopt->enableFrameTimeLock = 1; // (after v110c) his decision of 2026-11-17: on by default, so the output follows a source that changes rate (240p <-> 480i). Stock: 0, "does not work on all displays"
+    uopt->enableFrameTimeLock = 1; // (after v110c) 2026-11-17: on by default, so the output follows a source that changes rate (240p <-> 480i). Stock: 0, "does not work on all displays"
     uopt->presetSlot = 'A';          //
     uopt->frameTimeLockMethod = 0; // compatibility with more displays
     uopt->enableAutoGain = 0;
@@ -40,6 +40,7 @@ void loadDefaultUserOptions()
         REVERSE_ROTARY_ENCODER_FOR_OLED_MENU > 0 ? 1 : 0; // #20 default from build-time macro
     uopt->outputRateMode = 0;                // #21 follow source
     uopt->outputRateExact = 0;               // #214..#219 (after v111b)
+    uopt->hProtectForce = 0;                 // (after v126) experimental, off
     uopt->outputChosen = 0;                  // #220 (after v111f) nothing picked yet: the web shows the red notice
     uopt->integer1080 = 0;
     uopt->integer1080Narrow = 0;
@@ -72,7 +73,7 @@ void loadDefaultUserOptions()
     syncReverseRotaryEncoderIsrMirror();
 }
 
-// (after v122) his request of 2026-11-22: the preferences are built in a buffer and compared with what is already in
+// (after v122) 2026-11-22: the preferences are built in a buffer and compared with what is already in
 // the flash. If nothing changed, nothing is written. Two of the writes happen on their own every time a console is
 // switched on (the mode restore and the colour preset), and they almost always wrote the very same bytes.
 #define PREFS_BUF_MAX 320
@@ -106,7 +107,7 @@ static bool prefsSameAsFlash(const uint8_t *buf, uint16_t n)
     return same;
 }
 
-// (after v123j) his request of 2026-11-22, step 2: the preferences are written 30 s after the last change, like the
+// (after v123j) 2026-11-22, step 2: the preferences are written 30 s after the last change, like the
 // borders, so a run of presses writes the flash once. saveUserPrefs() only arms the deadline (and keeps the encoder
 // mirror up to date at once, as before); prefsTick() writes when it comes; prefsFlush() writes now, before anything
 // that reads the file or restarts the board.
@@ -198,11 +199,13 @@ static void writeUserPrefsNow()
         f.write((const uint8_t *)d, 6);
     }
     f.write((uopt->outputChosen ? 1 : 0) + '0'); // #220 (after v111f) an output was picked by hand
+    f.write('h');                                 // (after v126) marked, so a stray digit of an older file is never read as it
+    f.write((uopt->hProtectForce ? 1 : 0) + '0');
 
     f.close();
     syncReverseRotaryEncoderIsrMirror(); // before the comparison: it must run on every call, as it always did
     if (f.over) { // should never happen: the buffer is bigger than the file
-        SerialM.println(F("[3x4x-v123l] preferences: buffer too small, not saved"));
+        SerialM.println(F("[3x4x-v130k] preferences: buffer too small, not saved"));
         return;
     }
     if (prefsSameAsFlash(f.b, f.n))
